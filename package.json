@@ -10,7 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check": "pnpm exec astro check"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
