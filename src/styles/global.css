@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens from notes/style-guide.md.
+ * Raw custom properties live outside @theme so their values can be
+ * swapped per-theme (system preference, then explicit override) without
+ * Tailwind baking a single value in at build time. @theme inline then
+ * re-exposes them as Tailwind utilities (bg-paper, text-ink, etc.).
+ */
+
+:root {
+  --paper: oklch(0.937 0.013 95);
+  --paper-shadow: oklch(0.898 0.018 88);
+  --ink: oklch(0.224 0.011 80);
+  --ink-soft: oklch(0.433 0.028 88);
+  --rule: oklch(0.807 0.024 85);
+  --gold: oklch(0.643 0.126 76);
+  --gold-ink: oklch(0.525 0.104 76);
+  --red: oklch(0.474 0.162 18);
+}
+
+/* System dark preference, unless an explicit light override is set. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: oklch(0.184 0.011 80);
+    --paper-shadow: oklch(0.234 0.017 79);
+    --ink: oklch(0.929 0.017 83);
+    --ink-soft: oklch(0.750 0.031 85);
+    --rule: oklch(0.325 0.023 81);
+    --gold: oklch(0.788 0.141 81);
+    --gold-ink: oklch(0.796 0.131 81);
+    --red: oklch(0.631 0.18 18);
+  }
+}
+
+/* Explicit override (persisted in localStorage), wins over system preference either way. */
+:root[data-theme="dark"] {
+  --paper: oklch(0.184 0.011 80);
+  --paper-shadow: oklch(0.234 0.017 79);
+  --ink: oklch(0.929 0.017 83);
+  --ink-soft: oklch(0.750 0.031 85);
+  --rule: oklch(0.325 0.023 81);
+  --gold: oklch(0.788 0.141 81);
+  --gold-ink: oklch(0.796 0.131 81);
+  --red: oklch(0.631 0.18 18);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-shadow: var(--paper-shadow);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-red: var(--red);
+
+  --font-display: var(--font-big-shoulders);
+  --font-body: var(--font-ibm-plex-sans);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+/*
+ * Soft accents (e.g. the ticket stub's "this week" edge) blend gold
+ * toward the active background instead of a dedicated token, so they
+ * stay correctly toned down in both themes automatically:
+ *   color-mix(in srgb, var(--gold) 60%, var(--paper) 40%)
+ */
+
+@layer base {
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+  }
+}
