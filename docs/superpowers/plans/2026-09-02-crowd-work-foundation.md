@@ -39,7 +39,8 @@ crowd-work/
 │   │   ├── utils/
 │   │   │   ├── recurrence.ts       # pure recurrence/exception resolution logic
 │   │   │   └── recurrence.test.ts  # co-located test
-│   │   └── listings.ts          # typed Supabase data-access functions
+│   │   └── data/
+│   │       └── listings.ts      # typed Supabase data-access functions
 │   ├── layouts/
 │   │   └── Base.astro
 │   └── pages/
@@ -75,6 +76,14 @@ Run in the repo root (it already contains `docs/`, `notes/`, etc. — the CLI wi
 ```bash
 pnpm create astro@latest . -- --template minimal --typescript strict --install --git false
 ```
+
+**Known gotcha:** this currently scaffolds against TypeScript 7.x, whose new native (Go-based) compiler doesn't yet expose the Language Service Programmatic API that `astro check` (Task 7 Step 2 onward) depends on — running `astro check` against it fails with "does not expose the programmatic API that `astro check` relies on." Pin TypeScript back to the latest 6.x line before it causes problems later:
+
+```bash
+pnpm add -D typescript@^6.0.0
+```
+
+(Check `npm view typescript versions --json` for the current latest 6.x patch if `^6.0.0` doesn't resolve as expected — the exact patch will drift over time.)
 
 - [x] **Step 2: Add the Vercel adapter**
 
@@ -473,7 +482,7 @@ EOF
 - Consumes: nothing (pure logic, no I/O)
 - Produces:
   - `resolveOccurrences(listing: Listing, exceptions: OccurrenceException[], rangeStart: string, rangeEnd: string): Occurrence[]`
-  - Types `RecurrenceRule`, `OccurrenceException`, `Listing` (a union of `RecurringListing` and `OneOffListing`), `Occurrence` — all exported from `src/lib/utils/recurrence.ts`, consumed by `src/lib/listings.ts` (Task 7) and the pages in Tasks 8-9.
+  - Types `RecurrenceRule`, `OccurrenceException`, `Listing` (a union of `RecurringListing` and `OneOffListing`), `Occurrence` — all exported from `src/lib/utils/recurrence.ts`, consumed by `src/lib/data/listings.ts` (Task 7) and the pages in Tasks 8-9.
 
 This is the highest-risk logic in the whole system per the spec's Testing section — it's what silently shows people the wrong information if it's wrong. Full TDD.
 
@@ -816,7 +825,7 @@ function addDays(date: Date, days: number): Date {
 Run: `pnpm test`
 Expected: PASS — all 5 tests green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/utils/recurrence.ts src/lib/utils/recurrence.test.ts vitest.config.ts package.json pnpm-lock.yaml
@@ -834,7 +843,7 @@ EOF
 
 **Files:**
 
-- Create: `src/lib/listings.ts`
+- Create: `src/lib/data/listings.ts`
 
 **Interfaces:**
 
@@ -848,17 +857,16 @@ EOF
 
   All consumed by the pages in Tasks 8-9.
 
-- [ ] **Step 1: Write the data access module**
+- [x] **Step 1: Write the data access module**
 
-Create `src/lib/listings.ts`:
+Create `src/lib/data/listings.ts`:
 
 ```ts
-import { supabase } from './supabase/supabase';
+import { supabase } from '../supabase/supabase';
 import {
-  resolveOccurrences,
   type Listing as RecurrenceListing,
   type OccurrenceException,
-} from './utils/recurrence';
+} from '../utils/recurrence';
 
 export interface Area {
   id: string;
@@ -988,7 +996,11 @@ export function toRecurrenceListing(
       id: listing.id,
       venueId: listing.venue.id,
       startTime: listing.startTime,
-      recurrenceRule: listing.recurrenceRule,
+      recurrenceRule: {
+        frequency: listing.recurrenceRule.frequency,
+        dayOfWeek: listing.recurrenceRule.dayOfWeek,
+        weekOfMonth: listing.recurrenceRule.weekOfMonth ?? undefined,
+      },
     };
   }
   return {
@@ -1000,15 +1012,15 @@ export function toRecurrenceListing(
 }
 ```
 
-- [ ] **Step 2: Verify it typechecks**
+- [x] **Step 2: Verify it typechecks**
 
 Run: `pnpm exec astro check`
-Expected: no type errors in `src/lib/listings.ts`.
+Expected: no type errors in `src/lib/data/listings.ts`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
-git add src/lib/listings.ts
+git add src/lib/data/listings.ts
 git commit -m "$(cat <<'EOF'
 feat: add typed data-access layer for listings, venues, and areas
 
@@ -1102,7 +1114,7 @@ EOF
 
 **Interfaces:**
 
-- Consumes: `getPublishedListings`, `getExceptionsForListings`, `getAreas`, `toRecurrenceListing` from `src/lib/listings.ts` (Task 7); `resolveOccurrences` from `src/lib/utils/recurrence.ts` (Task 6)
+- Consumes: `getPublishedListings`, `getExceptionsForListings`, `getAreas`, `toRecurrenceListing` from `src/lib/data/listings.ts` (Task 7); `resolveOccurrences` from `src/lib/utils/recurrence.ts` (Task 6)
 - Produces: the `/` route
 
 - [ ] **Step 1: Write the base layout**
@@ -1136,7 +1148,7 @@ Replace `src/pages/index.astro`:
 ```astro
 ---
 import Base from '../layouts/Base.astro';
-import { getPublishedListings, getExceptionsForListings, getAreas, toRecurrenceListing } from '../lib/listings';
+import { getPublishedListings, getExceptionsForListings, getAreas, toRecurrenceListing } from '../lib/data/listings';
 import { resolveOccurrences } from '../lib/utils/recurrence';
 
 const typeFilter = Astro.url.searchParams.get('type');

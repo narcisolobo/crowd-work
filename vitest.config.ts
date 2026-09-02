@@ -1,9 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
-defineConfig({
+const config = defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
   },
 });
 
-export default defineConfig;
+export default config;
