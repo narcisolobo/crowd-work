@@ -29,6 +29,9 @@ pnpm-debug.log*
 # host
 .vercel
 
+# agents
+.impeccable
+
 competitors
 drama
 .DS_Store
