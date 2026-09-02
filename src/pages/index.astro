@@ -1,17 +1,84 @@
 ---
+import Base from "../layouts/Base.astro";
+import {
+  getPublishedListings,
+  getExceptionsForListings,
+  getAreas,
+  toRecurrenceListing,
+} from "../lib/data/listings";
+import { resolveOccurrences } from "../lib/utils/recurrence";
 
+const typeFilter = Astro.url.searchParams.get("type");
+const areaFilter = Astro.url.searchParams.get("area");
+
+const [listings, areas] = await Promise.all([
+  getPublishedListings(),
+  getAreas(),
+]);
+const exceptionsByListing = await getExceptionsForListings(
+  listings.map((l) => l.id),
+);
+
+const today = new Date();
+const rangeStart = today.toISOString().slice(0, 10);
+const rangeEndDate = new Date(today);
+rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + 7);
+const rangeEnd = rangeEndDate.toISOString().slice(0, 10);
+
+const rows = listings
+  .filter((listing) => !typeFilter || listing.type === typeFilter)
+  .filter((listing) => !areaFilter || listing.venue.areaId === areaFilter)
+  .flatMap((listing) => {
+    const occurrences = resolveOccurrences(
+      toRecurrenceListing(listing),
+      exceptionsByListing.get(listing.id) ?? [],
+      rangeStart,
+      rangeEnd,
+    );
+    return occurrences.map((occurrence) => ({ listing, occurrence }));
+  })
+  .sort((a, b) => a.occurrence.date.localeCompare(b.occurrence.date));
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base title="Crowd Work — LA Open Mics & Comedy Shows">
+  <h1>This Week in LA Comedy</h1>
+  <form method="get">
+    <label>
+      Type
+      <select name="type">
+        <option value="" selected={!typeFilter}>All</option>
+        <option value="mic" selected={typeFilter === "mic"}>Open Mics</option>
+        <option value="show" selected={typeFilter === "show"}>Shows</option>
+      </select>
+    </label>
+    <label>
+      Area
+      <select name="area">
+        <option value="" selected={!areaFilter}>All of LA</option>
+        {
+          areas.map((area) => (
+            <option value={area.id} selected={areaFilter === area.id}>
+              {area.name}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+    <button type="submit">Filter</button>
+  </form>
+  {
+    rows.length === 0 ? (
+      <p>No listings found for this filter in the next 7 days.</p>
+    ) : (
+      <ul>
+        {rows.map(({ listing, occurrence }) => (
+          <li>
+            <a href={`/listings/${listing.id}`}>{listing.title}</a>—{" "}
+            {occurrence.date} at {occurrence.startTime} — {listing.venue.name}
+            {occurrence.note && <em> ({occurrence.note})</em>}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Base>
