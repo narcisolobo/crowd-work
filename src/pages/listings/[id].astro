@@ -1,0 +1,105 @@
+---
+import Base from "../../layouts/Base.astro";
+import { supabase } from "../../lib/supabase/supabase";
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect("/404");
+}
+
+const { data: listing, error } = await supabase
+  .from("listings")
+  .select(
+    `
+    id, type, title, host, description, start_time, one_off_date,
+    sign_up_method, cost_to_perform, ticket_price, ticket_url,
+    venue:venues ( name, address, google_maps_url ),
+    recurrence_rules ( frequency, day_of_week, week_of_month )
+  `,
+  )
+  .eq("id", id)
+  .eq("status", "published")
+  .single();
+
+if (error || !listing) {
+  return Astro.redirect("/404");
+}
+
+const dayNames = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+const rule = listing.recurrence_rules as any;
+const recurrenceLabel = rule
+  ? rule.frequency === "weekly"
+    ? `Every ${dayNames[rule.day_of_week]}`
+    : `${rule.week_of_month === -1 ? "Last" : `${rule.week_of_month}th`} ${dayNames[rule.day_of_week]} of the month`
+  : `One-time on ${listing.one_off_date}`;
+---
+
+<Base title={`${listing.title} — Crowd Work`}>
+  <h1>{listing.title}</h1>
+  <p>
+    {listing.type === "mic" ? "Open Mic" : "Show"} · {recurrenceLabel} at {
+      listing.start_time
+    }
+  </p>
+  <p>
+    <strong>{listing.venue.name}</strong><br />
+    {listing.venue.address}
+    {
+      listing.venue.google_maps_url && (
+        <>
+          {" "}
+          ·{" "}
+          <a
+            href={listing.venue.google_maps_url}
+            target="_blank"
+            rel="noopener"
+          >
+            Directions
+          </a>
+        </>
+      )
+    }
+  </p>
+  {listing.host && <p>Hosted by {listing.host}</p>}
+  {listing.description && <p>{listing.description}</p>}
+  {
+    listing.type === "mic" && (
+      <p>
+        {listing.sign_up_method && (
+          <>
+            Sign-up: {listing.sign_up_method}
+            <br />
+          </>
+        )}
+        {listing.cost_to_perform && (
+          <>Cost to perform: {listing.cost_to_perform}</>
+        )}
+      </p>
+    )
+  }
+  {
+    listing.type === "show" && (
+      <p>
+        {listing.ticket_price && <>Tickets: {listing.ticket_price}</>}
+        {listing.ticket_url && (
+          <>
+            {" "}
+            —{" "}
+            <a href={listing.ticket_url} target="_blank" rel="noopener">
+              Buy tickets
+            </a>
+          </>
+        )}
+      </p>
+    )
+  }
+</Base>

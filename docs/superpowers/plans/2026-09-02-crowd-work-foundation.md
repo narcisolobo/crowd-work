@@ -93,6 +93,15 @@ pnpm exec astro add vercel
 
 Accept the prompts to install `@astrojs/vercel` and update `astro.config.mjs`.
 
+**Known gotcha:** `astro add vercel` does not set an `output` mode, so Astro defaults to `output: 'static'` — every route is prerendered at build time, and dynamic routes (like Task 10's `/listings/[id]`) fail with "getStaticPaths() function is required for dynamic routes," since static mode has no per-request rendering to resolve them. This project needs on-demand rendering everywhere (every page queries Supabase live), so set server output globally in `astro.config.mjs` rather than adding `export const prerender = false` per page:
+
+```js
+export default defineConfig({
+  output: "server",
+  adapter: vercel(),
+});
+```
+
 - [x] **Step 3: Update `.gitignore` for the new project**
 
 Add these lines (append, don't replace the existing `competitors`/`drama`/`.DS_Store` entries):
@@ -1266,7 +1275,7 @@ EOF
 - Consumes: `supabase` from `src/lib/supabase/supabase.ts` (Task 2)
 - Produces: the `/listings/[id]` route
 
-- [ ] **Step 1: Write the detail page**
+- [x] **Step 1: Write the detail page**
 
 Create `src/pages/listings/[id].astro`:
 
@@ -1374,11 +1383,11 @@ const recurrenceLabel = rule
 </Base>
 ```
 
-- [ ] **Step 2: Manually verify locally**
+- [x] **Step 2: Manually verify locally**
 
 With `pnpm dev` running, click through from the directory page to each of the three seeded listings. Expected: each detail page shows the correct recurrence label ("Every Tuesday", "Last Thursday of the month", "One-time on 2026-09-19"), venue info with a working Maps link, and type-specific fields (sign-up/cost for mics, ticket price/link for the show).
 
-- [ ] **Step 3: Push the schema to the remote Supabase project**
+- [x] **Step 3: Push the schema to the remote Supabase project**
 
 ```bash
 supabase db push
@@ -1386,21 +1395,21 @@ supabase db push
 
 Expected: all migrations apply to the linked remote project with no errors.
 
-- [ ] **Step 4: Seed the remote project**
+- [x] **Step 4: Seed the remote project**
 
-The CLI's `db push` does not run `seed.sql` against a remote project. Apply it directly:
+The CLI's `db push` does not run `seed.sql` against a remote project. Apply it directly with `db query` (not `db execute` — that subcommand doesn't exist; `query` is the one that accepts `--file`/`--linked`):
 
 ```bash
-supabase db execute --file supabase/seed.sql --linked
+supabase db query --file supabase/seed.sql --linked
 ```
 
-Expected: no errors. (If this flag is unavailable in your installed CLI version, run `supabase link` again to confirm the project is linked, then apply `supabase/seed.sql` via the SQL editor in the Supabase dashboard as a fallback.)
+Expected: no errors. (If `--linked` behaves unexpectedly on your installed CLI version, run `supabase link` again to confirm the project is linked, then apply `supabase/seed.sql` via the SQL editor in the Supabase dashboard as a fallback.)
 
-- [ ] **Step 5: Configure production environment variables in Vercel**
+- [x] **Step 5: Configure production environment variables in Vercel**
 
 In the Vercel project dashboard (or via `pnpm dlx vercel env add`), set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the **remote** project's values (from the Supabase dashboard's API settings) for the Production environment.
 
-- [ ] **Step 6: Deploy to production**
+- [x] **Step 6: Deploy to production**
 
 ```bash
 pnpm dlx vercel deploy --prod
@@ -1408,7 +1417,7 @@ pnpm dlx vercel deploy --prod
 
 Expected: a production URL is printed. Visit it and confirm the same three seeded listings render as they did locally, now reading from the remote Supabase project.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/listings
