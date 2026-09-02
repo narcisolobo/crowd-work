@@ -62,4 +62,4 @@ Product name is "Crowd Work." No visual identity (logo, palette, typography) is 
 
 ## Accessibility & Inclusion
 
-No formal standard required yet; no specific user need has been established beyond general good practice.
+No formal standard adopted, but one specific, validated need exists: a volunteer moderator has low vision and navigates at 400%+ browser zoom. Her personal Wix-built site reflows badly at that zoom level (fixed-canvas absolute positioning clips content and forces two-dimensional scrolling), which is the concrete failure mode to design against here — this maps to WCAG 1.4.10 (Reflow) and 1.4.4 (Resize Text). Applies to both the public site and, especially, the admin/moderation area she'll work in directly: layouts should use relative units and fluid/responsive CSS rather than fixed-width or absolutely-positioned elements, so pages reflow to a single readable column at high zoom without horizontal scrolling.
