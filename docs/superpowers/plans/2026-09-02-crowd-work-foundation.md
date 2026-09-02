@@ -33,7 +33,9 @@ crowd-work/
 ├── src/
 │   ├── env.d.ts
 │   ├── lib/
-│   │   ├── supabase.ts          # Supabase client factory
+│   │   ├── supabase/
+│   │   │   ├── supabase.ts      # Supabase client factory
+│   │   │   └── database.types.ts # generated Supabase schema types
 │   │   ├── recurrence.ts        # pure recurrence/exception resolution logic
 │   │   └── listings.ts          # typed Supabase data-access functions
 │   ├── layouts/
@@ -100,7 +102,7 @@ dist
 Run: `npm run build`
 Expected: build completes with no errors, `dist/` is created.
 
-- [ ] **Step 5: Deploy a placeholder to Vercel**
+- [x] **Step 5: Deploy a placeholder to Vercel**
 
 ```bash
 npx vercel login
@@ -110,7 +112,7 @@ npx vercel deploy
 
 Expected: a preview URL is printed; visiting it shows the default Astro starter page.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add package.json package-lock.json astro.config.mjs tsconfig.json src .gitignore
@@ -128,15 +130,15 @@ EOF
 
 **Files:**
 
-- Create: `supabase/config.toml` (generated), `src/lib/supabase.ts`, `.env.example`
+- Create: `supabase/config.toml` (generated), `src/lib/supabase/supabase.ts`, `.env.example`
 - Modify: `package.json` (add `@supabase/supabase-js`)
 
 **Interfaces:**
 
 - Consumes: nothing (this task establishes the Supabase project itself)
-- Produces: `supabase` — a typed Supabase client, exported from `src/lib/supabase.ts`, imported by every later data-access task as `import { supabase } from '../lib/supabase'`
+- Produces: `supabase` — a typed Supabase client, exported from `src/lib/supabase/supabase.ts`, imported by every later data-access task as `import { supabase } from '../lib/supabase/supabase'`
 
-- [ ] **Step 1: Install the Supabase CLI and initialize the project**
+- [x] **Step 1: Install the Supabase CLI and initialize the project**
 
 If not already installed: `npm install -g supabase`
 
@@ -144,15 +146,15 @@ If not already installed: `npm install -g supabase`
 supabase init
 ```
 
-- [ ] **Step 2: Start the local Supabase stack**
+- [x] **Step 2: Start the local Supabase stack**
 
 ```bash
 supabase start
 ```
 
-Expected: Docker containers start; the output prints a local `API URL`, `anon key`, and `service_role key` — keep this output visible for the next step.
+Expected: Docker containers start; the output prints a local `API URL`, `publishable key`, and `secret key` — keep this output visible for the next step. (Supabase is deprecating the legacy `anon`/`service_role` JWT keys by the end of 2026; `supabase start` now leads with the publishable/secret key pair, which is what this plan uses.)
 
-- [ ] **Step 3: Create a remote Supabase project and link it**
+- [x] **Step 3: Create a remote Supabase project and link it**
 
 In the Supabase dashboard (supabase.com), create a new project (new account, since existing free-tier accounts are already at capacity). Then:
 
@@ -161,46 +163,49 @@ supabase login
 supabase link --project-ref <your-project-ref>
 ```
 
-- [ ] **Step 4: Set up local environment variables**
+- [x] **Step 4: Set up local environment variables**
 
 Create `.env.example` (committed):
 
 ```
 PUBLIC_SUPABASE_URL=
-PUBLIC_SUPABASE_ANON_KEY=
+PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
 
 Create `.env` (gitignored, not committed) and fill in the **local** values from `supabase start`'s output:
 
 ```
-PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-PUBLIC_SUPABASE_ANON_KEY=<local anon key from supabase start output>
+PUBLIC_SUPABASE_URL=http://127.0.0.1:54521
+PUBLIC_SUPABASE_PUBLISHABLE_KEY=<local publishable key from supabase start output>
 ```
 
-- [ ] **Step 5: Install the Supabase JS client**
+- [x] **Step 5: Install the Supabase JS client**
 
 ```bash
 npm install @supabase/supabase-js
 ```
 
-- [ ] **Step 6: Write the Supabase client factory**
+- [x] **Step 6: Write the Supabase client factory**
 
-Create `src/lib/supabase.ts`:
+Create `src/lib/supabase/supabase.ts`:
 
 ```ts
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+const supabasePublishableKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabasePublishableKey) {
   throw new Error(
-    'Missing PUBLIC_SUPABASE_URL or PUBLIC_SUPABASE_ANON_KEY environment variables',
+    'Missing PUBLIC_SUPABASE_URL or PUBLIC_SUPABASE_PUBLISHABLE_KEY environment variables',
   );
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(
+  supabaseUrl,
+  supabasePublishableKey,
+);
 ```
 
 This imports a `Database` type from `./database.types`, which doesn't exist yet — that's expected; Task 5 generates it once the schema exists. The project won't typecheck cleanly until then, which is fine mid-plan.
@@ -208,7 +213,7 @@ This imports a `Database` type from `./database.types`, which doesn't exist yet 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add supabase/config.toml src/lib/supabase.ts .env.example package.json package-lock.json .gitignore
+git add supabase/config.toml src/lib/supabase/supabase.ts .env.example package.json package-lock.json .gitignore
 git commit -m "$(cat <<'EOF'
 chore: initialize Supabase project and client factory
 
@@ -348,12 +353,12 @@ EOF
 **Files:**
 
 - Create: `supabase/migrations/<timestamp>_listings_and_recurrence.sql`
-- Create: `src/lib/database.types.ts` (generated, not hand-written)
+- Create: `src/lib/supabase/database.types.ts` (generated, not hand-written)
 
 **Interfaces:**
 
 - Consumes: `venues(id)` from Task 4
-- Produces: tables `listings`, `recurrence_rules`, `occurrence_exceptions`; the generated `Database` type consumed by `src/lib/supabase.ts` (Task 2)
+- Produces: tables `listings`, `recurrence_rules`, `occurrence_exceptions`; the generated `Database` type consumed by `src/lib/supabase/supabase.ts` (Task 2)
 
 - [ ] **Step 1: Generate the migration file**
 
@@ -436,15 +441,15 @@ Expected: all three migrations apply with no errors.
 - [ ] **Step 4: Generate TypeScript types from the schema**
 
 ```bash
-supabase gen types typescript --local > src/lib/database.types.ts
+supabase gen types typescript --local > src/lib/supabase/database.types.ts
 ```
 
-Expected: `src/lib/database.types.ts` is created/overwritten and exports a `Database` type. Run `npm run build` — the earlier "missing module" error from Task 2 should now be resolved.
+Expected: `src/lib/supabase/database.types.ts` is created/overwritten and exports a `Database` type. Run `npm run build` — the earlier "missing module" error from Task 2 should now be resolved.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add supabase/migrations src/lib/database.types.ts
+git add supabase/migrations src/lib/supabase/database.types.ts
 git commit -m "$(cat <<'EOF'
 feat: add listings, recurrence_rules, and occurrence_exceptions schema
 
@@ -834,7 +839,7 @@ EOF
 
 **Interfaces:**
 
-- Consumes: `supabase` from `src/lib/supabase.ts` (Task 2); `Listing`/`OccurrenceException` types from `src/lib/recurrence.ts` (Task 6)
+- Consumes: `supabase` from `src/lib/supabase/supabase.ts` (Task 2); `Listing`/`OccurrenceException` types from `src/lib/recurrence.ts` (Task 6)
 - Produces:
   - `getAreas(): Promise<Area[]>`
   - `getPublishedListings(): Promise<ListingWithVenue[]>`
@@ -849,7 +854,7 @@ EOF
 Create `src/lib/listings.ts`:
 
 ```ts
-import { supabase } from './supabase';
+import { supabase } from './supabase/supabase';
 import {
   resolveOccurrences,
   type Listing as RecurrenceListing,
@@ -1069,8 +1074,8 @@ supabase db reset
 Expected output includes `Seeding data supabase/seed.sql...` with no errors. Verify with a REST call against the local stack:
 
 ```bash
-curl "http://127.0.0.1:54321/rest/v1/listings?select=title" \
-  -H "apikey: <local anon key from supabase start output>"
+curl "http://127.0.0.1:54521/rest/v1/listings?select=title" \
+  -H "apikey: <local publishable key from supabase start output>"
 ```
 
 Expected: a JSON array with the three seeded listing titles.
@@ -1227,7 +1232,7 @@ EOF
 
 **Interfaces:**
 
-- Consumes: `supabase` from `src/lib/supabase.ts` (Task 2)
+- Consumes: `supabase` from `src/lib/supabase/supabase.ts` (Task 2)
 - Produces: the `/listings/[id]` route
 
 - [ ] **Step 1: Write the detail page**
@@ -1237,7 +1242,7 @@ Create `src/pages/listings/[id].astro`:
 ```astro
 ---
 import Base from '../../layouts/Base.astro';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase/supabase';
 
 const { id } = Astro.params;
 
@@ -1316,7 +1321,7 @@ Expected: no errors. (If this flag is unavailable in your installed CLI version,
 
 - [ ] **Step 5: Configure production environment variables in Vercel**
 
-In the Vercel project dashboard (or via `npx vercel env add`), set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_ANON_KEY` to the **remote** project's values (from the Supabase dashboard's API settings) for the Production environment.
+In the Vercel project dashboard (or via `npx vercel env add`), set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the **remote** project's values (from the Supabase dashboard's API settings) for the Production environment.
 
 - [ ] **Step 6: Deploy to production**
 
