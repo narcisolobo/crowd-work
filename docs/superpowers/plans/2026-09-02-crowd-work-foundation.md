@@ -74,13 +74,13 @@ crowd-work/
 Run in the repo root (it already contains `docs/`, `notes/`, etc. — the CLI will prompt about the non-empty directory; confirm to continue):
 
 ```bash
-npm create astro@latest . -- --template minimal --typescript strict --install --git false
+pnpm create astro@latest . -- --template minimal --typescript strict --install --git false
 ```
 
 - [x] **Step 2: Add the Vercel adapter**
 
 ```bash
-npx astro add vercel
+pnpm exec astro add vercel
 ```
 
 Accept the prompts to install `@astrojs/vercel` and update `astro.config.mjs`.
@@ -99,15 +99,15 @@ dist
 
 - [x] **Step 4: Verify the project builds locally**
 
-Run: `npm run build`
+Run: `pnpm build`
 Expected: build completes with no errors, `dist/` is created.
 
 - [x] **Step 5: Deploy a placeholder to Vercel**
 
 ```bash
-npx vercel login
-npx vercel link
-npx vercel deploy
+pnpm dlx vercel login
+pnpm dlx vercel link
+pnpm dlx vercel deploy
 ```
 
 Expected: a preview URL is printed; visiting it shows the default Astro starter page.
@@ -115,7 +115,7 @@ Expected: a preview URL is printed; visiting it shows the default Astro starter 
 - [x] **Step 6: Commit**
 
 ```bash
-git add package.json package-lock.json astro.config.mjs tsconfig.json src .gitignore
+git add package.json pnpm-lock.yaml astro.config.mjs tsconfig.json src .gitignore
 git commit -m "$(cat <<'EOF'
 chore: scaffold Astro project with Vercel adapter
 
@@ -140,7 +140,7 @@ EOF
 
 - [x] **Step 1: Install the Supabase CLI and initialize the project**
 
-If not already installed: `npm install -g supabase`
+If not already installed: `pnpm add -g supabase`
 
 ```bash
 supabase init
@@ -182,7 +182,7 @@ PUBLIC_SUPABASE_PUBLISHABLE_KEY=<local publishable key from supabase start outpu
 - [x] **Step 5: Install the Supabase JS client**
 
 ```bash
-npm install @supabase/supabase-js
+pnpm add @supabase/supabase-js
 ```
 
 - [x] **Step 6: Write the Supabase client factory**
@@ -210,10 +210,10 @@ export const supabase = createClient<Database>(
 
 This imports a `Database` type from `./database.types`, which doesn't exist yet — that's expected; Task 5 generates it once the schema exists. The project won't typecheck cleanly until then, which is fine mid-plan.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
-git add supabase/config.toml src/lib/supabase/supabase.ts .env.example package.json package-lock.json .gitignore
+git add supabase/config.toml src/lib/supabase/supabase.ts .env.example package.json pnpm-lock.yaml .gitignore
 git commit -m "$(cat <<'EOF'
 chore: initialize Supabase project and client factory
 
@@ -302,13 +302,13 @@ EOF
 - Consumes: `neighborhoods(id)` from Task 3
 - Produces: table `venues (id, name, address, neighborhood_id, google_maps_url)`, publicly readable via RLS
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new venues
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 ```sql
 create table venues (
@@ -326,7 +326,7 @@ create policy "venues are publicly readable"
   using (true);
 ```
 
-- [ ] **Step 3: Apply and verify**
+- [x] **Step 3: Apply and verify**
 
 ```bash
 supabase db reset
@@ -334,7 +334,7 @@ supabase db reset
 
 Expected: both prior migrations and this one apply with no errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations
@@ -366,7 +366,7 @@ EOF
 supabase migration new listings_and_recurrence
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 ```sql
 create type listing_type as enum ('mic', 'show');
@@ -430,7 +430,7 @@ create policy "occurrence exceptions are publicly readable"
   using (true);
 ```
 
-- [ ] **Step 3: Apply and verify**
+- [x] **Step 3: Apply and verify**
 
 ```bash
 supabase db reset
@@ -438,15 +438,15 @@ supabase db reset
 
 Expected: all three migrations apply with no errors.
 
-- [ ] **Step 4: Generate TypeScript types from the schema**
+- [x] **Step 4: Generate TypeScript types from the schema**
 
 ```bash
 supabase gen types typescript --local > src/lib/supabase/database.types.ts
 ```
 
-Expected: `src/lib/supabase/database.types.ts` is created/overwritten and exports a `Database` type. Run `npm run build` — the earlier "missing module" error from Task 2 should now be resolved.
+Expected: `src/lib/supabase/database.types.ts` is created/overwritten and exports a `Database` type. Run `pnpm build` — the earlier "missing module" error from Task 2 should now be resolved.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations src/lib/supabase/database.types.ts
@@ -481,7 +481,7 @@ This is the highest-risk logic in the whole system per the spec's Testing sectio
 - [ ] **Step 1: Install Vitest**
 
 ```bash
-npm install -D vitest
+pnpm add -D vitest
 ```
 
 Add to `package.json` `scripts`:
@@ -624,7 +624,7 @@ describe('resolveOccurrences', () => {
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `npm test`
+Run: `pnpm test`
 Expected: FAIL — `src/lib/recurrence.ts` does not exist yet (module not found).
 
 - [ ] **Step 4: Implement the recurrence resolution logic**
@@ -814,13 +814,13 @@ function addDays(date: Date, days: number): Date {
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `npm test`
+Run: `pnpm test`
 Expected: PASS — all 5 tests green.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/lib/recurrence.ts tests/lib/recurrence.test.ts vitest.config.ts package.json package-lock.json
+git add src/lib/recurrence.ts tests/lib/recurrence.test.ts vitest.config.ts package.json pnpm-lock.yaml
 git commit -m "$(cat <<'EOF'
 feat: add recurrence and exception resolution logic
 
@@ -1003,7 +1003,7 @@ export function toRecurrenceListing(
 
 - [ ] **Step 2: Verify it typechecks**
 
-Run: `npx astro check`
+Run: `pnpm exec astro check`
 Expected: no type errors in `src/lib/listings.ts`.
 
 - [ ] **Step 3: Commit**
@@ -1206,7 +1206,7 @@ const rows = listings
 
 - [ ] **Step 3: Manually verify against local Supabase**
 
-Run: `npm run dev`, visit `http://localhost:4321/`
+Run: `pnpm dev`, visit `http://localhost:4321/`
 
 Expected: the Tuesday Night Mic and (if today falls within the next 7 days of the last Thursday of the month) Last Thursday Mic appear, each linking to `/listings/<id>`. Try `?type=show` and confirm only the Westside Comedy Showcase appears if its date falls in the next 7 days, or that the empty state renders otherwise. Try `?area=<Eastside area id>` and confirm only Eastside venues (The Virgil) appear.
 
@@ -1299,7 +1299,7 @@ const recurrenceLabel = rule
 
 - [ ] **Step 2: Manually verify locally**
 
-With `npm run dev` running, click through from the directory page to each of the three seeded listings. Expected: each detail page shows the correct recurrence label ("Every Tuesday", "Last Thursday of the month", "One-time on 2026-09-19"), venue info with a working Maps link, and type-specific fields (sign-up/cost for mics, ticket price/link for the show).
+With `pnpm dev` running, click through from the directory page to each of the three seeded listings. Expected: each detail page shows the correct recurrence label ("Every Tuesday", "Last Thursday of the month", "One-time on 2026-09-19"), venue info with a working Maps link, and type-specific fields (sign-up/cost for mics, ticket price/link for the show).
 
 - [ ] **Step 3: Push the schema to the remote Supabase project**
 
@@ -1321,12 +1321,12 @@ Expected: no errors. (If this flag is unavailable in your installed CLI version,
 
 - [ ] **Step 5: Configure production environment variables in Vercel**
 
-In the Vercel project dashboard (or via `npx vercel env add`), set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the **remote** project's values (from the Supabase dashboard's API settings) for the Production environment.
+In the Vercel project dashboard (or via `pnpm dlx vercel env add`), set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the **remote** project's values (from the Supabase dashboard's API settings) for the Production environment.
 
 - [ ] **Step 6: Deploy to production**
 
 ```bash
-npx vercel deploy --prod
+pnpm dlx vercel deploy --prod
 ```
 
 Expected: a production URL is printed. Visit it and confirm the same three seeded listings render as they did locally, now reading from the remote Supabase project.
@@ -1347,7 +1347,7 @@ EOF
 
 ## Definition of Done
 
-- `npm test` passes (recurrence/exception resolution fully covered).
-- `npm run build` and `npx astro check` succeed with no errors.
+- `pnpm test` passes (recurrence/exception resolution fully covered).
+- `pnpm build` and `pnpm exec astro check` succeed with no errors.
 - The production Vercel URL shows a working, filterable directory of the seeded listings, each linking to a working detail page with a correct recurrence description and a working Google Maps link.
 - All schema is versioned as migrations in `supabase/migrations/`, applied to both local and remote Supabase projects.
