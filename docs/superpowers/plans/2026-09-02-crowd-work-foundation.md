@@ -198,15 +198,15 @@ pnpm add @supabase/supabase-js
 Create `src/lib/supabase/supabase.ts`:
 
 ```ts
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabasePublishableKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 if (!supabaseUrl || !supabasePublishableKey) {
   throw new Error(
-    'Missing PUBLIC_SUPABASE_URL or PUBLIC_SUPABASE_PUBLISHABLE_KEY environment variables',
+    "Missing PUBLIC_SUPABASE_URL or PUBLIC_SUPABASE_PUBLISHABLE_KEY environment variables",
   );
 }
 
@@ -501,11 +501,11 @@ Add to `package.json` `scripts`:
 Create `vitest.config.ts`:
 
 ```ts
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ["src/**/*.test.ts"],
   },
 });
 ```
@@ -515,115 +515,115 @@ export default defineConfig({
 Create `src/lib/utils/recurrence.test.ts` (co-located with the module it tests, per project convention):
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { resolveOccurrences } from './recurrence';
+import { describe, it, expect } from "vitest";
+import { resolveOccurrences } from "./recurrence";
 
-describe('resolveOccurrences', () => {
-  it('generates weekly occurrences within the date range', () => {
+describe("resolveOccurrences", () => {
+  it("generates weekly occurrences within the date range", () => {
     const listing = {
-      id: 'mic-1',
-      venueId: 'venue-1',
-      startTime: '20:00',
-      recurrenceRule: { frequency: 'weekly' as const, dayOfWeek: 2 }, // Tuesday
+      id: "mic-1",
+      venueId: "venue-1",
+      startTime: "20:00",
+      recurrenceRule: { frequency: "weekly" as const, dayOfWeek: 2 }, // Tuesday
     };
-    const result = resolveOccurrences(listing, [], '2026-09-01', '2026-09-30');
+    const result = resolveOccurrences(listing, [], "2026-09-01", "2026-09-30");
     expect(result.map((o) => o.date)).toEqual([
-      '2026-09-01',
-      '2026-09-08',
-      '2026-09-15',
-      '2026-09-22',
-      '2026-09-29',
+      "2026-09-01",
+      "2026-09-08",
+      "2026-09-15",
+      "2026-09-22",
+      "2026-09-29",
     ]);
   });
 
   it('generates the correct date for "last Thursday of the month"', () => {
     const listing = {
-      id: 'mic-2',
-      venueId: 'venue-1',
-      startTime: '19:30',
+      id: "mic-2",
+      venueId: "venue-1",
+      startTime: "19:30",
       recurrenceRule: {
-        frequency: 'monthly' as const,
+        frequency: "monthly" as const,
         dayOfWeek: 4,
         weekOfMonth: -1,
       }, // Thursday
     };
-    const result = resolveOccurrences(listing, [], '2026-09-01', '2026-09-30');
-    expect(result.map((o) => o.date)).toEqual(['2026-09-24']);
+    const result = resolveOccurrences(listing, [], "2026-09-01", "2026-09-30");
+    expect(result.map((o) => o.date)).toEqual(["2026-09-24"]);
   });
 
-  it('excludes a cancelled occurrence', () => {
+  it("excludes a cancelled occurrence", () => {
     const listing = {
-      id: 'mic-1',
-      venueId: 'venue-1',
-      startTime: '20:00',
-      recurrenceRule: { frequency: 'weekly' as const, dayOfWeek: 2 },
+      id: "mic-1",
+      venueId: "venue-1",
+      startTime: "20:00",
+      recurrenceRule: { frequency: "weekly" as const, dayOfWeek: 2 },
     };
     const exceptions = [
-      { originalDate: '2026-09-08', type: 'cancelled' as const },
+      { originalDate: "2026-09-08", type: "cancelled" as const },
     ];
     const result = resolveOccurrences(
       listing,
       exceptions,
-      '2026-09-01',
-      '2026-09-30',
+      "2026-09-01",
+      "2026-09-30",
     );
-    expect(result.map((o) => o.date)).not.toContain('2026-09-08');
+    expect(result.map((o) => o.date)).not.toContain("2026-09-08");
     expect(result).toHaveLength(4);
   });
 
-  it('applies a modified occurrence (moved date and time)', () => {
+  it("applies a modified occurrence (moved date and time)", () => {
     const listing = {
-      id: 'mic-3',
-      venueId: 'venue-1',
-      startTime: '20:00',
-      recurrenceRule: { frequency: 'weekly' as const, dayOfWeek: 0 }, // Sunday
+      id: "mic-3",
+      venueId: "venue-1",
+      startTime: "20:00",
+      recurrenceRule: { frequency: "weekly" as const, dayOfWeek: 0 }, // Sunday
     };
     const exceptions = [
       {
-        originalDate: '2026-09-06',
-        type: 'modified' as const,
-        newDate: '2026-09-07',
-        newStartTime: '19:00',
-        note: 'moved for Labor Day',
+        originalDate: "2026-09-06",
+        type: "modified" as const,
+        newDate: "2026-09-07",
+        newStartTime: "19:00",
+        note: "moved for Labor Day",
       },
     ];
     const result = resolveOccurrences(
       listing,
       exceptions,
-      '2026-09-01',
-      '2026-09-30',
+      "2026-09-01",
+      "2026-09-30",
     );
-    const moved = result.find((o) => o.note === 'moved for Labor Day');
+    const moved = result.find((o) => o.note === "moved for Labor Day");
     expect(moved).toEqual({
-      listingId: 'mic-3',
-      date: '2026-09-07',
-      startTime: '19:00',
-      venueId: 'venue-1',
-      note: 'moved for Labor Day',
+      listingId: "mic-3",
+      date: "2026-09-07",
+      startTime: "19:00",
+      venueId: "venue-1",
+      note: "moved for Labor Day",
     });
   });
 
-  it('returns a one-off listing only on its specific date', () => {
+  it("returns a one-off listing only on its specific date", () => {
     const listing = {
-      id: 'show-1',
-      venueId: 'venue-2',
-      startTime: '21:00',
-      oneOffDate: '2026-09-12',
+      id: "show-1",
+      venueId: "venue-2",
+      startTime: "21:00",
+      oneOffDate: "2026-09-12",
     };
-    const result = resolveOccurrences(listing, [], '2026-09-01', '2026-09-30');
+    const result = resolveOccurrences(listing, [], "2026-09-01", "2026-09-30");
     expect(result).toEqual([
       {
-        listingId: 'show-1',
-        date: '2026-09-12',
-        startTime: '21:00',
-        venueId: 'venue-2',
+        listingId: "show-1",
+        date: "2026-09-12",
+        startTime: "21:00",
+        venueId: "venue-2",
       },
     ]);
     const outOfRange = resolveOccurrences(
       listing,
       [],
-      '2026-10-01',
-      '2026-10-31',
+      "2026-10-01",
+      "2026-10-31",
     );
     expect(outOfRange).toEqual([]);
   });
@@ -641,14 +641,14 @@ Create `src/lib/utils/recurrence.ts`:
 
 ```ts
 export interface RecurrenceRule {
-  frequency: 'weekly' | 'monthly';
+  frequency: "weekly" | "monthly";
   dayOfWeek: number; // 0 = Sunday .. 6 = Saturday
   weekOfMonth?: number; // 1-4, or -1 for "last" — required when frequency is 'monthly'
 }
 
 export interface OccurrenceException {
   originalDate: string; // YYYY-MM-DD, the date being overridden
-  type: 'cancelled' | 'modified';
+  type: "cancelled" | "modified";
   newDate?: string;
   newStartTime?: string;
   newVenueId?: string;
@@ -699,11 +699,11 @@ export function resolveOccurrences(
   for (const date of baseDates) {
     const exception = exceptionsByDate.get(date);
 
-    if (exception?.type === 'cancelled') {
+    if (exception?.type === "cancelled") {
       continue;
     }
 
-    if (exception?.type === 'modified') {
+    if (exception?.type === "modified") {
       occurrences.push({
         listingId: listing.id,
         date: exception.newDate ?? date,
@@ -730,7 +730,7 @@ function resolveRecurringDates(
   rangeStart: string,
   rangeEnd: string,
 ): string[] {
-  if (rule.frequency === 'weekly') {
+  if (rule.frequency === "weekly") {
     return weeklyDatesInRange(rule.dayOfWeek, rangeStart, rangeEnd);
   }
   return monthlyDatesInRange(
@@ -862,11 +862,11 @@ EOF
 Create `src/lib/data/listings.ts`:
 
 ```ts
-import { supabase } from '../supabase/supabase';
+import { supabase } from "../supabase/supabase";
 import {
   type Listing as RecurrenceListing,
   type OccurrenceException,
-} from '../utils/recurrence';
+} from "../utils/recurrence";
 
 export interface Area {
   id: string;
@@ -875,7 +875,7 @@ export interface Area {
 
 export interface ListingWithVenue {
   id: string;
-  type: 'mic' | 'show';
+  type: "mic" | "show";
   title: string;
   host: string | null;
   description: string | null;
@@ -893,7 +893,7 @@ export interface ListingWithVenue {
     areaId: string;
   };
   recurrenceRule: {
-    frequency: 'weekly' | 'monthly';
+    frequency: "weekly" | "monthly";
     dayOfWeek: number;
     weekOfMonth: number | null;
   } | null;
@@ -902,16 +902,16 @@ export interface ListingWithVenue {
 
 export async function getAreas(): Promise<Area[]> {
   const { data, error } = await supabase
-    .from('areas')
-    .select('id, name')
-    .order('name');
+    .from("areas")
+    .select("id, name")
+    .order("name");
   if (error) throw new Error(`Failed to load areas: ${error.message}`);
   return data ?? [];
 }
 
 export async function getPublishedListings(): Promise<ListingWithVenue[]> {
   const { data, error } = await supabase
-    .from('listings')
+    .from("listings")
     .select(
       `
       id, type, title, host, description, start_time, one_off_date,
@@ -923,7 +923,7 @@ export async function getPublishedListings(): Promise<ListingWithVenue[]> {
       recurrence_rules ( frequency, day_of_week, week_of_month )
     `,
     )
-    .eq('status', 'published');
+    .eq("status", "published");
 
   if (error) throw new Error(`Failed to load listings: ${error.message}`);
 
@@ -963,11 +963,11 @@ export async function getExceptionsForListings(
   if (listingIds.length === 0) return new Map();
 
   const { data, error } = await supabase
-    .from('occurrence_exceptions')
+    .from("occurrence_exceptions")
     .select(
-      'listing_id, original_date, type, new_date, new_start_time, new_venue_id, note',
+      "listing_id, original_date, type, new_date, new_start_time, new_venue_id, note",
     )
-    .in('listing_id', listingIds);
+    .in("listing_id", listingIds);
 
   if (error)
     throw new Error(`Failed to load occurrence exceptions: ${error.message}`);
@@ -1119,7 +1119,7 @@ EOF
 - Consumes: `getPublishedListings`, `getExceptionsForListings`, `getAreas`, `toRecurrenceListing` from `src/lib/data/listings.ts` (Task 7); `resolveOccurrences` from `src/lib/utils/recurrence.ts` (Task 6)
 - Produces: the `/` route
 
-- [ ] **Step 1: Write the base layout**
+- [x] **Step 1: Write the base layout**
 
 Create `src/layouts/Base.astro`:
 
@@ -1130,6 +1130,7 @@ interface Props {
 }
 const { title } = Astro.props;
 ---
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -1143,21 +1144,31 @@ const { title } = Astro.props;
 </html>
 ```
 
-- [ ] **Step 2: Write the directory page**
+- [x] **Step 2: Write the directory page**
 
 Replace `src/pages/index.astro`:
 
 ```astro
 ---
-import Base from '../layouts/Base.astro';
-import { getPublishedListings, getExceptionsForListings, getAreas, toRecurrenceListing } from '../lib/data/listings';
-import { resolveOccurrences } from '../lib/utils/recurrence';
+import Base from "../layouts/Base.astro";
+import {
+  getPublishedListings,
+  getExceptionsForListings,
+  getAreas,
+  toRecurrenceListing,
+} from "../lib/data/listings";
+import { resolveOccurrences } from "../lib/utils/recurrence";
 
-const typeFilter = Astro.url.searchParams.get('type');
-const areaFilter = Astro.url.searchParams.get('area');
+const typeFilter = Astro.url.searchParams.get("type");
+const areaFilter = Astro.url.searchParams.get("area");
 
-const [listings, areas] = await Promise.all([getPublishedListings(), getAreas()]);
-const exceptionsByListing = await getExceptionsForListings(listings.map((l) => l.id));
+const [listings, areas] = await Promise.all([
+  getPublishedListings(),
+  getAreas(),
+]);
+const exceptionsByListing = await getExceptionsForListings(
+  listings.map((l) => l.id),
+);
 
 const today = new Date();
 const rangeStart = today.toISOString().slice(0, 10);
@@ -1173,12 +1184,13 @@ const rows = listings
       toRecurrenceListing(listing),
       exceptionsByListing.get(listing.id) ?? [],
       rangeStart,
-      rangeEnd
+      rangeEnd,
     );
     return occurrences.map((occurrence) => ({ listing, occurrence }));
   })
   .sort((a, b) => a.occurrence.date.localeCompare(b.occurrence.date));
 ---
+
 <Base title="Crowd Work — LA Open Mics & Comedy Shows">
   <h1>This Week in LA Comedy</h1>
   <form method="get">
@@ -1186,44 +1198,50 @@ const rows = listings
       Type
       <select name="type">
         <option value="" selected={!typeFilter}>All</option>
-        <option value="mic" selected={typeFilter === 'mic'}>Open Mics</option>
-        <option value="show" selected={typeFilter === 'show'}>Shows</option>
+        <option value="mic" selected={typeFilter === "mic"}>Open Mics</option>
+        <option value="show" selected={typeFilter === "show"}>Shows</option>
       </select>
     </label>
     <label>
       Area
       <select name="area">
         <option value="" selected={!areaFilter}>All of LA</option>
-        {areas.map((area) => (
-          <option value={area.id} selected={areaFilter === area.id}>{area.name}</option>
-        ))}
+        {
+          areas.map((area) => (
+            <option value={area.id} selected={areaFilter === area.id}>
+              {area.name}
+            </option>
+          ))
+        }
       </select>
     </label>
     <button type="submit">Filter</button>
   </form>
-  {rows.length === 0 ? (
-    <p>No listings found for this filter in the next 7 days.</p>
-  ) : (
-    <ul>
-      {rows.map(({ listing, occurrence }) => (
-        <li>
-          <a href={`/listings/${listing.id}`}>{listing.title}</a>
-          — {occurrence.date} at {occurrence.startTime} — {listing.venue.name}
-          {occurrence.note && <em> ({occurrence.note})</em>}
-        </li>
-      ))}
-    </ul>
-  )}
+  {
+    rows.length === 0 ? (
+      <p>No listings found for this filter in the next 7 days.</p>
+    ) : (
+      <ul>
+        {rows.map(({ listing, occurrence }) => (
+          <li>
+            <a href={`/listings/${listing.id}`}>{listing.title}</a>—{" "}
+            {occurrence.date} at {occurrence.startTime} — {listing.venue.name}
+            {occurrence.note && <em> ({occurrence.note})</em>}
+          </li>
+        ))}
+      </ul>
+    )
+  }
 </Base>
 ```
 
-- [ ] **Step 3: Manually verify against local Supabase**
+- [x] **Step 3: Manually verify against local Supabase**
 
 Run: `pnpm dev`, visit `http://localhost:4321/`
 
 Expected: the Tuesday Night Mic and (if today falls within the next 7 days of the last Thursday of the month) Last Thursday Mic appear, each linking to `/listings/<id>`. Try `?type=show` and confirm only the Westside Comedy Showcase appears if its date falls in the next 7 days, or that the empty state renders otherwise. Try `?area=<Eastside area id>` and confirm only Eastside venues (The Virgil) appear.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/layouts/Base.astro src/pages/index.astro
@@ -1254,59 +1272,105 @@ Create `src/pages/listings/[id].astro`:
 
 ```astro
 ---
-import Base from '../../layouts/Base.astro';
-import { supabase } from '../../lib/supabase/supabase';
+import Base from "../../layouts/Base.astro";
+import { supabase } from "../../lib/supabase/supabase";
 
 const { id } = Astro.params;
 
 const { data: listing, error } = await supabase
-  .from('listings')
-  .select(`
+  .from("listings")
+  .select(
+    `
     id, type, title, host, description, start_time, one_off_date,
     sign_up_method, cost_to_perform, ticket_price, ticket_url,
     venue:venues ( name, address, google_maps_url ),
     recurrence_rules ( frequency, day_of_week, week_of_month )
-  `)
-  .eq('id', id)
-  .eq('status', 'published')
+  `,
+  )
+  .eq("id", id)
+  .eq("status", "published")
   .single();
 
 if (error || !listing) {
-  return Astro.redirect('/404');
+  return Astro.redirect("/404");
 }
 
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const dayNames = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 const rule = listing.recurrence_rules as any;
 const recurrenceLabel = rule
-  ? rule.frequency === 'weekly'
+  ? rule.frequency === "weekly"
     ? `Every ${dayNames[rule.day_of_week]}`
-    : `${rule.week_of_month === -1 ? 'Last' : `${rule.week_of_month}th`} ${dayNames[rule.day_of_week]} of the month`
+    : `${rule.week_of_month === -1 ? "Last" : `${rule.week_of_month}th`} ${dayNames[rule.day_of_week]} of the month`
   : `One-time on ${listing.one_off_date}`;
 ---
+
 <Base title={`${listing.title} — Crowd Work`}>
   <h1>{listing.title}</h1>
-  <p>{listing.type === 'mic' ? 'Open Mic' : 'Show'} · {recurrenceLabel} at {listing.start_time}</p>
+  <p>
+    {listing.type === "mic" ? "Open Mic" : "Show"} · {recurrenceLabel} at {
+      listing.start_time
+    }
+  </p>
   <p>
     <strong>{listing.venue.name}</strong><br />
     {listing.venue.address}
-    {listing.venue.google_maps_url && (
-      <> · <a href={listing.venue.google_maps_url} target="_blank" rel="noopener">Directions</a></>
-    )}
+    {
+      listing.venue.google_maps_url && (
+        <>
+          {" "}
+          ·{" "}
+          <a
+            href={listing.venue.google_maps_url}
+            target="_blank"
+            rel="noopener"
+          >
+            Directions
+          </a>
+        </>
+      )
+    }
   </p>
   {listing.host && <p>Hosted by {listing.host}</p>}
   {listing.description && <p>{listing.description}</p>}
-  {listing.type === 'mic' && (
-    <p>
-      {listing.sign_up_method && <>Sign-up: {listing.sign_up_method}<br /></>}
-      {listing.cost_to_perform && <>Cost to perform: {listing.cost_to_perform}</>}
-    </p>
-  )}
-  {listing.type === 'show' && (
-    <p>
-      {listing.ticket_price && <>Tickets: {listing.ticket_price}</>}
-      {listing.ticket_url && <> — <a href={listing.ticket_url} target="_blank" rel="noopener">Buy tickets</a></>}
-    </p>
-  )}
+  {
+    listing.type === "mic" && (
+      <p>
+        {listing.sign_up_method && (
+          <>
+            Sign-up: {listing.sign_up_method}
+            <br />
+          </>
+        )}
+        {listing.cost_to_perform && (
+          <>Cost to perform: {listing.cost_to_perform}</>
+        )}
+      </p>
+    )
+  }
+  {
+    listing.type === "show" && (
+      <p>
+        {listing.ticket_price && <>Tickets: {listing.ticket_price}</>}
+        {listing.ticket_url && (
+          <>
+            {" "}
+            —{" "}
+            <a href={listing.ticket_url} target="_blank" rel="noopener">
+              Buy tickets
+            </a>
+          </>
+        )}
+      </p>
+    )
+  }
 </Base>
 ```
 
