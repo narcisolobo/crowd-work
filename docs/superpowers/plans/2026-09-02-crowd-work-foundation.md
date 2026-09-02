@@ -1042,7 +1042,7 @@ EOF
 - Consumes: schema from Tasks 3-5
 - Produces: sample rows in `areas`, `neighborhoods`, `venues`, `listings`, `recurrence_rules` for manual testing of Tasks 9-10
 
-- [ ] **Step 1: Write the seed file**
+- [x] **Step 1: Write the seed file**
 
 Create `supabase/seed.sql`:
 
@@ -1052,31 +1052,33 @@ insert into areas (id, name) values
   ('a0000000-0000-0000-0000-000000000002', 'Westside');
 
 insert into neighborhoods (id, name, area_id) values
-  ('n0000000-0000-0000-0000-000000000001', 'Los Feliz', 'a0000000-0000-0000-0000-000000000001'),
-  ('n0000000-0000-0000-0000-000000000002', 'Silver Lake', 'a0000000-0000-0000-0000-000000000001'),
-  ('n0000000-0000-0000-0000-000000000003', 'Santa Monica', 'a0000000-0000-0000-0000-000000000002');
+  ('b0000000-0000-0000-0000-000000000001', 'Los Feliz', 'a0000000-0000-0000-0000-000000000001'),
+  ('b0000000-0000-0000-0000-000000000002', 'Silver Lake', 'a0000000-0000-0000-0000-000000000001'),
+  ('b0000000-0000-0000-0000-000000000003', 'Santa Monica', 'a0000000-0000-0000-0000-000000000002');
 
 insert into venues (id, name, address, neighborhood_id, google_maps_url) values
-  ('v0000000-0000-0000-0000-000000000001', 'The Virgil', '4519 Santa Monica Blvd, Los Angeles, CA', 'n0000000-0000-0000-0000-000000000002', 'https://maps.google.com/?q=The+Virgil+LA'),
-  ('v0000000-0000-0000-0000-000000000002', 'Westside Comedy Theater', '1323 3rd St Promenade, Santa Monica, CA', 'n0000000-0000-0000-0000-000000000003', 'https://maps.google.com/?q=Westside+Comedy+Theater');
+  ('c0000000-0000-0000-0000-000000000001', 'The Virgil', '4519 Santa Monica Blvd, Los Angeles, CA', 'b0000000-0000-0000-0000-000000000002', 'https://maps.google.com/?q=The+Virgil+LA'),
+  ('c0000000-0000-0000-0000-000000000002', 'Westside Comedy Theater', '1323 3rd St Promenade, Santa Monica, CA', 'b0000000-0000-0000-0000-000000000003', 'https://maps.google.com/?q=Westside+Comedy+Theater');
 
 insert into listings (id, type, title, host, venue_id, start_time, sign_up_method, cost_to_perform, status) values
-  ('l0000000-0000-0000-0000-000000000001', 'mic', 'Tuesday Night Mic', 'Jamie Rivera', 'v0000000-0000-0000-0000-000000000001', '20:00', 'sign-up list at the door, 7:30pm', 'free', 'published');
+  ('d0000000-0000-0000-0000-000000000001', 'mic', 'Tuesday Night Mic', 'Jamie Rivera', 'c0000000-0000-0000-0000-000000000001', '20:00', 'sign-up list at the door, 7:30pm', 'free', 'published');
 
 insert into recurrence_rules (listing_id, frequency, day_of_week) values
-  ('l0000000-0000-0000-0000-000000000001', 'weekly', 2);
+  ('d0000000-0000-0000-0000-000000000001', 'weekly', 2);
 
 insert into listings (id, type, title, host, venue_id, start_time, sign_up_method, cost_to_perform, status) values
-  ('l0000000-0000-0000-0000-000000000002', 'mic', 'Last Thursday Mic', 'Dana Okafor', 'v0000000-0000-0000-0000-000000000001', '19:30', 'app sign-up opens 6pm', '$5', 'published');
+  ('d0000000-0000-0000-0000-000000000002', 'mic', 'Last Thursday Mic', 'Dana Okafor', 'c0000000-0000-0000-0000-000000000001', '19:30', 'app sign-up opens 6pm', '$5', 'published');
 
 insert into recurrence_rules (listing_id, frequency, day_of_week, week_of_month) values
-  ('l0000000-0000-0000-0000-000000000002', 'monthly', 4, -1);
+  ('d0000000-0000-0000-0000-000000000002', 'monthly', 4, -1);
 
 insert into listings (id, type, title, venue_id, start_time, one_off_date, ticket_price, ticket_url, status) values
-  ('l0000000-0000-0000-0000-000000000003', 'show', 'Westside Comedy Showcase', 'v0000000-0000-0000-0000-000000000002', '21:00', '2026-09-19', '$15', 'https://example.com/tickets', 'published');
+  ('d0000000-0000-0000-0000-000000000003', 'show', 'Westside Comedy Showcase', 'c0000000-0000-0000-0000-000000000002', '21:00', '2026-09-19', '$15', 'https://example.com/tickets', 'published');
 ```
 
-- [ ] **Step 2: Apply and verify**
+**Note:** the original `n`/`v`/`l` UUID prefixes weren't valid hex digits (UUIDs only allow `0-9a-f`), which broke `supabase db reset` with `invalid input syntax for type uuid`. Fixed by switching to valid hex prefixes (`b`/`c`/`d`) while keeping each entity type visually distinct.
+
+- [x] **Step 2: Apply and verify**
 
 ```bash
 supabase db reset
@@ -1091,7 +1093,7 @@ curl "http://127.0.0.1:54521/rest/v1/listings?select=title" \
 
 Expected: a JSON array with the three seeded listing titles.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/seed.sql
