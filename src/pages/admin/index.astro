@@ -1,0 +1,35 @@
+---
+import { getReviewableQueueEntries } from "../../lib/data/moderation";
+
+const supabase = Astro.locals.supabase!;
+const entries = await getReviewableQueueEntries(supabase);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Moderation queue — Crowd Work</title>
+  </head>
+  <body>
+    <div>
+      <span>Logged in as {Astro.locals.user!.email}</span>
+      <a href="/admin/logout">Log out</a>
+    </div>
+    <h1>Moderation queue</h1>
+    {
+      entries.length === 0 ? (
+        <p>Nothing to review right now.</p>
+      ) : (
+        <ul>
+          {entries.map((entry) => (
+            <li>
+              <a href={`/admin/queue/${entry.id}`}>
+                {entry.changeType} — {entry.origin} — {entry.status}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </body>
+</html>

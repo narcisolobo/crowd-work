@@ -1574,7 +1574,7 @@ EOF
 - Consumes: everything from Tasks 6-8 (`getReviewableQueueEntries`, `getQueueEntryById`, `approveNewListing`, `approveListingUpdate`, `approveCancellation`, `proposeRejection`, `confirmRejection`, `sendBackToPending`, `getVenues`, `getListingById`); `Astro.locals.user`/`Astro.locals.supabase` from Task 5
 - Produces: the `/admin` and `/admin/queue/[id]` routes
 
-- [ ] **Step 1: Write the queue list page**
+- [x] **Step 1: Write the queue list page**
 
 Create `src/pages/admin/index.astro`:
 
@@ -1616,7 +1616,7 @@ const entries = await getReviewableQueueEntries(supabase);
 </html>
 ```
 
-- [ ] **Step 2: Write the detail/edit page**
+- [x] **Step 2: Write the detail/edit page**
 
 Create `src/pages/admin/queue/[id].astro`:
 
@@ -1994,12 +1994,12 @@ const isOwnProposal = entry.proposedBy === user.id;
 </html>
 ```
 
-- [ ] **Step 3: Verify it typechecks**
+- [x] **Step 3: Verify it typechecks**
 
 Run: `pnpm run check`
 Expected: no type errors.
 
-- [ ] **Step 4: Manually verify against local Supabase**
+- [x] **Step 4: Manually verify against local Supabase**
 
 Run: `astro dev --background`. Log in at `/admin/login` with moderator 1 (from Task 4).
 
@@ -2012,7 +2012,7 @@ Run: `astro dev --background`. Log in at `/admin/login` with moderator 1 (from T
 
 Run: `astro dev stop`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pages/admin/index.astro src/pages/admin/queue
