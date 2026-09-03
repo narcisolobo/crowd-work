@@ -265,7 +265,7 @@ EOF
 - Consumes: `moderation_queue` schema from Task 1, existing seeded `venues`/`listings` rows from the foundation seed
 - Produces: three `pending` queue entries (one per `change_type`) standing in for the sourcing agent/submission form, which don't exist yet
 
-- [ ] **Step 1: Append sample entries to the seed file**
+- [x] **Step 1: Append sample entries to the seed file**
 
 Add to `supabase/seed.sql`:
 
@@ -313,7 +313,7 @@ insert into moderation_queue (id, listing_id, change_type, proposed_data, correc
   }'::jsonb, 'Venue emailed to say this date is cancelled due to a private event.', 'seed', 'pending');
 ```
 
-- [ ] **Step 2: Apply and verify**
+- [x] **Step 2: Apply and verify**
 
 ```bash
 supabase db reset
@@ -323,12 +323,15 @@ Expected output includes `Seeding data supabase/seed.sql...` with no errors. Ver
 
 ```bash
 curl "http://127.0.0.1:54521/rest/v1/moderation_queue?select=change_type,status" \
-  -H "apikey: <local publishable key from supabase status>"
+  -H "apikey: <local service_role key from supabase status>" \
+  -H "Authorization: Bearer <local service_role key from supabase status>"
 ```
 
 Expected: a JSON array with the three seeded entries, all `status: "pending"`.
 
-- [ ] **Step 3: Commit**
+Note: `moderation_queue` only has a SELECT policy for the `authenticated` role (Task 1), and moderator accounts/login aren't provisioned until Tasks 4–5. Querying with the publishable/anon key here will correctly return `[]` — it's not a seeding bug. The `service_role` key bypasses RLS, so it's the right way to confirm the seed itself landed at this stage.
+
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/seed.sql
