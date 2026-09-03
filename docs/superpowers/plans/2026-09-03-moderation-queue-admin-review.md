@@ -359,12 +359,18 @@ EOF
 
 This script writes real rows to whichever Supabase project `PUBLIC_SUPABASE_URL` points at (local by default). **Because `supabase db reset` wipes the entire local Postgres instance including `auth.users`, this script must be re-run after every `supabase db reset`.**
 
-- [ ] **Step 1: Write the provisioning script**
+- [x] **Step 1: Write the provisioning script**
 
 Create `scripts/provision-moderators.mjs`:
 
 ```js
 import { createClient } from "@supabase/supabase-js";
+
+try {
+  process.loadEnvFile();
+} catch {
+  // .env not present — required variables below will fail with a clear error instead.
+}
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -420,7 +426,7 @@ console.log(
 );
 ```
 
-- [ ] **Step 2: Document the new environment variables**
+- [x] **Step 2: Document the new environment variables**
 
 Append to `.env.example` (the `SUPABASE_SERVICE_ROLE_KEY` line already exists):
 
@@ -432,7 +438,7 @@ TEST_MODERATOR_2_EMAIL=
 TEST_MODERATOR_2_PASSWORD=
 ```
 
-- [ ] **Step 3: Set local values and run the script**
+- [x] **Step 3: Set local values and run the script**
 
 In `.env` (gitignored), fill in `SUPABASE_SERVICE_ROLE_KEY` with the `SECRET_KEY` value from `supabase status` (or `SERVICE_ROLE_KEY` on older CLI versions), and choose two local-only email/password pairs for `TEST_MODERATOR_1_*`/`TEST_MODERATOR_2_*` — these are dev/test accounts under your own control, not real invitees.
 
@@ -444,17 +450,19 @@ node scripts/provision-moderators.mjs mod1@crowdwork.test <password1> mod2@crowd
 
 Expected: two "Provisioned moderator" lines and the "Seeded a rejection_proposed..." line, no errors.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 curl "http://127.0.0.1:54521/rest/v1/moderation_queue?select=id,status,proposed_by&id=eq.e0000000-0000-0000-0000-000000000004" \
-  -H "apikey: <local publishable key from supabase status>" \
-  -H "Authorization: Bearer <local publishable key from supabase status>"
+  -H "apikey: <local service_role key from supabase status>" \
+  -H "Authorization: Bearer <local service_role key from supabase status>"
 ```
 
 Expected: one row with `status: "rejection_proposed"` and a non-null `proposed_by`.
 
-- [ ] **Step 5: Commit**
+Note: as in Task 3, `moderation_queue` SELECT is `authenticated`-only and moderator login isn't built until Task 5, so this uses the `service_role` key to bypass RLS rather than the publishable/anon key.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/provision-moderators.mjs .env.example
