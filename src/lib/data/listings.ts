@@ -1,8 +1,8 @@
-import { supabase } from '../supabase/supabase';
+import { supabase } from "../supabase/supabase";
 import {
   type Listing as RecurrenceListing,
   type OccurrenceException,
-} from '../utils/recurrence';
+} from "../utils/recurrence";
 
 export interface Area {
   id: string;
@@ -11,7 +11,7 @@ export interface Area {
 
 export interface ListingWithVenue {
   id: string;
-  type: 'mic' | 'show';
+  type: "mic" | "show";
   title: string;
   host: string | null;
   description: string | null;
@@ -29,7 +29,7 @@ export interface ListingWithVenue {
     areaId: string;
   };
   recurrenceRule: {
-    frequency: 'weekly' | 'monthly';
+    frequency: "weekly" | "monthly";
     dayOfWeek: number;
     weekOfMonth: number | null;
   } | null;
@@ -38,9 +38,9 @@ export interface ListingWithVenue {
 
 export async function getAreas(): Promise<Area[]> {
   const { data, error } = await supabase
-    .from('areas')
-    .select('id, name')
-    .order('name');
+    .from("areas")
+    .select("id, name")
+    .order("name");
   if (error) throw new Error(`Failed to load areas: ${error.message}`);
   return data ?? [];
 }
@@ -88,9 +88,9 @@ function mapListingRow(row: any): ListingWithVenue {
 
 export async function getPublishedListings(): Promise<ListingWithVenue[]> {
   const { data, error } = await supabase
-    .from('listings')
+    .from("listings")
     .select(LISTING_WITH_VENUE_SELECT)
-    .eq('status', 'published');
+    .eq("status", "published");
 
   if (error) throw new Error(`Failed to load listings: ${error.message}`);
 
@@ -101,17 +101,17 @@ export async function getListingById(
   id: string,
 ): Promise<ListingWithVenue | null> {
   const { data, error } = await supabase
-    .from('listings')
+    .from("listings")
     .select(LISTING_WITH_VENUE_SELECT)
-    .eq('id', id)
-    .eq('status', 'published')
+    .eq("id", id)
+    .eq("status", "published")
     .maybeSingle();
 
   if (error) {
     // Postgres' invalid_text_representation — id isn't even a well-formed
     // UUID (e.g. a stray/typo'd URL). Same "not found" outcome as a real
     // miss, not a server error.
-    if (error.code === '22P02') return null;
+    if (error.code === "22P02") return null;
     throw new Error(`Failed to load listing ${id}: ${error.message}`);
   }
   if (!data) return null;
@@ -125,11 +125,11 @@ export async function getExceptionsForListings(
   if (listingIds.length === 0) return new Map();
 
   const { data, error } = await supabase
-    .from('occurrence_exceptions')
+    .from("occurrence_exceptions")
     .select(
-      'listing_id, original_date, type, new_date, new_start_time, new_venue_id, note',
+      "listing_id, original_date, type, new_date, new_start_time, new_venue_id, note",
     )
-    .in('listing_id', listingIds);
+    .in("listing_id", listingIds);
 
   if (error)
     throw new Error(`Failed to load occurrence exceptions: ${error.message}`);
@@ -171,4 +171,18 @@ export function toRecurrenceListing(
     startTime: listing.startTime,
     oneOffDate: listing.oneOffDate!,
   };
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+}
+
+export async function getVenues(): Promise<Venue[]> {
+  const { data, error } = await supabase
+    .from("venues")
+    .select("id, name")
+    .order("name");
+  if (error) throw new Error(`Failed to load venues: ${error.message}`);
+  return data ?? [];
 }

@@ -752,7 +752,7 @@ EOF
 
   All consumed by the admin pages in Tasks 9-10 and the transition/approve functions in Tasks 7-8.
 
-- [ ] **Step 1: Add `getVenues` to the listings data layer**
+- [x] **Step 1: Add `getVenues` to the listings data layer**
 
 In `src/lib/data/listings.ts`, add:
 
@@ -772,7 +772,7 @@ export async function getVenues(): Promise<Venue[]> {
 }
 ```
 
-- [ ] **Step 2: Write the moderation queue read functions**
+- [x] **Step 2: Write the moderation queue read functions**
 
 Create `src/lib/data/moderation.ts`:
 
@@ -875,7 +875,7 @@ export async function getQueueEntryById(
 }
 ```
 
-- [ ] **Step 3: Verify it typechecks**
+- [x] **Step 3: Verify it typechecks**
 
 Run: `pnpm run check`
 Expected: no type errors in `src/lib/data/moderation.ts` or `src/lib/data/listings.ts`.
