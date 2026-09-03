@@ -880,7 +880,7 @@ export async function getQueueEntryById(
 Run: `pnpm run check`
 Expected: no type errors in `src/lib/data/moderation.ts` or `src/lib/data/listings.ts`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/listings.ts
@@ -914,7 +914,7 @@ EOF
 
 These tests run against the real local Supabase instance (`supabase start` must be running) — the self-block is an RLS policy, not application code, so it can only be verified by actually hitting Postgres as two different authenticated users.
 
-- [ ] **Step 1: Load `.env` for Vitest**
+- [x] **Step 1: Load `.env` for Vitest**
 
 Create `vitest.setup.ts`:
 
@@ -942,7 +942,7 @@ const config = defineConfig({
 export default config;
 ```
 
-- [ ] **Step 2: Write the test helpers**
+- [x] **Step 2: Write the test helpers**
 
 Create `src/lib/data/moderation-test-helpers.ts`:
 
@@ -986,7 +986,7 @@ export async function signInTestModerator(
 }
 ```
 
-- [ ] **Step 3: Write the failing tests**
+- [x] **Step 3: Write the failing tests**
 
 Create `src/lib/data/moderation-transitions.test.ts`:
 
@@ -1068,12 +1068,12 @@ describe("rejection state machine", () => {
 });
 ```
 
-- [ ] **Step 4: Run the tests to verify they fail**
+- [x] **Step 4: Run the tests to verify they fail**
 
 Ensure `supabase start` is running and Task 4's provisioning script has been run against it. Run: `pnpm test`
 Expected: FAIL — `proposeRejection` etc. are not exported from `./moderation` yet.
 
-- [ ] **Step 5: Implement the transition functions**
+- [x] **Step 5: Implement the transition functions**
 
 Add to `src/lib/data/moderation.ts`:
 
@@ -1158,12 +1158,12 @@ export async function sendBackToPending(
 }
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `pnpm test`
 Expected: PASS — all 4 tests in `moderation-transitions.test.ts` green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-test-helpers.ts src/lib/data/moderation-transitions.test.ts vitest.config.ts vitest.setup.ts

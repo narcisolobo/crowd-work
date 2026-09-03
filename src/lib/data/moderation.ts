@@ -94,3 +94,82 @@ export async function getQueueEntryById(
 
   return mapQueueEntryRow(data);
 }
+
+export async function proposeRejection(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  reason: string,
+): Promise<QueueEntry> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await client
+    .from("moderation_queue")
+    .update({
+      status: "rejection_proposed",
+      proposed_by: user.id,
+      proposed_reason: reason,
+    })
+    .eq("id", entryId)
+    .eq("status", "pending")
+    .select(QUEUE_ENTRY_SELECT)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to propose rejection: ${error.message}`);
+  if (!data)
+    throw new Error(
+      "Could not propose rejection — the entry is no longer pending.",
+    );
+
+  return mapQueueEntryRow(data);
+}
+
+export async function confirmRejection(
+  client: SupabaseClient<Database>,
+  entryId: string,
+): Promise<QueueEntry> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await client
+    .from("moderation_queue")
+    .update({ status: "rejected", confirmed_by: user.id })
+    .eq("id", entryId)
+    .eq("status", "rejection_proposed")
+    .select(QUEUE_ENTRY_SELECT)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to confirm rejection: ${error.message}`);
+  if (!data)
+    throw new Error(
+      "Rejection was not confirmed — the entry may not be in rejection_proposed, or you proposed this rejection yourself and cannot confirm it.",
+    );
+
+  return mapQueueEntryRow(data);
+}
+
+export async function sendBackToPending(
+  client: SupabaseClient<Database>,
+  entryId: string,
+): Promise<QueueEntry> {
+  const { data, error } = await client
+    .from("moderation_queue")
+    .update({ status: "pending", proposed_by: null, proposed_reason: null })
+    .eq("id", entryId)
+    .eq("status", "rejection_proposed")
+    .select(QUEUE_ENTRY_SELECT)
+    .maybeSingle();
+
+  if (error)
+    throw new Error(`Failed to return entry to pending: ${error.message}`);
+  if (!data)
+    throw new Error(
+      "Could not return this entry to pending — it may not be in rejection_proposed, or you proposed this rejection yourself.",
+    );
+
+  return mapQueueEntryRow(data);
+}
