@@ -173,3 +173,138 @@ export async function sendBackToPending(
 
   return mapQueueEntryRow(data);
 }
+
+export async function approveNewListing(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  fields: ProposedListingFields,
+): Promise<void> {
+  const { data: listing, error: listingError } = await client
+    .from("listings")
+    .insert({
+      type: fields.type,
+      title: fields.title,
+      host: fields.host,
+      description: fields.description,
+      venue_id: fields.venueId,
+      start_time: fields.startTime,
+      one_off_date: fields.oneOffDate,
+      sign_up_method: fields.signUpMethod,
+      cost_to_perform: fields.costToPerform,
+      ticket_price: fields.ticketPrice,
+      ticket_url: fields.ticketUrl,
+      status: "published",
+    })
+    .select("id")
+    .single();
+
+  if (listingError)
+    throw new Error(`Failed to create listing: ${listingError.message}`);
+
+  if (fields.recurrence) {
+    const { error: recurrenceError } = await client
+      .from("recurrence_rules")
+      .insert({
+        listing_id: listing.id,
+        frequency: fields.recurrence.frequency,
+        day_of_week: fields.recurrence.dayOfWeek,
+        week_of_month: fields.recurrence.weekOfMonth,
+      });
+    if (recurrenceError)
+      throw new Error(
+        `Failed to create recurrence rule: ${recurrenceError.message}`,
+      );
+  }
+
+  await markApproved(client, entryId, listing.id);
+}
+
+export async function approveListingUpdate(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  listingId: string,
+  fields: ProposedListingFields,
+): Promise<void> {
+  const { error: listingError } = await client
+    .from("listings")
+    .update({
+      type: fields.type,
+      title: fields.title,
+      host: fields.host,
+      description: fields.description,
+      venue_id: fields.venueId,
+      start_time: fields.startTime,
+      one_off_date: fields.oneOffDate,
+      sign_up_method: fields.signUpMethod,
+      cost_to_perform: fields.costToPerform,
+      ticket_price: fields.ticketPrice,
+      ticket_url: fields.ticketUrl,
+    })
+    .eq("id", listingId);
+
+  if (listingError)
+    throw new Error(`Failed to update listing: ${listingError.message}`);
+
+  if (fields.recurrence) {
+    const { error: recurrenceError } = await client
+      .from("recurrence_rules")
+      .upsert(
+        {
+          listing_id: listingId,
+          frequency: fields.recurrence.frequency,
+          day_of_week: fields.recurrence.dayOfWeek,
+          week_of_month: fields.recurrence.weekOfMonth,
+        },
+        { onConflict: "listing_id" },
+      );
+    if (recurrenceError)
+      throw new Error(
+        `Failed to update recurrence rule: ${recurrenceError.message}`,
+      );
+  }
+
+  await markApproved(client, entryId, listingId);
+}
+
+export async function approveCancellation(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  listingId: string,
+  originalDate: string,
+  note: string | null,
+): Promise<void> {
+  const { error: exceptionError } = await client
+    .from("occurrence_exceptions")
+    .insert({
+      listing_id: listingId,
+      original_date: originalDate,
+      type: "cancelled",
+      note,
+    });
+
+  if (exceptionError)
+    throw new Error(`Failed to record cancellation: ${exceptionError.message}`);
+
+  await markApproved(client, entryId, listingId);
+}
+
+async function markApproved(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  listingId: string,
+): Promise<void> {
+  const { data, error } = await client
+    .from("moderation_queue")
+    .update({ status: "approved", listing_id: listingId })
+    .eq("id", entryId)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
+
+  if (error)
+    throw new Error(`Failed to mark queue entry approved: ${error.message}`);
+  if (!data)
+    throw new Error(
+      "Could not mark this entry approved — it is no longer pending.",
+    );
+}

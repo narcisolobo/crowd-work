@@ -1189,7 +1189,7 @@ EOF
 - Consumes: `ProposedListingFields`, `QueueEntry` types and `signInTestModerator`/`createAdminClient` helpers from Tasks 6-7; authenticated write policies from Task 2
 - Produces: `approveNewListing(client, entryId, fields): Promise<void>`, `approveListingUpdate(client, entryId, listingId, fields): Promise<void>`, `approveCancellation(client, entryId, listingId, originalDate, note): Promise<void>` — consumed by the admin edit page in Task 9
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/lib/data/moderation-approve.test.ts`:
 
@@ -1398,12 +1398,12 @@ describe("approveCancellation", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test`
 Expected: FAIL — `approveNewListing` etc. are not exported yet.
 
-- [ ] **Step 3: Implement the approve functions**
+- [x] **Step 3: Implement the approve functions**
 
 Add to `src/lib/data/moderation.ts`:
 
@@ -1544,12 +1544,12 @@ async function markApproved(
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm test`
 Expected: PASS — all tests across both moderation test files green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-approve.test.ts
