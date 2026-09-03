@@ -37,6 +37,7 @@ pnpm-debug.log*
 
 # agents
 .impeccable
+.claude/settings.local.json
 
 competitors
 drama
