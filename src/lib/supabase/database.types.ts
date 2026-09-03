@@ -108,6 +108,56 @@ export type Database = {
           },
         ]
       }
+      moderation_queue: {
+        Row: {
+          change_type: Database["public"]["Enums"]["moderation_change_type"]
+          confirmed_by: string | null
+          correction_note: string | null
+          created_at: string
+          id: string
+          listing_id: string | null
+          origin: string
+          proposed_by: string | null
+          proposed_data: Json | null
+          proposed_reason: string | null
+          status: Database["public"]["Enums"]["moderation_status"]
+        }
+        Insert: {
+          change_type: Database["public"]["Enums"]["moderation_change_type"]
+          confirmed_by?: string | null
+          correction_note?: string | null
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          origin: string
+          proposed_by?: string | null
+          proposed_data?: Json | null
+          proposed_reason?: string | null
+          status?: Database["public"]["Enums"]["moderation_status"]
+        }
+        Update: {
+          change_type?: Database["public"]["Enums"]["moderation_change_type"]
+          confirmed_by?: string | null
+          correction_note?: string | null
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          origin?: string
+          proposed_by?: string | null
+          proposed_data?: Json | null
+          proposed_reason?: string | null
+          status?: Database["public"]["Enums"]["moderation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_queue_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       neighborhoods: {
         Row: {
           area_id: string
@@ -254,6 +304,12 @@ export type Database = {
       exception_type: "cancelled" | "modified"
       listing_status: "published" | "archived"
       listing_type: "mic" | "show"
+      moderation_change_type: "new" | "update" | "cancellation"
+      moderation_status:
+        | "pending"
+        | "rejection_proposed"
+        | "approved"
+        | "rejected"
       recurrence_frequency: "weekly" | "monthly"
     }
     CompositeTypes: {
@@ -388,6 +444,13 @@ export const Constants = {
       exception_type: ["cancelled", "modified"],
       listing_status: ["published", "archived"],
       listing_type: ["mic", "show"],
+      moderation_change_type: ["new", "update", "cancellation"],
+      moderation_status: [
+        "pending",
+        "rejection_proposed",
+        "approved",
+        "rejected",
+      ],
       recurrence_frequency: ["weekly", "monthly"],
     },
   },

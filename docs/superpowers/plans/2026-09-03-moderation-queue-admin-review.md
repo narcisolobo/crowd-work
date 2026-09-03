@@ -77,13 +77,13 @@ crowd-work/
 - Consumes: `listings(id)` from the foundation schema
 - Produces: table `moderation_queue` with columns `id, listing_id, change_type, proposed_data, correction_note, origin, status, proposed_by, proposed_reason, confirmed_by, created_at`; the regenerated `Database` type consumed by every task from here on
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new moderation_queue
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 Open the generated file and write:
 
@@ -154,7 +154,7 @@ create policy "a different moderator can confirm or return a proposed rejection"
   );
 ```
 
-- [ ] **Step 3: Apply the migration locally and verify**
+- [x] **Step 3: Apply the migration locally and verify**
 
 ```bash
 supabase db reset
@@ -162,7 +162,7 @@ supabase db reset
 
 Expected: all prior migrations plus `moderation_queue` apply with no errors.
 
-- [ ] **Step 4: Regenerate TypeScript types**
+- [x] **Step 4: Regenerate TypeScript types**
 
 ```bash
 supabase gen types typescript --local > src/lib/supabase/database.types.ts
@@ -170,7 +170,7 @@ supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
 Expected: `database.types.ts` now includes `moderation_queue`, `moderation_change_type`, and `moderation_status`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations src/lib/supabase/database.types.ts
@@ -485,16 +485,17 @@ A single module-level Supabase client (like the existing `src/lib/supabase/supab
 Create `src/lib/supabase/server.ts`:
 
 ```ts
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 export function createServerSupabaseClient() {
   const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-  const supabasePublishableKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const supabasePublishableKey = import.meta.env
+    .PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabasePublishableKey) {
     throw new Error(
-      'Missing PUBLIC_SUPABASE_URL or PUBLIC_SUPABASE_PUBLISHABLE_KEY environment variables',
+      "Missing PUBLIC_SUPABASE_URL or PUBLIC_SUPABASE_PUBLISHABLE_KEY environment variables",
     );
   }
 
@@ -511,8 +512,8 @@ Create `src/env.d.ts`:
 ```ts
 /// <reference types="astro/client" />
 
-import type { SupabaseClient, User } from '@supabase/supabase-js';
-import type { Database } from './lib/supabase/database.types';
+import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { Database } from "./lib/supabase/database.types";
 
 declare global {
   namespace App {
@@ -529,19 +530,19 @@ declare global {
 Create `src/middleware.ts`:
 
 ```ts
-import { defineMiddleware } from 'astro:middleware';
-import { createServerSupabaseClient } from './lib/supabase/server';
+import { defineMiddleware } from "astro:middleware";
+import { createServerSupabaseClient } from "./lib/supabase/server";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.user = null;
   context.locals.supabase = null;
 
-  if (!context.url.pathname.startsWith('/admin')) {
+  if (!context.url.pathname.startsWith("/admin")) {
     return next();
   }
 
-  const accessToken = context.cookies.get('sb-access-token')?.value;
-  const refreshToken = context.cookies.get('sb-refresh-token')?.value;
+  const accessToken = context.cookies.get("sb-access-token")?.value;
+  const refreshToken = context.cookies.get("sb-refresh-token")?.value;
 
   if (accessToken && refreshToken) {
     const supabase = createServerSupabaseClient();
@@ -554,13 +555,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
       context.locals.user = data.user;
       context.locals.supabase = supabase;
     } else {
-      context.cookies.delete('sb-access-token', { path: '/' });
-      context.cookies.delete('sb-refresh-token', { path: '/' });
+      context.cookies.delete("sb-access-token", { path: "/" });
+      context.cookies.delete("sb-refresh-token", { path: "/" });
     }
   }
 
-  if (context.url.pathname !== '/admin/login' && !context.locals.user) {
-    return context.redirect('/admin/login');
+  if (context.url.pathname !== "/admin/login" && !context.locals.user) {
+    return context.redirect("/admin/login");
   }
 
   return next();
@@ -575,37 +576,40 @@ Create `src/pages/admin/login.astro`:
 
 ```astro
 ---
-import { createServerSupabaseClient } from '../../lib/supabase/server';
+import { createServerSupabaseClient } from "../../lib/supabase/server";
 
 let errorMessage: string | null = null;
 
-if (Astro.request.method === 'POST') {
+if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
-  const email = formData.get('email')?.toString();
-  const password = formData.get('password')?.toString();
+  const email = formData.get("email")?.toString();
+  const password = formData.get("password")?.toString();
 
   if (!email || !password) {
-    errorMessage = 'Email and password are required.';
+    errorMessage = "Email and password are required.";
   } else {
     const supabase = createServerSupabaseClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error || !data.session) {
-      errorMessage = 'Incorrect email or password.';
+      errorMessage = "Incorrect email or password.";
     } else {
-      Astro.cookies.set('sb-access-token', data.session.access_token, {
-        path: '/',
+      Astro.cookies.set("sb-access-token", data.session.access_token, {
+        path: "/",
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: "lax",
         secure: import.meta.env.PROD,
       });
-      Astro.cookies.set('sb-refresh-token', data.session.refresh_token, {
-        path: '/',
+      Astro.cookies.set("sb-refresh-token", data.session.refresh_token, {
+        path: "/",
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: "lax",
         secure: import.meta.env.PROD,
       });
-      return Astro.redirect('/admin');
+      return Astro.redirect("/admin");
     }
   }
 }
@@ -640,9 +644,9 @@ Create `src/pages/admin/logout.astro`:
 
 ```astro
 ---
-Astro.cookies.delete('sb-access-token', { path: '/' });
-Astro.cookies.delete('sb-refresh-token', { path: '/' });
-return Astro.redirect('/admin/login');
+Astro.cookies.delete("sb-access-token", { path: "/" });
+Astro.cookies.delete("sb-refresh-token", { path: "/" });
+return Astro.redirect("/admin/login");
 ---
 ```
 
@@ -700,9 +704,9 @@ export interface Venue {
 
 export async function getVenues(): Promise<Venue[]> {
   const { data, error } = await supabase
-    .from('venues')
-    .select('id, name')
-    .order('name');
+    .from("venues")
+    .select("id, name")
+    .order("name");
   if (error) throw new Error(`Failed to load venues: ${error.message}`);
   return data ?? [];
 }
@@ -713,14 +717,15 @@ export async function getVenues(): Promise<Venue[]> {
 Create `src/lib/data/moderation.ts`:
 
 ```ts
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../supabase/database.types';
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../supabase/database.types";
 
-export type QueueStatus = 'pending' | 'rejection_proposed' | 'approved' | 'rejected';
-export type QueueChangeType = 'new' | 'update' | 'cancellation';
+export type QueueStatus =
+  "pending" | "rejection_proposed" | "approved" | "rejected";
+export type QueueChangeType = "new" | "update" | "cancellation";
 
 export interface ProposedListingFields {
-  type: 'mic' | 'show';
+  type: "mic" | "show";
   title: string;
   host: string | null;
   description: string | null;
@@ -731,7 +736,7 @@ export interface ProposedListingFields {
   ticketPrice: string | null;
   ticketUrl: string | null;
   recurrence: {
-    frequency: 'weekly' | 'monthly';
+    frequency: "weekly" | "monthly";
     dayOfWeek: number;
     weekOfMonth: number | null;
   } | null;
@@ -757,7 +762,7 @@ export interface QueueEntry {
 }
 
 export const QUEUE_ENTRY_SELECT =
-  'id, listing_id, change_type, proposed_data, correction_note, origin, status, proposed_by, proposed_reason, confirmed_by, created_at';
+  "id, listing_id, change_type, proposed_data, correction_note, origin, status, proposed_by, proposed_reason, confirmed_by, created_at";
 
 export function mapQueueEntryRow(row: any): QueueEntry {
   return {
@@ -779,12 +784,13 @@ export async function getReviewableQueueEntries(
   client: SupabaseClient<Database>,
 ): Promise<QueueEntry[]> {
   const { data, error } = await client
-    .from('moderation_queue')
+    .from("moderation_queue")
     .select(QUEUE_ENTRY_SELECT)
-    .in('status', ['pending', 'rejection_proposed'])
-    .order('created_at', { ascending: true });
+    .in("status", ["pending", "rejection_proposed"])
+    .order("created_at", { ascending: true });
 
-  if (error) throw new Error(`Failed to load moderation queue: ${error.message}`);
+  if (error)
+    throw new Error(`Failed to load moderation queue: ${error.message}`);
 
   return (data ?? []).map(mapQueueEntryRow);
 }
@@ -794,13 +800,13 @@ export async function getQueueEntryById(
   id: string,
 ): Promise<QueueEntry | null> {
   const { data, error } = await client
-    .from('moderation_queue')
+    .from("moderation_queue")
     .select(QUEUE_ENTRY_SELECT)
-    .eq('id', id)
+    .eq("id", id)
     .maybeSingle();
 
   if (error) {
-    if (error.code === '22P02') return null;
+    if (error.code === "22P02") return null;
     throw new Error(`Failed to load queue entry ${id}: ${error.message}`);
   }
   if (!data) return null;
@@ -864,12 +870,12 @@ try {
 Modify `vitest.config.ts`:
 
 ```ts
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 const config = defineConfig({
   test: {
-    include: ['src/**/*.test.ts'],
-    setupFiles: ['./vitest.setup.ts'],
+    include: ["src/**/*.test.ts"],
+    setupFiles: ["./vitest.setup.ts"],
   },
 });
 
@@ -881,8 +887,8 @@ export default config;
 Create `src/lib/data/moderation-test-helpers.ts`:
 
 ```ts
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../supabase/database.types';
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../supabase/database.types";
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -892,8 +898,8 @@ function requiredEnv(name: string): string {
 
 export function createAdminClient(): SupabaseClient<Database> {
   return createClient<Database>(
-    requiredEnv('PUBLIC_SUPABASE_URL'),
-    requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+    requiredEnv("PUBLIC_SUPABASE_URL"),
+    requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 }
@@ -902,8 +908,8 @@ export async function signInTestModerator(
   which: 1 | 2,
 ): Promise<SupabaseClient<Database>> {
   const client = createClient<Database>(
-    requiredEnv('PUBLIC_SUPABASE_URL'),
-    requiredEnv('PUBLIC_SUPABASE_PUBLISHABLE_KEY'),
+    requiredEnv("PUBLIC_SUPABASE_URL"),
+    requiredEnv("PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
@@ -911,7 +917,10 @@ export async function signInTestModerator(
     email: requiredEnv(`TEST_MODERATOR_${which}_EMAIL`),
     password: requiredEnv(`TEST_MODERATOR_${which}_PASSWORD`),
   });
-  if (error) throw new Error(`Failed to sign in test moderator ${which}: ${error.message}`);
+  if (error)
+    throw new Error(
+      `Failed to sign in test moderator ${which}: ${error.message}`,
+    );
 
   return client;
 }
@@ -922,25 +931,32 @@ export async function signInTestModerator(
 Create `src/lib/data/moderation-transitions.test.ts`:
 
 ```ts
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { proposeRejection, confirmRejection, sendBackToPending } from './moderation';
-import { createAdminClient, signInTestModerator } from './moderation-test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import {
+  proposeRejection,
+  confirmRejection,
+  sendBackToPending,
+} from "./moderation";
+import {
+  createAdminClient,
+  signInTestModerator,
+} from "./moderation-test-helpers";
 
 let entryId: string;
 
 beforeEach(async () => {
   const admin = createAdminClient();
   const { data, error } = await admin
-    .from('moderation_queue')
+    .from("moderation_queue")
     .insert({
-      change_type: 'cancellation',
-      listing_id: 'd0000000-0000-0000-0000-000000000001',
-      proposed_data: { originalDate: '2026-09-15' },
-      correction_note: 'test entry',
-      origin: 'seed',
-      status: 'pending',
+      change_type: "cancellation",
+      listing_id: "d0000000-0000-0000-0000-000000000001",
+      proposed_data: { originalDate: "2026-09-15" },
+      correction_note: "test entry",
+      origin: "seed",
+      status: "pending",
     })
-    .select('id')
+    .select("id")
     .single();
   if (error) throw error;
   entryId = data.id;
@@ -948,40 +964,44 @@ beforeEach(async () => {
 
 afterEach(async () => {
   const admin = createAdminClient();
-  await admin.from('moderation_queue').delete().eq('id', entryId);
+  await admin.from("moderation_queue").delete().eq("id", entryId);
 });
 
-describe('rejection state machine', () => {
-  it('lets a moderator propose rejection on a pending entry', async () => {
+describe("rejection state machine", () => {
+  it("lets a moderator propose rejection on a pending entry", async () => {
     const moderator1 = await signInTestModerator(1);
-    const result = await proposeRejection(moderator1, entryId, 'Duplicate of another entry');
-    expect(result.status).toBe('rejection_proposed');
-    expect(result.proposedReason).toBe('Duplicate of another entry');
+    const result = await proposeRejection(
+      moderator1,
+      entryId,
+      "Duplicate of another entry",
+    );
+    expect(result.status).toBe("rejection_proposed");
+    expect(result.proposedReason).toBe("Duplicate of another entry");
   });
 
-  it('blocks the proposing moderator from confirming their own rejection', async () => {
+  it("blocks the proposing moderator from confirming their own rejection", async () => {
     const moderator1 = await signInTestModerator(1);
-    await proposeRejection(moderator1, entryId, 'Duplicate of another entry');
+    await proposeRejection(moderator1, entryId, "Duplicate of another entry");
 
     await expect(confirmRejection(moderator1, entryId)).rejects.toThrow();
   });
 
-  it('lets a different moderator confirm the rejection', async () => {
+  it("lets a different moderator confirm the rejection", async () => {
     const moderator1 = await signInTestModerator(1);
     const moderator2 = await signInTestModerator(2);
-    await proposeRejection(moderator1, entryId, 'Duplicate of another entry');
+    await proposeRejection(moderator1, entryId, "Duplicate of another entry");
 
     const result = await confirmRejection(moderator2, entryId);
-    expect(result.status).toBe('rejected');
+    expect(result.status).toBe("rejected");
   });
 
-  it('lets a different moderator send the entry back to pending', async () => {
+  it("lets a different moderator send the entry back to pending", async () => {
     const moderator1 = await signInTestModerator(1);
     const moderator2 = await signInTestModerator(2);
-    await proposeRejection(moderator1, entryId, 'Duplicate of another entry');
+    await proposeRejection(moderator1, entryId, "Duplicate of another entry");
 
     const result = await sendBackToPending(moderator2, entryId);
-    expect(result.status).toBe('pending');
+    expect(result.status).toBe("pending");
     expect(result.proposedBy).toBeNull();
     expect(result.proposedReason).toBeNull();
   });
@@ -1006,18 +1026,25 @@ export async function proposeRejection(
   const {
     data: { user },
   } = await client.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  if (!user) throw new Error("Not authenticated");
 
   const { data, error } = await client
-    .from('moderation_queue')
-    .update({ status: 'rejection_proposed', proposed_by: user.id, proposed_reason: reason })
-    .eq('id', entryId)
-    .eq('status', 'pending')
+    .from("moderation_queue")
+    .update({
+      status: "rejection_proposed",
+      proposed_by: user.id,
+      proposed_reason: reason,
+    })
+    .eq("id", entryId)
+    .eq("status", "pending")
     .select(QUEUE_ENTRY_SELECT)
     .maybeSingle();
 
   if (error) throw new Error(`Failed to propose rejection: ${error.message}`);
-  if (!data) throw new Error('Could not propose rejection — the entry is no longer pending.');
+  if (!data)
+    throw new Error(
+      "Could not propose rejection — the entry is no longer pending.",
+    );
 
   return mapQueueEntryRow(data);
 }
@@ -1029,20 +1056,20 @@ export async function confirmRejection(
   const {
     data: { user },
   } = await client.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  if (!user) throw new Error("Not authenticated");
 
   const { data, error } = await client
-    .from('moderation_queue')
-    .update({ status: 'rejected', confirmed_by: user.id })
-    .eq('id', entryId)
-    .eq('status', 'rejection_proposed')
+    .from("moderation_queue")
+    .update({ status: "rejected", confirmed_by: user.id })
+    .eq("id", entryId)
+    .eq("status", "rejection_proposed")
     .select(QUEUE_ENTRY_SELECT)
     .maybeSingle();
 
   if (error) throw new Error(`Failed to confirm rejection: ${error.message}`);
   if (!data)
     throw new Error(
-      'Rejection was not confirmed — the entry may not be in rejection_proposed, or you proposed this rejection yourself and cannot confirm it.',
+      "Rejection was not confirmed — the entry may not be in rejection_proposed, or you proposed this rejection yourself and cannot confirm it.",
     );
 
   return mapQueueEntryRow(data);
@@ -1053,17 +1080,18 @@ export async function sendBackToPending(
   entryId: string,
 ): Promise<QueueEntry> {
   const { data, error } = await client
-    .from('moderation_queue')
-    .update({ status: 'pending', proposed_by: null, proposed_reason: null })
-    .eq('id', entryId)
-    .eq('status', 'rejection_proposed')
+    .from("moderation_queue")
+    .update({ status: "pending", proposed_by: null, proposed_reason: null })
+    .eq("id", entryId)
+    .eq("status", "rejection_proposed")
     .select(QUEUE_ENTRY_SELECT)
     .maybeSingle();
 
-  if (error) throw new Error(`Failed to return entry to pending: ${error.message}`);
+  if (error)
+    throw new Error(`Failed to return entry to pending: ${error.message}`);
   if (!data)
     throw new Error(
-      'Could not return this entry to pending — it may not be in rejection_proposed, or you proposed this rejection yourself.',
+      "Could not return this entry to pending — it may not be in rejection_proposed, or you proposed this rejection yourself.",
     );
 
   return mapQueueEntryRow(data);
@@ -1106,16 +1134,19 @@ EOF
 Create `src/lib/data/moderation-approve.test.ts`:
 
 ```ts
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from "vitest";
 import {
   approveNewListing,
   approveListingUpdate,
   approveCancellation,
   type ProposedListingFields,
-} from './moderation';
-import { createAdminClient, signInTestModerator } from './moderation-test-helpers';
+} from "./moderation";
+import {
+  createAdminClient,
+  signInTestModerator,
+} from "./moderation-test-helpers";
 
-const EXISTING_VENUE_ID = 'c0000000-0000-0000-0000-000000000001';
+const EXISTING_VENUE_ID = "c0000000-0000-0000-0000-000000000001";
 
 let insertedListingIds: string[] = [];
 let insertedEntryIds: string[] = [];
@@ -1123,10 +1154,10 @@ let insertedEntryIds: string[] = [];
 afterEach(async () => {
   const admin = createAdminClient();
   if (insertedEntryIds.length > 0) {
-    await admin.from('moderation_queue').delete().in('id', insertedEntryIds);
+    await admin.from("moderation_queue").delete().in("id", insertedEntryIds);
   }
   if (insertedListingIds.length > 0) {
-    await admin.from('listings').delete().in('id', insertedListingIds);
+    await admin.from("listings").delete().in("id", insertedListingIds);
   }
   insertedListingIds = [];
   insertedEntryIds = [];
@@ -1135,49 +1166,49 @@ afterEach(async () => {
 async function createPendingEntry(overrides: Record<string, unknown>) {
   const admin = createAdminClient();
   const { data, error } = await admin
-    .from('moderation_queue')
-    .insert({ origin: 'seed', status: 'pending', ...overrides })
-    .select('id')
+    .from("moderation_queue")
+    .insert({ origin: "seed", status: "pending", ...overrides })
+    .select("id")
     .single();
   if (error) throw error;
   insertedEntryIds.push(data.id);
   return data.id as string;
 }
 
-describe('approveNewListing', () => {
-  it('inserts a listing and recurrence rule using the moderator-edited values, not the original proposal', async () => {
+describe("approveNewListing", () => {
+  it("inserts a listing and recurrence rule using the moderator-edited values, not the original proposal", async () => {
     const entryId = await createPendingEntry({
-      change_type: 'new',
+      change_type: "new",
       listing_id: null,
       proposed_data: {
-        type: 'mic',
-        title: 'Original Proposed Title',
+        type: "mic",
+        title: "Original Proposed Title",
         host: null,
         description: null,
         venueId: EXISTING_VENUE_ID,
-        startTime: '19:00',
+        startTime: "19:00",
         signUpMethod: null,
         costToPerform: null,
         ticketPrice: null,
         ticketUrl: null,
-        recurrence: { frequency: 'weekly', dayOfWeek: 1, weekOfMonth: null },
+        recurrence: { frequency: "weekly", dayOfWeek: 1, weekOfMonth: null },
         oneOffDate: null,
       },
     });
 
     const moderator1 = await signInTestModerator(1);
     const edited: ProposedListingFields = {
-      type: 'mic',
-      title: 'Moderator-Corrected Title',
-      host: 'Corrected Host',
+      type: "mic",
+      title: "Moderator-Corrected Title",
+      host: "Corrected Host",
       description: null,
       venueId: EXISTING_VENUE_ID,
-      startTime: '19:30',
-      signUpMethod: 'text to sign up',
-      costToPerform: 'free',
+      startTime: "19:30",
+      signUpMethod: "text to sign up",
+      costToPerform: "free",
       ticketPrice: null,
       ticketUrl: null,
-      recurrence: { frequency: 'weekly', dayOfWeek: 1, weekOfMonth: null },
+      recurrence: { frequency: "weekly", dayOfWeek: 1, weekOfMonth: null },
       oneOffDate: null,
     };
 
@@ -1185,106 +1216,106 @@ describe('approveNewListing', () => {
 
     const admin = createAdminClient();
     const { data: listing } = await admin
-      .from('listings')
-      .select('id, title, host, start_time')
-      .eq('title', 'Moderator-Corrected Title')
+      .from("listings")
+      .select("id, title, host, start_time")
+      .eq("title", "Moderator-Corrected Title")
       .single();
     expect(listing).not.toBeNull();
     insertedListingIds.push(listing!.id);
-    expect(listing!.host).toBe('Corrected Host');
-    expect(listing!.start_time).toBe('19:30:00');
+    expect(listing!.host).toBe("Corrected Host");
+    expect(listing!.start_time).toBe("19:30:00");
 
     const { data: rule } = await admin
-      .from('recurrence_rules')
-      .select('day_of_week')
-      .eq('listing_id', listing!.id)
+      .from("recurrence_rules")
+      .select("day_of_week")
+      .eq("listing_id", listing!.id)
       .single();
     expect(rule!.day_of_week).toBe(1);
 
     const { data: entry } = await admin
-      .from('moderation_queue')
-      .select('status, listing_id')
-      .eq('id', entryId)
+      .from("moderation_queue")
+      .select("status, listing_id")
+      .eq("id", entryId)
       .single();
-    expect(entry!.status).toBe('approved');
+    expect(entry!.status).toBe("approved");
     expect(entry!.listing_id).toBe(listing!.id);
   });
 });
 
-describe('approveListingUpdate', () => {
-  it('updates the existing listing with the moderator-edited values', async () => {
+describe("approveListingUpdate", () => {
+  it("updates the existing listing with the moderator-edited values", async () => {
     const admin = createAdminClient();
     const { data: original, error: createError } = await admin
-      .from('listings')
+      .from("listings")
       .insert({
-        type: 'mic',
-        title: 'Temp Listing For Update Test',
+        type: "mic",
+        title: "Temp Listing For Update Test",
         venue_id: EXISTING_VENUE_ID,
-        start_time: '18:00',
-        status: 'published',
+        start_time: "18:00",
+        status: "published",
       })
-      .select('id')
+      .select("id")
       .single();
     if (createError) throw createError;
     insertedListingIds.push(original.id);
 
     const entryId = await createPendingEntry({
-      change_type: 'update',
+      change_type: "update",
       listing_id: original.id,
       proposed_data: null,
-      correction_note: 'Start time changed',
+      correction_note: "Start time changed",
     });
 
     const moderator1 = await signInTestModerator(1);
     const edited: ProposedListingFields = {
-      type: 'mic',
-      title: 'Temp Listing For Update Test',
+      type: "mic",
+      title: "Temp Listing For Update Test",
       host: null,
       description: null,
       venueId: EXISTING_VENUE_ID,
-      startTime: '20:30',
+      startTime: "20:30",
       signUpMethod: null,
       costToPerform: null,
       ticketPrice: null,
       ticketUrl: null,
       recurrence: null,
-      oneOffDate: '2026-10-01',
+      oneOffDate: "2026-10-01",
     };
 
     await approveListingUpdate(moderator1, entryId, original.id, edited);
 
     const { data: updated } = await admin
-      .from('listings')
-      .select('start_time')
-      .eq('id', original.id)
+      .from("listings")
+      .select("start_time")
+      .eq("id", original.id)
       .single();
-    expect(updated!.start_time).toBe('20:30:00');
+    expect(updated!.start_time).toBe("20:30:00");
   });
 });
 
-describe('approveCancellation', () => {
-  it('records an occurrence exception', async () => {
+describe("approveCancellation", () => {
+  it("records an occurrence exception", async () => {
     const admin = createAdminClient();
     const { data: listing, error: createError } = await admin
-      .from('listings')
+      .from("listings")
       .insert({
-        type: 'mic',
-        title: 'Temp Listing For Cancellation Test',
+        type: "mic",
+        title: "Temp Listing For Cancellation Test",
         venue_id: EXISTING_VENUE_ID,
-        start_time: '19:00',
-        one_off_date: '2026-09-15',
-        status: 'published',
+        start_time: "19:00",
+        one_off_date: "2026-09-15",
+        status: "published",
       })
-      .select('id')
+      .select("id")
       .single();
     if (createError) throw createError;
     insertedListingIds.push(listing.id);
 
     const entryId = await createPendingEntry({
-      change_type: 'cancellation',
+      change_type: "cancellation",
       listing_id: listing.id,
-      proposed_data: { originalDate: '2026-09-15' },
-      correction_note: 'Venue closed that night',
+      proposed_data: { originalDate: "2026-09-15" },
+      correction_note: "Venue closed that night",
     });
 
     const moderator1 = await signInTestModerator(1);
@@ -1292,17 +1323,17 @@ describe('approveCancellation', () => {
       moderator1,
       entryId,
       listing.id,
-      '2026-09-15',
-      'Venue closed that night',
+      "2026-09-15",
+      "Venue closed that night",
     );
 
     const { data: exception } = await admin
-      .from('occurrence_exceptions')
-      .select('type, original_date')
-      .eq('listing_id', listing.id)
-      .eq('original_date', '2026-09-15')
+      .from("occurrence_exceptions")
+      .select("type, original_date")
+      .eq("listing_id", listing.id)
+      .eq("original_date", "2026-09-15")
       .single();
-    expect(exception!.type).toBe('cancelled');
+    expect(exception!.type).toBe("cancelled");
   });
 });
 ```
@@ -1323,7 +1354,7 @@ export async function approveNewListing(
   fields: ProposedListingFields,
 ): Promise<void> {
   const { data: listing, error: listingError } = await client
-    .from('listings')
+    .from("listings")
     .insert({
       type: fields.type,
       title: fields.title,
@@ -1336,22 +1367,27 @@ export async function approveNewListing(
       cost_to_perform: fields.costToPerform,
       ticket_price: fields.ticketPrice,
       ticket_url: fields.ticketUrl,
-      status: 'published',
+      status: "published",
     })
-    .select('id')
+    .select("id")
     .single();
 
-  if (listingError) throw new Error(`Failed to create listing: ${listingError.message}`);
+  if (listingError)
+    throw new Error(`Failed to create listing: ${listingError.message}`);
 
   if (fields.recurrence) {
-    const { error: recurrenceError } = await client.from('recurrence_rules').insert({
-      listing_id: listing.id,
-      frequency: fields.recurrence.frequency,
-      day_of_week: fields.recurrence.dayOfWeek,
-      week_of_month: fields.recurrence.weekOfMonth,
-    });
+    const { error: recurrenceError } = await client
+      .from("recurrence_rules")
+      .insert({
+        listing_id: listing.id,
+        frequency: fields.recurrence.frequency,
+        day_of_week: fields.recurrence.dayOfWeek,
+        week_of_month: fields.recurrence.weekOfMonth,
+      });
     if (recurrenceError)
-      throw new Error(`Failed to create recurrence rule: ${recurrenceError.message}`);
+      throw new Error(
+        `Failed to create recurrence rule: ${recurrenceError.message}`,
+      );
   }
 
   await markApproved(client, entryId, listing.id);
@@ -1364,7 +1400,7 @@ export async function approveListingUpdate(
   fields: ProposedListingFields,
 ): Promise<void> {
   const { error: listingError } = await client
-    .from('listings')
+    .from("listings")
     .update({
       type: fields.type,
       title: fields.title,
@@ -1378,22 +1414,27 @@ export async function approveListingUpdate(
       ticket_price: fields.ticketPrice,
       ticket_url: fields.ticketUrl,
     })
-    .eq('id', listingId);
+    .eq("id", listingId);
 
-  if (listingError) throw new Error(`Failed to update listing: ${listingError.message}`);
+  if (listingError)
+    throw new Error(`Failed to update listing: ${listingError.message}`);
 
   if (fields.recurrence) {
-    const { error: recurrenceError } = await client.from('recurrence_rules').upsert(
-      {
-        listing_id: listingId,
-        frequency: fields.recurrence.frequency,
-        day_of_week: fields.recurrence.dayOfWeek,
-        week_of_month: fields.recurrence.weekOfMonth,
-      },
-      { onConflict: 'listing_id' },
-    );
+    const { error: recurrenceError } = await client
+      .from("recurrence_rules")
+      .upsert(
+        {
+          listing_id: listingId,
+          frequency: fields.recurrence.frequency,
+          day_of_week: fields.recurrence.dayOfWeek,
+          week_of_month: fields.recurrence.weekOfMonth,
+        },
+        { onConflict: "listing_id" },
+      );
     if (recurrenceError)
-      throw new Error(`Failed to update recurrence rule: ${recurrenceError.message}`);
+      throw new Error(
+        `Failed to update recurrence rule: ${recurrenceError.message}`,
+      );
   }
 
   await markApproved(client, entryId, listingId);
@@ -1406,12 +1447,14 @@ export async function approveCancellation(
   originalDate: string,
   note: string | null,
 ): Promise<void> {
-  const { error: exceptionError } = await client.from('occurrence_exceptions').insert({
-    listing_id: listingId,
-    original_date: originalDate,
-    type: 'cancelled',
-    note,
-  });
+  const { error: exceptionError } = await client
+    .from("occurrence_exceptions")
+    .insert({
+      listing_id: listingId,
+      original_date: originalDate,
+      type: "cancelled",
+      note,
+    });
 
   if (exceptionError)
     throw new Error(`Failed to record cancellation: ${exceptionError.message}`);
@@ -1425,15 +1468,19 @@ async function markApproved(
   listingId: string,
 ): Promise<void> {
   const { data, error } = await client
-    .from('moderation_queue')
-    .update({ status: 'approved', listing_id: listingId })
-    .eq('id', entryId)
-    .eq('status', 'pending')
-    .select('id')
+    .from("moderation_queue")
+    .update({ status: "approved", listing_id: listingId })
+    .eq("id", entryId)
+    .eq("status", "pending")
+    .select("id")
     .maybeSingle();
 
-  if (error) throw new Error(`Failed to mark queue entry approved: ${error.message}`);
-  if (!data) throw new Error('Could not mark this entry approved — it is no longer pending.');
+  if (error)
+    throw new Error(`Failed to mark queue entry approved: ${error.message}`);
+  if (!data)
+    throw new Error(
+      "Could not mark this entry approved — it is no longer pending.",
+    );
 }
 ```
 
@@ -1473,7 +1520,7 @@ Create `src/pages/admin/index.astro`:
 
 ```astro
 ---
-import { getReviewableQueueEntries } from '../../lib/data/moderation';
+import { getReviewableQueueEntries } from "../../lib/data/moderation";
 
 const supabase = Astro.locals.supabase!;
 const entries = await getReviewableQueueEntries(supabase);
@@ -1525,94 +1572,106 @@ import {
   sendBackToPending,
   type ProposedListingFields,
   type ProposedCancellation,
-} from '../../../lib/data/moderation';
-import { getListingById, getVenues } from '../../../lib/data/listings';
+} from "../../../lib/data/moderation";
+import { getListingById, getVenues } from "../../../lib/data/listings";
 
 const { id } = Astro.params;
 const supabase = Astro.locals.supabase!;
 const user = Astro.locals.user!;
 
 if (!id) {
-  return Astro.redirect('/admin');
+  return Astro.redirect("/admin");
 }
 
 let entry = await getQueueEntryById(supabase, id);
 
 if (!entry) {
-  return Astro.redirect('/admin');
+  return Astro.redirect("/admin");
 }
 
 const venues = await getVenues();
 let errorMessage: string | null = null;
 
-if (Astro.request.method === 'POST') {
+if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
-  const action = formData.get('action')?.toString();
+  const action = formData.get("action")?.toString();
 
   try {
-    if (action === 'approve') {
-      const frequency = formData.get('frequency')?.toString();
+    if (action === "approve") {
+      const frequency = formData.get("frequency")?.toString();
       const fields: ProposedListingFields = {
-        type: formData.get('type')?.toString() === 'show' ? 'show' : 'mic',
-        title: formData.get('title')?.toString() ?? '',
-        host: formData.get('host')?.toString() || null,
-        description: formData.get('description')?.toString() || null,
-        venueId: formData.get('venueId')?.toString() ?? '',
-        startTime: formData.get('startTime')?.toString() ?? '',
-        signUpMethod: formData.get('signUpMethod')?.toString() || null,
-        costToPerform: formData.get('costToPerform')?.toString() || null,
-        ticketPrice: formData.get('ticketPrice')?.toString() || null,
-        ticketUrl: formData.get('ticketUrl')?.toString() || null,
+        type: formData.get("type")?.toString() === "show" ? "show" : "mic",
+        title: formData.get("title")?.toString() ?? "",
+        host: formData.get("host")?.toString() || null,
+        description: formData.get("description")?.toString() || null,
+        venueId: formData.get("venueId")?.toString() ?? "",
+        startTime: formData.get("startTime")?.toString() ?? "",
+        signUpMethod: formData.get("signUpMethod")?.toString() || null,
+        costToPerform: formData.get("costToPerform")?.toString() || null,
+        ticketPrice: formData.get("ticketPrice")?.toString() || null,
+        ticketUrl: formData.get("ticketUrl")?.toString() || null,
         recurrence:
-          frequency === 'weekly' || frequency === 'monthly'
+          frequency === "weekly" || frequency === "monthly"
             ? {
                 frequency,
-                dayOfWeek: Number(formData.get('dayOfWeek')),
-                weekOfMonth: formData.get('weekOfMonth')
-                  ? Number(formData.get('weekOfMonth'))
+                dayOfWeek: Number(formData.get("dayOfWeek")),
+                weekOfMonth: formData.get("weekOfMonth")
+                  ? Number(formData.get("weekOfMonth"))
                   : null,
               }
             : null,
-        oneOffDate: formData.get('oneOffDate')?.toString() || null,
+        oneOffDate: formData.get("oneOffDate")?.toString() || null,
       };
 
-      if (entry.changeType === 'new') {
+      if (entry.changeType === "new") {
         await approveNewListing(supabase, entry.id, fields);
-      } else if (entry.changeType === 'update') {
-        await approveListingUpdate(supabase, entry.id, entry.listingId!, fields);
+      } else if (entry.changeType === "update") {
+        await approveListingUpdate(
+          supabase,
+          entry.id,
+          entry.listingId!,
+          fields,
+        );
       }
 
-      return Astro.redirect('/admin');
+      return Astro.redirect("/admin");
     }
 
-    if (action === 'approve_cancellation') {
-      const originalDate = formData.get('originalDate')?.toString() ?? '';
-      const note = formData.get('note')?.toString() || null;
-      await approveCancellation(supabase, entry.id, entry.listingId!, originalDate, note);
-      return Astro.redirect('/admin');
+    if (action === "approve_cancellation") {
+      const originalDate = formData.get("originalDate")?.toString() ?? "";
+      const note = formData.get("note")?.toString() || null;
+      await approveCancellation(
+        supabase,
+        entry.id,
+        entry.listingId!,
+        originalDate,
+        note,
+      );
+      return Astro.redirect("/admin");
     }
 
-    if (action === 'propose_reject') {
-      const reason = formData.get('reason')?.toString();
+    if (action === "propose_reject") {
+      const reason = formData.get("reason")?.toString();
       if (!reason) {
-        errorMessage = 'A reason is required to propose rejection.';
+        errorMessage = "A reason is required to propose rejection.";
       } else {
         await proposeRejection(supabase, entry.id, reason);
-        return Astro.redirect('/admin');
+        return Astro.redirect("/admin");
       }
     }
 
-    if (action === 'confirm_reject') {
+    if (action === "confirm_reject") {
       await confirmRejection(supabase, entry.id);
-      return Astro.redirect('/admin');
+      return Astro.redirect("/admin");
     }
 
-    if (action === 'send_back') {
+    if (action === "send_back") {
       await sendBackToPending(supabase, entry.id);
-      return Astro.redirect('/admin');
+      return Astro.redirect("/admin");
     }
   } catch (error) {
-    errorMessage = error instanceof Error ? error.message : 'Something went wrong.';
+    errorMessage =
+      error instanceof Error ? error.message : "Something went wrong.";
     entry = (await getQueueEntryById(supabase, id))!;
   }
 }
@@ -1623,9 +1682,9 @@ if (Astro.request.method === 'POST') {
 // the listing's current values instead, since the moderator is translating
 // free text into field edits, not reviewing a structured diff.
 let prefill: ProposedListingFields | null = null;
-if (entry.changeType === 'new') {
+if (entry.changeType === "new") {
   prefill = entry.proposedData as ProposedListingFields;
-} else if (entry.changeType === 'update') {
+} else if (entry.changeType === "update") {
   if (entry.proposedData) {
     prefill = entry.proposedData as ProposedListingFields;
   } else {
@@ -1649,7 +1708,9 @@ if (entry.changeType === 'new') {
   }
 }
 const proposedCancellation =
-  entry.changeType === 'cancellation' ? (entry.proposedData as ProposedCancellation) : null;
+  entry.changeType === "cancellation"
+    ? (entry.proposedData as ProposedCancellation)
+    : null;
 const isOwnProposal = entry.proposedBy === user.id;
 ---
 
@@ -1666,7 +1727,7 @@ const isOwnProposal = entry.proposedBy === user.id;
     {entry.correctionNote && <p>Reporter's note: {entry.correctionNote}</p>}
 
     {
-      entry.changeType === 'cancellation' ? (
+      entry.changeType === "cancellation" ? (
         <form method="post">
           <input type="hidden" name="action" value="approve_cancellation" />
           <label>
@@ -1680,9 +1741,9 @@ const isOwnProposal = entry.proposedBy === user.id;
           </label>
           <label>
             Note
-            <textarea name="note">{entry.correctionNote ?? ''}</textarea>
+            <textarea name="note">{entry.correctionNote ?? ""}</textarea>
           </label>
-          <button type="submit" disabled={entry.status !== 'pending'}>
+          <button type="submit" disabled={entry.status !== "pending"}>
             Approve cancellation
           </button>
         </form>
@@ -1692,31 +1753,39 @@ const isOwnProposal = entry.proposedBy === user.id;
           <label>
             Type
             <select name="type">
-              <option value="mic" selected={prefill?.type !== 'show'}>
+              <option value="mic" selected={prefill?.type !== "show"}>
                 Mic
               </option>
-              <option value="show" selected={prefill?.type === 'show'}>
+              <option value="show" selected={prefill?.type === "show"}>
                 Show
               </option>
             </select>
           </label>
           <label>
             Title
-            <input type="text" name="title" value={prefill?.title ?? ''} required />
+            <input
+              type="text"
+              name="title"
+              value={prefill?.title ?? ""}
+              required
+            />
           </label>
           <label>
             Host
-            <input type="text" name="host" value={prefill?.host ?? ''} />
+            <input type="text" name="host" value={prefill?.host ?? ""} />
           </label>
           <label>
             Description
-            <textarea name="description">{prefill?.description ?? ''}</textarea>
+            <textarea name="description">{prefill?.description ?? ""}</textarea>
           </label>
           <label>
             Venue
             <select name="venueId" required>
               {venues.map((venue) => (
-                <option value={venue.id} selected={venue.id === prefill?.venueId}>
+                <option
+                  value={venue.id}
+                  selected={venue.id === prefill?.venueId}
+                >
                   {venue.name}
                 </option>
               ))}
@@ -1724,23 +1793,44 @@ const isOwnProposal = entry.proposedBy === user.id;
           </label>
           <label>
             Start time
-            <input type="time" name="startTime" value={prefill?.startTime ?? ''} required />
+            <input
+              type="time"
+              name="startTime"
+              value={prefill?.startTime ?? ""}
+              required
+            />
           </label>
           <label>
             Sign-up method
-            <input type="text" name="signUpMethod" value={prefill?.signUpMethod ?? ''} />
+            <input
+              type="text"
+              name="signUpMethod"
+              value={prefill?.signUpMethod ?? ""}
+            />
           </label>
           <label>
             Cost to perform
-            <input type="text" name="costToPerform" value={prefill?.costToPerform ?? ''} />
+            <input
+              type="text"
+              name="costToPerform"
+              value={prefill?.costToPerform ?? ""}
+            />
           </label>
           <label>
             Ticket price
-            <input type="text" name="ticketPrice" value={prefill?.ticketPrice ?? ''} />
+            <input
+              type="text"
+              name="ticketPrice"
+              value={prefill?.ticketPrice ?? ""}
+            />
           </label>
           <label>
             Ticket URL
-            <input type="text" name="ticketUrl" value={prefill?.ticketUrl ?? ''} />
+            <input
+              type="text"
+              name="ticketUrl"
+              value={prefill?.ticketUrl ?? ""}
+            />
           </label>
           <fieldset>
             <legend>Recurrence</legend>
@@ -1750,10 +1840,16 @@ const isOwnProposal = entry.proposedBy === user.id;
                 <option value="" selected={!prefill?.recurrence}>
                   One-time
                 </option>
-                <option value="weekly" selected={prefill?.recurrence?.frequency === 'weekly'}>
+                <option
+                  value="weekly"
+                  selected={prefill?.recurrence?.frequency === "weekly"}
+                >
                   Weekly
                 </option>
-                <option value="monthly" selected={prefill?.recurrence?.frequency === 'monthly'}>
+                <option
+                  value="monthly"
+                  selected={prefill?.recurrence?.frequency === "monthly"}
+                >
                   Monthly
                 </option>
               </select>
@@ -1775,15 +1871,19 @@ const isOwnProposal = entry.proposedBy === user.id;
                 name="weekOfMonth"
                 min="-1"
                 max="4"
-                value={prefill?.recurrence?.weekOfMonth ?? ''}
+                value={prefill?.recurrence?.weekOfMonth ?? ""}
               />
             </label>
             <label>
               One-off date (if not recurring)
-              <input type="date" name="oneOffDate" value={prefill?.oneOffDate ?? ''} />
+              <input
+                type="date"
+                name="oneOffDate"
+                value={prefill?.oneOffDate ?? ""}
+              />
             </label>
           </fieldset>
-          <button type="submit" disabled={entry.status !== 'pending'}>
+          <button type="submit" disabled={entry.status !== "pending"}>
             Approve
           </button>
         </form>
@@ -1791,7 +1891,7 @@ const isOwnProposal = entry.proposedBy === user.id;
     }
 
     {
-      entry.status === 'pending' && (
+      entry.status === "pending" && (
         <form method="post">
           <input type="hidden" name="action" value="propose_reject" />
           <label>
@@ -1804,13 +1904,17 @@ const isOwnProposal = entry.proposedBy === user.id;
     }
 
     {
-      entry.status === 'rejection_proposed' && (
+      entry.status === "rejection_proposed" && (
         <div>
           <p>
-            Rejection proposed by moderator {entry.proposedBy}: {entry.proposedReason}
+            Rejection proposed by moderator {entry.proposedBy}:{" "}
+            {entry.proposedReason}
           </p>
           {isOwnProposal ? (
-            <p>You proposed this rejection — a different moderator must confirm it.</p>
+            <p>
+              You proposed this rejection — a different moderator must confirm
+              it.
+            </p>
           ) : (
             <>
               <form method="post">
@@ -1880,49 +1984,50 @@ Create `src/pages/listings/[id]/report.astro`:
 
 ```astro
 ---
-import { supabase } from '../../../lib/supabase/supabase';
-import { getListingById } from '../../../lib/data/listings';
+import { supabase } from "../../../lib/supabase/supabase";
+import { getListingById } from "../../../lib/data/listings";
 
 const { id } = Astro.params;
 
 if (!id) {
-  return Astro.redirect('/404');
+  return Astro.redirect("/404");
 }
 
 const listing = await getListingById(id);
 
 if (!listing) {
-  return Astro.redirect('/404');
+  return Astro.redirect("/404");
 }
 
 let submitted = false;
 let errorMessage: string | null = null;
 
-if (Astro.request.method === 'POST') {
+if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
-  const honeypot = formData.get('company')?.toString() ?? '';
-  const reason = formData.get('reason')?.toString();
-  const note = formData.get('note')?.toString();
+  const honeypot = formData.get("company")?.toString() ?? "";
+  const reason = formData.get("reason")?.toString();
+  const note = formData.get("note")?.toString();
 
-  if (honeypot !== '') {
+  if (honeypot !== "") {
     // Silently succeed for bots without writing anything.
     submitted = true;
-  } else if (reason !== 'not_happening' && reason !== 'something_else') {
+  } else if (reason !== "not_happening" && reason !== "something_else") {
     errorMessage = "Please choose a reason.";
   } else if (!note || note.trim().length === 0) {
     errorMessage = "Please describe what's wrong.";
   } else {
-    const { error } = await supabase.from('moderation_queue').insert({
+    const { error } = await supabase.from("moderation_queue").insert({
       listing_id: listing.id,
-      change_type: reason === 'not_happening' ? 'cancellation' : 'update',
-      proposed_data: reason === 'not_happening' ? { originalDate: null } : null,
+      change_type: reason === "not_happening" ? "cancellation" : "update",
+      proposed_data: reason === "not_happening" ? { originalDate: null } : null,
       correction_note: note.trim(),
-      origin: 'report_form',
-      status: 'pending',
+      origin: "report_form",
+      status: "pending",
     });
 
     if (error) {
-      errorMessage = 'Something went wrong submitting your report. Please try again.';
+      errorMessage =
+        "Something went wrong submitting your report. Please try again.";
     } else {
       submitted = true;
     }
@@ -1947,13 +2052,23 @@ if (Astro.request.method === 'POST') {
           <div hidden>
             <label>
               Company
-              <input type="text" name="company" tabindex={-1} autocomplete="off" />
+              <input
+                type="text"
+                name="company"
+                tabindex={-1}
+                autocomplete="off"
+              />
             </label>
           </div>
           <fieldset>
             <legend>What's wrong?</legend>
             <label>
-              <input type="radio" name="reason" value="not_happening" required />
+              <input
+                type="radio"
+                name="reason"
+                value="not_happening"
+                required
+              />
               This isn't happening anymore
             </label>
             <label>
@@ -2000,39 +2115,50 @@ try {
 Create `e2e/admin-moderation.spec.ts`:
 
 ```ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 const email = process.env.TEST_MODERATOR_1_EMAIL;
 const password = process.env.TEST_MODERATOR_1_PASSWORD;
 
-test.skip(!email || !password, 'TEST_MODERATOR_1_EMAIL/PASSWORD not set in .env');
+test.skip(
+  !email || !password,
+  "TEST_MODERATOR_1_EMAIL/PASSWORD not set in .env",
+);
 
-test('a moderator can log in and see the moderation queue', async ({ page }) => {
-  await page.goto('/admin');
+test("a moderator can log in and see the moderation queue", async ({
+  page,
+}) => {
+  await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/login/);
 
-  await page.getByLabel('Email').fill(email!);
-  await page.getByLabel('Password').fill(password!);
-  await page.getByRole('button', { name: 'Log in' }).click();
+  await page.getByLabel("Email").fill(email!);
+  await page.getByLabel("Password").fill(password!);
+  await page.getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole('heading', { name: 'Moderation queue' })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Moderation queue" }),
+  ).toBeVisible();
 });
 
-test('reporting a problem submits a correction into the moderation queue', async ({ page }) => {
-  await page.goto('/');
-  const firstLink = page.locator('[data-listing-row]:not([hidden]) h2 a').first();
+test("reporting a problem submits a correction into the moderation queue", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const firstLink = page
+    .locator("[data-listing-row]:not([hidden]) h2 a")
+    .first();
   await firstLink.click();
 
-  await page.getByRole('link', { name: /Report a problem/i }).click();
+  await page.getByRole("link", { name: /Report a problem/i }).click();
   await expect(page).toHaveURL(/\/report$/);
 
   await page.getByLabel(/Something else is wrong/i).check();
-  await page.getByLabel('Details').fill('The sign-up sheet was gone by 7pm.');
-  await page.getByRole('button', { name: 'Submit report' }).click();
+  await page.getByLabel("Details").fill("The sign-up sheet was gone by 7pm.");
+  await page.getByRole("button", { name: "Submit report" }).click();
 
   await expect(
-    page.getByText('Thanks — a moderator will review this shortly.'),
+    page.getByText("Thanks — a moderator will review this shortly."),
   ).toBeVisible();
 });
 ```
