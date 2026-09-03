@@ -1,0 +1,32 @@
+---
+interface Props {
+  day: string;
+  date: string;
+  month: string;
+  isSoon: boolean;
+  class?: string;
+}
+
+const { day, date, month, isSoon, class: className = '' } = Astro.props;
+
+const edgeColor = isSoon
+  ? 'border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)]'
+  : 'border-l-rule';
+---
+
+<div
+  class={`stub flex flex-col items-center justify-center rounded-sm border-l-[3px] bg-paper-shadow px-0.5 py-1.5 text-center ${edgeColor} ${className}`}
+>
+  <span
+    class="font-body text-[0.68rem] font-semibold tracking-wider text-ink-soft uppercase"
+    >{day}</span
+  >
+  <span
+    class="font-mono text-[1.15rem] leading-tight font-semibold tabular-nums"
+    >{date}</span
+  >
+  <span
+    class="font-body text-[0.62rem] font-semibold tracking-wider text-ink-soft uppercase"
+    >{month}</span
+  >
+</div>

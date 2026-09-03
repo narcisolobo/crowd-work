@@ -1,0 +1,16 @@
+---
+import ListingRow, { type ListingRowData } from './ListingRow.astro';
+import EmptyState from './EmptyState.astro';
+
+interface Props {
+  rows: ListingRowData[];
+}
+
+const { rows } = Astro.props;
+const anyVisible = rows.some((row) => !row.hidden);
+---
+
+<ul class="listings m-0 list-none p-0">
+  {rows.map((row) => <ListingRow {...row} />)}
+</ul>
+<EmptyState hidden={anyVisible} />

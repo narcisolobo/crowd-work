@@ -1,0 +1,31 @@
+---
+interface Props {
+  dateLabel: string;
+  listingCount: number;
+  scopeLabel: string;
+}
+
+const { dateLabel, listingCount, scopeLabel } = Astro.props;
+---
+
+<header class="masthead border-b-[3px] border-ink pt-10 pb-6">
+  <div class="flex flex-wrap items-baseline justify-between gap-4">
+    <h1
+      class="text-balance font-display text-[clamp(2.4rem,8vw,3.6rem)] leading-[0.9] font-black tracking-tight"
+    >
+      Crowd Work
+    </h1>
+    <span class="pb-1.5 font-mono text-[0.85rem] whitespace-nowrap"
+      >{dateLabel}</span
+    >
+  </div>
+  <p class="mt-2.5 max-w-[46ch] text-[1.02rem] text-ink-soft">
+    Open mics and comedy shows across LA — sourced daily, moderated by
+    working comics, kept honest.
+  </p>
+  <p class="mt-4 text-[0.95rem]">
+    <strong id="listing-count" class="font-semibold text-gold-ink"
+      >{listingCount} listing{listingCount === 1 ? '' : 's'}</strong
+    > found <span id="listing-scope">{scopeLabel}</span>.
+  </p>
+</header>

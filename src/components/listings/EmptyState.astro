@@ -1,0 +1,15 @@
+---
+interface Props {
+  hidden?: boolean;
+}
+
+const { hidden = false } = Astro.props;
+---
+
+<p
+  id="empty-state"
+  class="empty-state py-10 text-[0.95rem] text-ink-soft"
+  hidden={hidden}
+>
+  No listings match this filter right now.
+</p>

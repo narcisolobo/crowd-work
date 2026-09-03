@@ -1,0 +1,30 @@
+---
+import BrandMark from './BrandMark.astro';
+import ThemeToggle from '../theme/ThemeToggle.astro';
+---
+
+<header class="site-nav sticky top-0 z-20 border-b border-ink bg-paper">
+  <div class="mx-auto flex h-14 max-w-[720px] items-center gap-[22px] px-5">
+    <a href="/" class="mr-auto flex items-center gap-2 text-ink no-underline">
+      <BrandMark class="h-[23px] w-[23px] flex-none text-ink" />
+      <span class="font-display text-[1.15rem] font-bold tracking-tight"
+        >Crowd Work</span
+      >
+    </a>
+    <nav class="flex items-center gap-[18px]" aria-label="Primary">
+      <a
+        href="/"
+        class="font-body text-[0.9rem] text-ink-soft underline-offset-2 hover:text-ink hover:underline max-[480px]:hidden"
+        >Browse</a
+      >
+      <a
+        href="#"
+        class="font-body text-[0.9rem] text-ink-soft underline-offset-2 hover:text-ink hover:underline"
+      >
+        <span class="max-[480px]:hidden">Submit a listing</span>
+        <span class="hidden max-[480px]:inline">Submit</span>
+      </a>
+    </nav>
+    <ThemeToggle />
+  </div>
+</header>

@@ -1,0 +1,151 @@
+---
+interface Area {
+  id: string;
+  name: string;
+}
+
+interface Props {
+  areas: Area[];
+  typeFilter: string | null;
+  areaFilter: string | null;
+}
+
+const { areas, typeFilter, areaFilter } = Astro.props;
+
+const tabs = [
+  { value: '', label: 'All' },
+  { value: 'mic', label: 'Mics' },
+  { value: 'show', label: 'Shows' },
+];
+---
+
+<form
+  method="get"
+  id="filter-bar"
+  class="filters flex flex-wrap items-center justify-between gap-4 border-b border-rule py-5"
+>
+  <div class="flex gap-1.5" role="group" aria-label="Filter by type">
+    {
+      tabs.map((tab) => {
+        const pressed = (typeFilter ?? '') === tab.value;
+        return (
+          <button
+            type="submit"
+            name="type"
+            value={tab.value}
+            aria-pressed={pressed}
+            class:list={[
+              'cursor-pointer rounded-sm border px-4 py-1.75 font-display text-[0.95rem] font-bold tracking-wide uppercase',
+              pressed
+                ? 'border-ink bg-ink text-paper'
+                : 'border-rule bg-transparent text-ink-soft',
+            ]}
+          >
+            {tab.label}
+          </button>
+        );
+      })
+    }
+  </div>
+  <div class="flex items-center gap-2.5">
+    <select
+      name="area"
+      id="area-select"
+      aria-label="Filter by area"
+      class="rounded-sm border border-rule bg-paper px-2.5 py-1.75 font-body text-[0.92rem] text-ink"
+    >
+      <option value="" selected={!areaFilter}>All of LA</option>
+      {
+        areas.map((area) => (
+          <option value={area.id} selected={areaFilter === area.id}>
+            {area.name}
+          </option>
+        ))
+      }
+    </select>
+    <button
+      type="submit"
+      id="apply-filter"
+      class="text-[0.86rem] text-gold-ink underline underline-offset-2"
+    >
+      Apply
+    </button>
+  </div>
+</form>
+
+<script>
+  const form = document.getElementById('filter-bar') as HTMLFormElement | null;
+  if (form) {
+    const typeButtons = Array.from(
+      form.querySelectorAll<HTMLButtonElement>('button[name="type"]'),
+    );
+    const areaSelect = form.querySelector<HTMLSelectElement>('select[name="area"]');
+    const applyButton = document.getElementById('apply-filter');
+    const rows = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-listing-row]'),
+    );
+    const emptyState = document.getElementById('empty-state');
+    const listingCount = document.getElementById('listing-count');
+    const listingScope = document.getElementById('listing-scope');
+
+    let activeType =
+      typeButtons.find((btn) => btn.getAttribute('aria-pressed') === 'true')
+        ?.value ?? '';
+    let activeArea = areaSelect?.value ?? '';
+
+    function applyFilters() {
+      let visibleCount = 0;
+      for (const row of rows) {
+        const matchesType = !activeType || row.dataset.type === activeType;
+        const matchesArea = !activeArea || row.dataset.area === activeArea;
+        const visible = matchesType && matchesArea;
+        row.hidden = !visible;
+        if (visible) visibleCount++;
+      }
+      if (emptyState) emptyState.hidden = visibleCount > 0;
+      if (listingCount) {
+        listingCount.textContent = `${visibleCount} listing${visibleCount === 1 ? '' : 's'}`;
+      }
+      if (listingScope) {
+        const areaName = areaSelect?.selectedOptions[0]?.textContent;
+        listingScope.textContent = activeArea && areaName ? `in ${areaName}` : 'across LA';
+      }
+    }
+
+    function updateUrl() {
+      const url = new URL(window.location.href);
+      if (activeType) url.searchParams.set('type', activeType);
+      else url.searchParams.delete('type');
+      if (activeArea) url.searchParams.set('area', activeArea);
+      else url.searchParams.delete('area');
+      window.history.pushState({}, '', url);
+    }
+
+    for (const button of typeButtons) {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        activeType = button.value;
+        for (const btn of typeButtons) {
+          btn.setAttribute('aria-pressed', String(btn === button));
+          btn.classList.toggle('border-ink', btn === button);
+          btn.classList.toggle('bg-ink', btn === button);
+          btn.classList.toggle('text-paper', btn === button);
+          btn.classList.toggle('border-rule', btn !== button);
+          btn.classList.toggle('bg-transparent', btn !== button);
+          btn.classList.toggle('text-ink-soft', btn !== button);
+        }
+        applyFilters();
+        updateUrl();
+      });
+    }
+
+    areaSelect?.addEventListener('change', () => {
+      activeArea = areaSelect.value;
+      applyFilters();
+      updateUrl();
+    });
+
+    if (applyButton) applyButton.hidden = true;
+    applyFilters();
+  }
+</script>
