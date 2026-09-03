@@ -1,0 +1,44 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { createServerSupabaseClient } from "../../lib/supabase/server";
+
+let errorMessage: string | null = null;
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const email = formData.get("email")?.toString();
+  const password = formData.get("password")?.toString();
+
+  if (!email || !password) {
+    errorMessage = "Email and password are required.";
+  } else {
+    const supabase = createServerSupabaseClient(Astro.request, Astro.cookies);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      errorMessage = "Incorrect email or password.";
+    } else {
+      return Astro.redirect("/admin");
+    }
+  }
+}
+---
+
+<AdminLayout title="Moderator login — Crowd Work">
+  <h1>Moderator login</h1>
+  {errorMessage && <p role="alert">{errorMessage}</p>}
+  <form method="post">
+    <label>
+      Email
+      <input type="email" name="email" required />
+    </label>
+    <label>
+      Password
+      <input type="password" name="password" required />
+    </label>
+    <button type="submit">Log in</button>
+  </form>
+</AdminLayout>

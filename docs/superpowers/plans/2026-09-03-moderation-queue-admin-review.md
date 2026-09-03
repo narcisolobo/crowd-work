@@ -6,7 +6,7 @@
 
 **Architecture:** Extends the existing Astro (SSR) + Supabase project with no new services. Admin pages live under `/admin/*`, gated by Supabase Auth (email/password) via an Astro middleware that attaches a per-request, request-scoped Supabase client to `Astro.locals`. `moderation_queue` RLS policies — not just UI checks — enforce every state transition, including the rule that a moderator can never confirm their own proposed rejection. Since the sourcing agent and full submission form don't exist yet, seed data and a narrow public "report a problem" form are this phase's only two producers of queue entries.
 
-**Tech Stack:** Astro (SSR), Supabase (Postgres, Auth, RLS), `@supabase/supabase-js` (no `@supabase/ssr` — a fresh, non-session-persisting client per request/action avoids relying on browser storage server-side and avoids mutating any shared client instance across concurrent requests), Vitest (integration tests against local Supabase), Playwright (e2e).
+**Tech Stack:** Astro (SSR), Supabase (Postgres, Auth, RLS), `@supabase/supabase-js` and `@supabase/ssr` (a fresh, per-request server client backed by an Astro-cookies adapter — avoids relying on browser storage server-side, avoids mutating any shared client instance across concurrent requests, and handles refresh-token rotation automatically instead of hand-rolling it), Vitest (integration tests against local Supabase), Playwright (e2e).
 
 **Spec:** [docs/superpowers/specs/2026-09-03-moderation-queue-admin-review-design.md](../specs/2026-09-03-moderation-queue-admin-review-design.md)
 
@@ -482,24 +482,31 @@ EOF
 
 **Files:**
 
-- Create: `src/lib/supabase/server.ts`, `src/middleware.ts`, `src/env.d.ts`, `src/pages/admin/login.astro`, `src/pages/admin/logout.astro`
+- Create: `src/lib/supabase/server.ts`, `src/middleware.ts`, `src/env.d.ts`, `src/layouts/AdminLayout.astro`, `src/pages/admin/login.astro`, `src/pages/admin/logout.astro`
+- Modify: `package.json` (add `@supabase/ssr`)
 
 **Interfaces:**
 
 - Consumes: `Database` type from Task 1
-- Produces: `createServerSupabaseClient(): SupabaseClient<Database>` from `src/lib/supabase/server.ts`; `Astro.locals.user: User | null` and `Astro.locals.supabase: SupabaseClient<Database> | null`, populated by the middleware for every `/admin/*` request and consumed by every admin page in Tasks 9-10
+- Produces: `createServerSupabaseClient(request: Request, cookies: AstroCookies): SupabaseClient<Database>` from `src/lib/supabase/server.ts`; `Astro.locals.user: User | null` and `Astro.locals.supabase: SupabaseClient<Database> | null`, populated by the middleware for every `/admin/*` request and consumed by every admin page in Tasks 9-10; `AdminLayout.astro` from `src/layouts/`, the shared shell for every `/admin/*` page
 
-A single module-level Supabase client (like the existing `src/lib/supabase/supabase.ts` singleton, used for anonymous public reads) must never have `signInWithPassword`/`setSession` called on it — that would mutate shared state read by every other concurrent request on the same server instance. Every authenticated operation in this task uses a freshly-constructed, non-session-persisting client instead.
+Install the dependency: `npm install @supabase/ssr`.
 
-- [ ] **Step 1: Write the request-scoped client factory**
+A single module-level Supabase client (like the existing `src/lib/supabase/supabase.ts` singleton, used for anonymous public reads) must never have `signInWithPassword`/`setSession` called on it — that would mutate shared state read by every other concurrent request on the same server instance. `@supabase/ssr`'s `createServerClient` sidesteps this by construction: it reads and writes the session through a cookie adapter passed in per call, backed by that request's own `AstroCookies`, so there's no shared client or session state across requests to begin with.
+
+- [x] **Step 1: Write the request-scoped client factory**
 
 Create `src/lib/supabase/server.ts`:
 
 ```ts
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient, parseCookieHeader } from "@supabase/ssr";
+import type { AstroCookies } from "astro";
 import type { Database } from "./database.types";
 
-export function createServerSupabaseClient() {
+export function createServerSupabaseClient(
+  request: Request,
+  cookies: AstroCookies,
+) {
   const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
   const supabasePublishableKey = import.meta.env
     .PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -510,13 +517,34 @@ export function createServerSupabaseClient() {
     );
   }
 
-  return createClient<Database>(supabaseUrl, supabasePublishableKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
+  return createServerClient<Database>(supabaseUrl, supabasePublishableKey, {
+    cookies: {
+      getAll() {
+        return parseCookieHeader(request.headers.get("Cookie") ?? "");
+      },
+      setAll(cookiesToSet) {
+        for (const { name, value, options } of cookiesToSet) {
+          cookies.set(name, value, options);
+        }
+      },
+    },
+    cookieOptions: {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: import.meta.env.PROD,
+    },
   });
 }
 ```
 
-- [ ] **Step 2: Type `Astro.locals`**
+Astro's `AstroCookies` has no `getAll()` (only `get`/`has`/`set`/`delete` by name) — unlike Next.js or SvelteKit's cookie APIs, it can't enumerate every cookie on the request. `parseCookieHeader`, exported by `@supabase/ssr` for exactly this gap, reads the full set straight from the raw `Cookie` request header instead; `setAll` still writes through `cookies.set()`, which Astro does support. This is the pattern Supabase's own docs show for Astro.
+
+`cookieOptions` is set explicitly because `@supabase/ssr` defaults to a non-`httpOnly` cookie so a paired browser client can also read the session — this app never runs Supabase Auth client-side, so it's pinned back to `httpOnly: true` to match the original hand-rolled cookie's security posture.
+
+Note: `setAll`'s cookies-to-set also come with a second argument, cache-control headers `@supabase/ssr` wants applied to the response whenever it writes auth cookies, so a CDN or reverse proxy in front of the app never caches (and leaks) one session to another visitor. This deployment has no such layer in front of `/admin` today, so that argument is intentionally left unused here — wire it up (via `Astro.response.headers` in pages, and the `next()` response in middleware) if a CDN/proxy is ever put in front of admin routes.
+
+- [x] **Step 2: Type `Astro.locals`**
 
 Create `src/env.d.ts`:
 
@@ -536,7 +564,7 @@ declare global {
 }
 ```
 
-- [ ] **Step 3: Write the middleware**
+- [x] **Step 3: Write the middleware**
 
 Create `src/middleware.ts`:
 
@@ -552,26 +580,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  const accessToken = context.cookies.get("sb-access-token")?.value;
-  const refreshToken = context.cookies.get("sb-refresh-token")?.value;
+  const supabase = createServerSupabaseClient(context.request, context.cookies);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (accessToken && refreshToken) {
-    const supabase = createServerSupabaseClient();
-    const { data, error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
+  context.locals.user = user;
+  context.locals.supabase = supabase;
 
-    if (!error && data.user) {
-      context.locals.user = data.user;
-      context.locals.supabase = supabase;
-    } else {
-      context.cookies.delete("sb-access-token", { path: "/" });
-      context.cookies.delete("sb-refresh-token", { path: "/" });
-    }
-  }
-
-  if (context.url.pathname !== "/admin/login" && !context.locals.user) {
+  if (context.url.pathname !== "/admin/login" && !user) {
     return context.redirect("/admin/login");
   }
 
@@ -579,14 +596,62 @@ export const onRequest = defineMiddleware(async (context, next) => {
 });
 ```
 
-Note: this phase does not implement token refresh-on-expiry. A session lasts until the access token expires (Supabase's default is about an hour), after which the moderator is redirected back to `/admin/login`. Acceptable for a two-person internal tool; revisit if it's annoying in practice.
+Note: `getUser()` validates the session against Supabase Auth on every request, and — because the client was built with the cookie adapter above — transparently refreshes an expired access token using the stored refresh token and writes the renewed tokens back through `setAll`. A moderator's session now survives past the ~1 hour access token lifetime for as long as the refresh token stays valid, with no hand-rolled refresh logic needed.
 
-- [ ] **Step 4: Write the login page**
+- [x] **Step 4: Write the admin layout**
+
+Create `src/layouts/AdminLayout.astro`. This is deliberately not the existing `src/layouts/Base.astro` — `Base` renders `SiteHeader`/`SiteFooter`, the public site's nav and branding, which don't belong wrapped around an internal moderator tool. `AdminLayout` shares `Base`'s document head (global styles, fonts, theme script) without the public chrome:
+
+```astro
+---
+import { Font } from "astro:assets";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {title}
+    </title>
+    <script is:inline>
+      (function () {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light" || stored === "dark") {
+          document.documentElement.setAttribute("data-theme", stored);
+        }
+      })();
+    </script>
+    <Font cssVariable="--font-big-shoulders" preload />
+    <Font cssVariable="--font-ibm-plex-sans" preload />
+    <Font cssVariable="--font-ibm-plex-mono" />
+  </head>
+  <body
+    class="font-body text-ink flex min-h-screen flex-col text-base antialiased"
+  >
+    <div
+      class="bg-paper mx-auto flex w-full max-w-180 flex-1 flex-col px-5 pb-16"
+    >
+      <slot />
+    </div>
+  </body>
+</html>
+```
+
+- [x] **Step 5: Write the login page**
 
 Create `src/pages/admin/login.astro`:
 
 ```astro
 ---
+import AdminLayout from "../../layouts/AdminLayout.astro";
 import { createServerSupabaseClient } from "../../lib/supabase/server";
 
 let errorMessage: string | null = null;
@@ -599,69 +664,53 @@ if (Astro.request.method === "POST") {
   if (!email || !password) {
     errorMessage = "Email and password are required.";
   } else {
-    const supabase = createServerSupabaseClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const supabase = createServerSupabaseClient(Astro.request, Astro.cookies);
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error || !data.session) {
+    if (error) {
       errorMessage = "Incorrect email or password.";
     } else {
-      Astro.cookies.set("sb-access-token", data.session.access_token, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: import.meta.env.PROD,
-      });
-      Astro.cookies.set("sb-refresh-token", data.session.refresh_token, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: import.meta.env.PROD,
-      });
       return Astro.redirect("/admin");
     }
   }
 }
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Moderator login — Crowd Work</title>
-  </head>
-  <body>
-    <h1>Moderator login</h1>
-    {errorMessage && <p role="alert">{errorMessage}</p>}
-    <form method="post">
-      <label>
-        Email
-        <input type="email" name="email" required />
-      </label>
-      <label>
-        Password
-        <input type="password" name="password" required />
-      </label>
-      <button type="submit">Log in</button>
-    </form>
-  </body>
-</html>
+<AdminLayout title="Moderator login — Crowd Work">
+  <h1>Moderator login</h1>
+  {errorMessage && <p role="alert">{errorMessage}</p>}
+  <form method="post">
+    <label>
+      Email
+      <input type="email" name="email" required />
+    </label>
+    <label>
+      Password
+      <input type="password" name="password" required />
+    </label>
+    <button type="submit">Log in</button>
+  </form>
+</AdminLayout>
 ```
 
-- [ ] **Step 5: Write the logout page**
+- [x] **Step 6: Write the logout page**
 
 Create `src/pages/admin/logout.astro`:
 
 ```astro
 ---
-Astro.cookies.delete("sb-access-token", { path: "/" });
-Astro.cookies.delete("sb-refresh-token", { path: "/" });
+import { createServerSupabaseClient } from "../../lib/supabase/server";
+
+const supabase = createServerSupabaseClient(Astro.request, Astro.cookies);
+await supabase.auth.signOut();
 return Astro.redirect("/admin/login");
 ---
 ```
 
-- [ ] **Step 6: Verify manually**
+- [x] **Step 7: Verify manually**
 
 Run: `astro dev --background`
 
@@ -671,10 +720,10 @@ Run: `astro dev --background`
 
 Run: `astro dev stop`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
-git add src/lib/supabase/server.ts src/middleware.ts src/env.d.ts src/pages/admin/login.astro src/pages/admin/logout.astro
+git add src/lib/supabase/server.ts src/middleware.ts src/env.d.ts src/layouts/AdminLayout.astro src/pages/admin/login.astro src/pages/admin/logout.astro package.json package-lock.json
 git commit -m "$(cat <<'EOF'
 feat: add moderator authentication and admin route gating
 
