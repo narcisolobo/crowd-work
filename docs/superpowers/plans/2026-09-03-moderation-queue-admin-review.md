@@ -195,13 +195,13 @@ EOF
 - Consumes: `listings`, `recurrence_rules`, `occurrence_exceptions` tables from the foundation schema (currently public-select-only)
 - Produces: INSERT/UPDATE policies for the `authenticated` role on those three tables, required before any approve write-through in Task 8 can succeed
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new moderator_write_policies
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 ```sql
 create policy "moderators can insert listings"
@@ -232,7 +232,7 @@ create policy "moderators can insert occurrence exceptions"
   with check (true);
 ```
 
-- [ ] **Step 3: Apply and verify**
+- [x] **Step 3: Apply and verify**
 
 ```bash
 supabase db reset
@@ -240,7 +240,7 @@ supabase db reset
 
 Expected: all migrations apply with no errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations
