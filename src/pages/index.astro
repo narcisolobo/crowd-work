@@ -10,6 +10,7 @@ import {
   toRecurrenceListing,
 } from "../lib/data/listings";
 import { resolveOccurrences } from "../lib/utils/recurrence";
+import { getTodayInLA } from "../lib/utils/date";
 
 const typeFilter = Astro.url.searchParams.get("type") || null;
 const dayFilter = Astro.url.searchParams.get("day") || null;
@@ -24,9 +25,10 @@ const exceptionsByListing = await getExceptionsForListings(
 );
 
 const today = new Date();
+const todayInLA = getTodayInLA(today);
 
 function daysFromToday(days: number): string {
-  const date = new Date(today);
+  const date = new Date(`${todayInLA}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
 }
@@ -90,7 +92,7 @@ const dateLabel = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   timeZone: "UTC",
-}).format(today);
+}).format(new Date(`${todayInLA}T00:00:00Z`));
 
 const areaName = areaFilter
   ? (areas.find((area) => area.id === areaFilter)?.name ?? null)
