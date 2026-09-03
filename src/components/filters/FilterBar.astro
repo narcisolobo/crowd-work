@@ -48,21 +48,37 @@ const tabs = [
     }
   </div>
   <div class="flex items-center gap-2.5">
-    <select
-      name="area"
-      id="area-select"
-      aria-label="Filter by area"
-      class="rounded-sm border border-rule bg-paper px-2.5 py-1.75 font-body text-[0.92rem] text-ink"
-    >
-      <option value="" selected={!areaFilter}>All of LA</option>
-      {
-        areas.map((area) => (
-          <option value={area.id} selected={areaFilter === area.id}>
-            {area.name}
-          </option>
-        ))
-      }
-    </select>
+    <div class="relative">
+      <select
+        name="area"
+        id="area-select"
+        aria-label="Filter by area"
+        class="appearance-none rounded-sm border border-rule bg-paper py-1.75 pr-7 pl-2.5 font-body text-[0.92rem] text-ink"
+      >
+        <option value="" selected={!areaFilter}>All of LA</option>
+        {
+          areas.map((area) => (
+            <option value={area.id} selected={areaFilter === area.id}>
+              {area.name}
+            </option>
+          ))
+        }
+      </select>
+      <svg
+        class="pointer-events-none absolute top-1/2 right-2.5 h-3 w-3 -translate-y-1/2 text-ink-soft"
+        viewBox="0 0 12 12"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M3 4.5L6 7.5L9 4.5"
+          stroke="currentColor"
+          stroke-width="1.3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
     <button
       type="submit"
       id="apply-filter"
