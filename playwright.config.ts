@@ -1,5 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
+try {
+  process.loadEnvFile();
+} catch {
+  // .env not present
+}
+
 // Astro's `astro dev` always daemonizes (even without --background: the
 // foreground CLI process hands off to a detached server process and exits
 // immediately), so Playwright's own `webServer` launcher sees that exit and

@@ -1,0 +1,103 @@
+---
+import { supabase } from "../../../lib/supabase/supabase";
+import { getListingById } from "../../../lib/data/listings";
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect("/404");
+}
+
+const listing = await getListingById(id);
+
+if (!listing) {
+  return Astro.redirect("/404");
+}
+
+let submitted = false;
+let errorMessage: string | null = null;
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const honeypot = formData.get("company")?.toString() ?? "";
+  const reason = formData.get("reason")?.toString();
+  const note = formData.get("note")?.toString();
+
+  if (honeypot !== "") {
+    // Silently succeed for bots without writing anything.
+    submitted = true;
+  } else if (reason !== "not_happening" && reason !== "something_else") {
+    errorMessage = "Please choose a reason.";
+  } else if (!note || note.trim().length === 0) {
+    errorMessage = "Please describe what's wrong.";
+  } else {
+    const { error } = await supabase.from("moderation_queue").insert({
+      listing_id: listing.id,
+      change_type: reason === "not_happening" ? "cancellation" : "update",
+      proposed_data: reason === "not_happening" ? { originalDate: null } : null,
+      correction_note: note.trim(),
+      origin: "report_form",
+      status: "pending",
+    });
+
+    if (error) {
+      errorMessage =
+        "Something went wrong submitting your report. Please try again.";
+    } else {
+      submitted = true;
+    }
+  }
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Report a problem — {listing.title} — Crowd Work</title>
+  </head>
+  <body>
+    <a href={`/listings/${listing.id}`}>Back to {listing.title}</a>
+    <h1>Report a problem with {listing.title}</h1>
+    {
+      submitted ? (
+        <p>Thanks — a moderator will review this shortly.</p>
+      ) : (
+        <form method="post">
+          {errorMessage && <p role="alert">{errorMessage}</p>}
+          <div hidden>
+            <label>
+              Company
+              <input
+                type="text"
+                name="company"
+                tabindex={-1}
+                autocomplete="off"
+              />
+            </label>
+          </div>
+          <fieldset>
+            <legend>What's wrong?</legend>
+            <label>
+              <input
+                type="radio"
+                name="reason"
+                value="not_happening"
+                required
+              />
+              This isn't happening anymore
+            </label>
+            <label>
+              <input type="radio" name="reason" value="something_else" />
+              Something else is wrong
+            </label>
+          </fieldset>
+          <label>
+            Details
+            <textarea name="note" required />
+          </label>
+          <button type="submit">Submit report</button>
+        </form>
+      )
+    }
+  </body>
+</html>

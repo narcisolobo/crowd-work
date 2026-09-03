@@ -2038,7 +2038,7 @@ EOF
 - Consumes: `getListingById` from `src/lib/data/listings.ts`; the anonymous `supabase` singleton from `src/lib/supabase/supabase.ts`; the anon insert RLS policy from Task 1
 - Produces: the `/listings/[id]/report` route, which the existing detail page already links to
 
-- [ ] **Step 1: Write the report form page**
+- [x] **Step 1: Write the report form page**
 
 Create `src/pages/listings/[id]/report.astro`:
 
@@ -2150,15 +2150,15 @@ if (Astro.request.method === "POST") {
 
 Note: a "not_happening" report doesn't currently capture which specific occurrence date is being reported cancelled — `proposed_data.originalDate` is left `null` here, and the moderator fills in the correct date manually on the edit page (Task 9's cancellation form already has an editable date field for exactly this). Capturing the specific date automatically (e.g. from the currently-displayed next occurrence) would be a reasonable improvement but isn't required for this phase to function correctly, since the moderator always reviews and can set/correct it before approving.
 
-- [ ] **Step 2: Verify it typechecks**
+- [x] **Step 2: Verify it typechecks**
 
 Run: `pnpm run check`
 
-- [ ] **Step 3: Manually verify the report flow**
+- [x] **Step 3: Manually verify the report flow**
 
 Run: `astro dev --background`. Visit any listing's detail page, click "Report a problem", submit the form with "Something else is wrong" and a note. Confirm the thank-you message appears. Log into `/admin` and confirm a new `pending` `update` entry with `origin: report_form` and your note appears in the queue. Run: `astro dev stop`
 
-- [ ] **Step 4: Load `.env` in the Playwright config**
+- [x] **Step 4: Load `.env` in the Playwright config**
 
 Modify `playwright.config.ts` — add near the top, before the `defineConfig` call:
 
@@ -2170,7 +2170,7 @@ try {
 }
 ```
 
-- [ ] **Step 5: Write the e2e test**
+- [x] **Step 5: Write the e2e test**
 
 Create `e2e/admin-moderation.spec.ts`:
 
@@ -2223,13 +2223,13 @@ test("reporting a problem submits a correction into the moderation queue", async
 });
 ```
 
-- [ ] **Step 6: Run the e2e tests**
+- [x] **Step 6: Run the e2e tests**
 
 Ensure `supabase start` is running, migrations/seed applied, and Task 4's provisioning script has been run. Run: `astro dev --background`, then `pnpm test:e2e`
 Expected: both tests pass.
 Run: `astro dev stop`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/listings e2e/admin-moderation.spec.ts playwright.config.ts
