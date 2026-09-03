@@ -1,11 +1,11 @@
 ---
-import TicketStub from './TicketStub.astro';
-import { formatStubDate, formatTime } from '../../lib/utils/format';
+import TicketStub from "./TicketStub.astro";
+import { formatStubDate, formatTime } from "../../lib/utils/format";
 
 export interface ListingRowData {
   id: string;
   title: string;
-  type: 'mic' | 'show';
+  type: "mic" | "show";
   dayOfWeek: number;
   areaId: string;
   venueName: string;
@@ -42,11 +42,11 @@ const {
 
 const stub = formatStubDate(date);
 const timeLabel = formatTime(startTime);
-const priceAmount = type === 'mic' ? costToPerform : ticketPrice;
+const priceAmount = type === "mic" ? costToPerform : ticketPrice;
 ---
 
 <li
-  class="row grid gap-x-[18px] border-b border-rule py-[22px] max-[600px]:gap-y-1.5"
+  class="row grid gap-x-4.5 border-b border-rule py-5.5 max-[600px]:gap-y-1.5"
   data-listing-row
   data-type={type}
   data-day={dayOfWeek}
@@ -77,22 +77,26 @@ const priceAmount = type === 'mic' ? costToPerform : ticketPrice;
       <span
         class="rounded-sm border border-rule px-1.5 py-px font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase whitespace-nowrap"
       >
-        {type === 'mic' ? 'Mic' : 'Show'}
+        {type === "mic" ? "Mic" : "Show"}
       </span>
     </div>
     <p class="mt-1 text-[0.94rem]">{venueName}</p>
-    {host && <p class="mt-[3px] text-[0.86rem] text-ink-soft">Hosted by {host}</p>}
     {
-      type === 'mic' && signUpMethod && (
-        <p class="mt-[3px] text-[0.86rem] font-medium text-ink">
+      host && (
+        <p class="mt-0.75 text-[0.86rem] text-ink-soft">Hosted by {host}</p>
+      )
+    }
+    {
+      type === "mic" && signUpMethod && (
+        <p class="mt-0.75 text-[0.86rem] font-medium text-ink">
           Sign-up: {signUpMethod}
         </p>
       )
     }
-    {note && <p class="mt-[3px] text-[0.86rem] text-ink-soft">{note}</p>}
+    {note && <p class="mt-0.75 text-[0.86rem] text-ink-soft">{note}</p>}
     {
       isSoon && (
-        <span class="mt-1.5 inline-flex items-center gap-1.5 text-[0.78rem] font-medium text-gold-ink before:h-[7px] before:w-[7px] before:flex-none before:rounded-full before:bg-gold">
+        <span class="mt-1.5 inline-flex items-center gap-1.5 text-[0.78rem] font-medium text-gold-ink before:h-1.75 before:w-1.75 before:flex-none before:rounded-full before:bg-gold">
           This week
         </span>
       )
@@ -108,7 +112,7 @@ const priceAmount = type === 'mic' ? costToPerform : ticketPrice;
       )
     }
     {
-      type === 'show' && ticketUrl && (
+      type === "show" && ticketUrl && (
         <a
           href={ticketUrl}
           target="_blank"
@@ -125,7 +129,7 @@ const priceAmount = type === 'mic' ? costToPerform : ticketPrice;
 <style>
   .row {
     grid-template-columns: 60px 78px 1fr auto;
-    grid-template-areas: 'stub time title price';
+    grid-template-areas: "stub time title price";
   }
 
   .row[hidden] {
@@ -136,8 +140,8 @@ const priceAmount = type === 'mic' ? costToPerform : ticketPrice;
     .row {
       grid-template-columns: 52px 1fr 78px;
       grid-template-areas:
-        'stub title price'
-        'stub time  time';
+        "stub title price"
+        "stub time  time";
     }
   }
 
