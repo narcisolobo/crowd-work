@@ -19,6 +19,7 @@
     "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.2.10",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3"
   },
