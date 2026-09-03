@@ -1,4 +1,9 @@
 ---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import FormField from "../../../components/forms/FormField.astro";
+import FormTextarea from "../../../components/forms/FormTextarea.astro";
+import FormSelect from "../../../components/forms/FormSelect.astro";
+import Button from "../../../components/forms/Button.astro";
 import {
   getQueueEntryById,
   approveNewListing,
@@ -7,6 +12,7 @@ import {
   proposeRejection,
   confirmRejection,
   sendBackToPending,
+  type QueueChangeType,
   type ProposedListingFields,
   type ProposedCancellation,
 } from "../../../lib/data/moderation";
@@ -149,223 +155,286 @@ const proposedCancellation =
     ? (entry.proposedData as ProposedCancellation)
     : null;
 const isOwnProposal = entry.proposedBy === user.id;
+
+const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
+  new: "New listing",
+  update: "Update",
+  cancellation: "Cancellation",
+};
+const ORIGIN_LABEL: Record<string, string> = {
+  seed: "Seed data",
+  report_form: "Public report",
+};
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pending",
+  rejection_proposed: "Rejection proposed",
+  approved: "Approved",
+  rejected: "Rejected",
+};
+
+const typeOptions = [
+  { value: "mic", label: "Mic" },
+  { value: "show", label: "Show" },
+];
+const venueOptions = venues.map((venue) => ({
+  value: venue.id,
+  label: venue.name,
+}));
+const frequencyOptions = [
+  { value: "", label: "One-time" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+];
+const dayOptions = [
+  { value: "", label: "Choose a day" },
+  { value: "0", label: "Sunday" },
+  { value: "1", label: "Monday" },
+  { value: "2", label: "Tuesday" },
+  { value: "3", label: "Wednesday" },
+  { value: "4", label: "Thursday" },
+  { value: "5", label: "Friday" },
+  { value: "6", label: "Saturday" },
+];
+const weekOfMonthOptions = [
+  { value: "", label: "Every week" },
+  { value: "1", label: "1st" },
+  { value: "2", label: "2nd" },
+  { value: "3", label: "3rd" },
+  { value: "4", label: "4th" },
+  { value: "-1", label: "Last" },
+];
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Review entry — Crowd Work admin</title>
-  </head>
-  <body>
-    <a href="/admin">Back to queue</a>
-    <h1>{entry.changeType} — {entry.origin}</h1>
-    <p>Status: {entry.status}</p>
-    {errorMessage && <p role="alert">{errorMessage}</p>}
-    {entry.correctionNote && <p>Reporter's note: {entry.correctionNote}</p>}
+<AdminLayout title="Review entry — Crowd Work admin" userEmail={user.email}>
+  <div class="flex items-center justify-between gap-4 pt-6 text-[0.86rem]">
+    <a
+      href="/admin"
+      class="inline-flex items-center gap-1.5 text-ink-soft underline-offset-2 hover:underline"
+    >
+      <svg class="h-2.5 w-2.5 rotate-90" viewBox="0 0 12 12" fill="none">
+        <path
+          d="M3 4.5L6 7.5L9 4.5"
+          stroke="currentColor"
+          stroke-width="1.3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      Back to queue
+    </a>
+    <a
+      href="/"
+      target="_blank"
+      rel="noopener"
+      class="text-ink-soft underline-offset-2 hover:underline"
+    >
+      View live site ↗
+    </a>
+  </div>
 
-    {
-      entry.changeType === "cancellation" ? (
-        <form method="post">
-          <input type="hidden" name="action" value="approve_cancellation" />
-          <label>
-            Date being cancelled
-            <input
-              type="date"
-              name="originalDate"
-              value={proposedCancellation?.originalDate}
-              required
-            />
-          </label>
-          <label>
-            Note
-            <textarea name="note">{entry.correctionNote ?? ""}</textarea>
-          </label>
-          <button type="submit" disabled={entry.status !== "pending"}>
-            Approve cancellation
-          </button>
-        </form>
-      ) : (
-        <form method="post">
-          <input type="hidden" name="action" value="approve" />
-          <label>
-            Type
-            <select name="type">
-              <option value="mic" selected={prefill?.type !== "show"}>
-                Mic
-              </option>
-              <option value="show" selected={prefill?.type === "show"}>
-                Show
-              </option>
-            </select>
-          </label>
-          <label>
-            Title
-            <input
-              type="text"
-              name="title"
-              value={prefill?.title ?? ""}
-              required
-            />
-          </label>
-          <label>
-            Host
-            <input type="text" name="host" value={prefill?.host ?? ""} />
-          </label>
-          <label>
-            Description
-            <textarea name="description">{prefill?.description ?? ""}</textarea>
-          </label>
-          <label>
-            Venue
-            <select name="venueId" required>
-              {venues.map((venue) => (
-                <option
-                  value={venue.id}
-                  selected={venue.id === prefill?.venueId}
-                >
-                  {venue.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Start time
-            <input
-              type="time"
-              name="startTime"
-              value={prefill?.startTime ?? ""}
-              required
-            />
-          </label>
-          <label>
-            Sign-up method
-            <input
-              type="text"
-              name="signUpMethod"
-              value={prefill?.signUpMethod ?? ""}
-            />
-          </label>
-          <label>
-            Cost to perform
-            <input
-              type="text"
-              name="costToPerform"
-              value={prefill?.costToPerform ?? ""}
-            />
-          </label>
-          <label>
-            Ticket price
-            <input
-              type="text"
-              name="ticketPrice"
-              value={prefill?.ticketPrice ?? ""}
-            />
-          </label>
-          <label>
-            Ticket URL
-            <input
-              type="text"
-              name="ticketUrl"
-              value={prefill?.ticketUrl ?? ""}
-            />
-          </label>
-          <fieldset>
-            <legend>Recurrence</legend>
-            <label>
-              Frequency
-              <select name="frequency">
-                <option value="" selected={!prefill?.recurrence}>
-                  One-time
-                </option>
-                <option
-                  value="weekly"
-                  selected={prefill?.recurrence?.frequency === "weekly"}
-                >
-                  Weekly
-                </option>
-                <option
-                  value="monthly"
-                  selected={prefill?.recurrence?.frequency === "monthly"}
-                >
-                  Monthly
-                </option>
-              </select>
-            </label>
-            <label>
-              Day of week (0=Sunday..6=Saturday)
-              <input
-                type="number"
-                name="dayOfWeek"
-                min="0"
-                max="6"
-                value={prefill?.recurrence?.dayOfWeek}
-              />
-            </label>
-            <label>
-              Week of month (1-4, or -1 for last)
-              <input
-                type="number"
-                name="weekOfMonth"
-                min="-1"
-                max="4"
-                value={prefill?.recurrence?.weekOfMonth ?? ""}
-              />
-            </label>
-            <label>
-              One-off date (if not recurring)
-              <input
-                type="date"
-                name="oneOffDate"
-                value={prefill?.oneOffDate ?? ""}
-              />
-            </label>
-          </fieldset>
-          <button type="submit" disabled={entry.status !== "pending"}>
-            Approve
-          </button>
-        </form>
-      )
-    }
+  <div class="mt-5 flex flex-wrap items-center gap-3">
+    <h1 class="font-display text-[1.28rem] font-bold">
+      {CHANGE_TYPE_LABEL[entry.changeType]}
+    </h1>
+    <span class="rounded-sm border border-rule px-1.5 py-px font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+      {ORIGIN_LABEL[entry.origin] ?? entry.origin}
+    </span>
+  </div>
 
-    {
-      entry.status === "pending" && (
-        <form method="post">
-          <input type="hidden" name="action" value="propose_reject" />
-          <label>
-            Reason for rejection
-            <textarea name="reason" required />
-          </label>
-          <button type="submit">Propose rejection</button>
-        </form>
-      )
-    }
+  <p class="mt-1.5 text-[0.86rem] text-ink-soft">
+    Status: <span class="font-medium text-ink">{STATUS_LABEL[entry.status]}</span>
+  </p>
 
-    {
-      entry.status === "rejection_proposed" && (
-        <div>
-          <p>
-            Rejection proposed by moderator {entry.proposedBy}:{" "}
-            {entry.proposedReason}
+  {
+    errorMessage && (
+      <p
+        role="alert"
+        class="mt-5 rounded-sm bg-paper-shadow px-3.5 py-2.5 text-[0.86rem] font-medium text-ink"
+      >
+        <strong>Error:</strong> {errorMessage}
+      </p>
+    )
+  }
+
+  {
+    entry.correctionNote && (
+      <div class="mt-6 rounded-sm border-l-[3px] border-l-rule bg-paper-shadow px-4 py-3.5">
+        <p class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+          Reporter's note
+        </p>
+        <p class="mt-1.5 text-[0.95rem] text-ink italic">
+          "{entry.correctionNote}"
+        </p>
+      </div>
+    )
+  }
+
+  {
+    entry.changeType === "cancellation" ? (
+      <form method="post" class="mt-8 flex max-w-104 flex-col gap-4">
+        <input type="hidden" name="action" value="approve_cancellation" />
+        <FormField
+          label="Date being cancelled"
+          name="originalDate"
+          type="date"
+          value={proposedCancellation?.originalDate}
+          required
+        />
+        <FormTextarea
+          label="Note"
+          name="note"
+          value={entry.correctionNote ?? ""}
+        />
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={entry.status !== "pending"}
+          class="mt-2 self-start"
+        >
+          Approve cancellation
+        </Button>
+      </form>
+    ) : (
+      <form method="post" class="mt-8 flex max-w-104 flex-col gap-6">
+        <input type="hidden" name="action" value="approve" />
+
+        <div class="flex flex-col gap-4">
+          <p class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+            Listing details
           </p>
-          {isOwnProposal ? (
-            <p>
-              You proposed this rejection — a different moderator must confirm
-              it.
-            </p>
-          ) : (
-            <>
-              <form method="post">
-                <input type="hidden" name="action" value="confirm_reject" />
-                <button type="submit">Confirm rejection</button>
-              </form>
-              <form method="post">
-                <input type="hidden" name="action" value="send_back" />
-                <button type="submit">Send back to pending</button>
-              </form>
-            </>
-          )}
+          <FormSelect
+            label="Type"
+            name="type"
+            options={typeOptions}
+            value={prefill?.type ?? "mic"}
+          />
+          <FormField label="Title" name="title" value={prefill?.title ?? ""} required />
+          <FormField label="Host" name="host" value={prefill?.host ?? ""} />
+          <FormTextarea
+            label="Description"
+            name="description"
+            value={prefill?.description ?? ""}
+          />
+          <FormSelect
+            label="Venue"
+            name="venueId"
+            options={venueOptions}
+            value={prefill?.venueId ?? ""}
+            required
+          />
+          <FormField
+            label="Start time"
+            name="startTime"
+            type="time"
+            value={prefill?.startTime ?? ""}
+            required
+          />
+          <FormField
+            label="Sign-up method"
+            name="signUpMethod"
+            value={prefill?.signUpMethod ?? ""}
+          />
+          <FormField
+            label="Cost to perform"
+            name="costToPerform"
+            value={prefill?.costToPerform ?? ""}
+          />
+          <FormField
+            label="Ticket price"
+            name="ticketPrice"
+            value={prefill?.ticketPrice ?? ""}
+          />
+          <FormField
+            label="Ticket URL"
+            name="ticketUrl"
+            type="url"
+            value={prefill?.ticketUrl ?? ""}
+          />
         </div>
-      )
-    }
-  </body>
-</html>
+
+        <div class="flex flex-col gap-4 border-t border-rule pt-6">
+          <p class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+            Recurrence
+          </p>
+          <FormSelect
+            label="Frequency"
+            name="frequency"
+            options={frequencyOptions}
+            value={prefill?.recurrence?.frequency ?? ""}
+          />
+          <FormSelect
+            label="Day of week"
+            name="dayOfWeek"
+            options={dayOptions}
+            value={prefill?.recurrence?.dayOfWeek ?? ""}
+          />
+          <FormSelect
+            label="Week of month"
+            name="weekOfMonth"
+            options={weekOfMonthOptions}
+            value={prefill?.recurrence?.weekOfMonth ?? ""}
+          />
+          <FormField
+            label="One-off date (if not recurring)"
+            name="oneOffDate"
+            type="date"
+            value={prefill?.oneOffDate ?? ""}
+          />
+        </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={entry.status !== "pending"}
+          class="self-start"
+        >
+          Approve
+        </Button>
+      </form>
+    )
+  }
+
+  {
+    entry.status === "pending" && (
+      <form method="post" class="mt-10 flex max-w-104 flex-col gap-3 border-t border-rule pt-6">
+        <input type="hidden" name="action" value="propose_reject" />
+        <FormTextarea label="Reason for rejection" name="reason" required />
+        <Button type="submit" variant="outline" class="self-start">
+          Propose rejection
+        </Button>
+      </form>
+    )
+  }
+
+  {
+    entry.status === "rejection_proposed" && (
+      <div class="mt-10 border-t border-rule pt-6">
+        <p class="text-[0.94rem]">
+          <span class="font-medium">Rejection proposed</span> —{" "}
+          {entry.proposedReason}
+        </p>
+        {isOwnProposal ? (
+          <p class="mt-3 text-[0.86rem] text-ink-soft">
+            You proposed this rejection — a different moderator must confirm
+            it.
+          </p>
+        ) : (
+          <div class="mt-4 flex flex-wrap gap-3">
+            <form method="post">
+              <input type="hidden" name="action" value="confirm_reject" />
+              <Button type="submit" variant="outline">
+                Confirm rejection
+              </Button>
+            </form>
+            <form method="post">
+              <input type="hidden" name="action" value="send_back" />
+              <Button type="submit" variant="outline">
+                Send back to pending
+              </Button>
+            </form>
+          </div>
+        )}
+      </div>
+    )
+  }
+</AdminLayout>

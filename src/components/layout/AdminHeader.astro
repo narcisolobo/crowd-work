@@ -1,0 +1,42 @@
+---
+import BrandMark from "./BrandMark.astro";
+import ThemeToggle from "../theme/ThemeToggle.astro";
+
+interface Props {
+  userEmail?: string | null;
+}
+
+const { userEmail = null } = Astro.props;
+---
+
+<header class="admin-nav sticky top-0 z-20 bg-paper-shadow">
+  <div
+    class="mx-auto flex h-14 max-w-180 items-center gap-5.5 border-b border-b-[color-mix(in_srgb,var(--ink)_25%,var(--paper)_75%)] bg-paper px-5"
+  >
+    <a
+      href={userEmail ? "/admin" : "/"}
+      class="mr-auto flex items-center gap-2 text-ink no-underline"
+    >
+      <BrandMark class="h-5 w-5 flex-none text-ink" />
+      <span class="font-display text-[1rem] font-bold tracking-tight">
+        Crowd Work <span class="font-body font-normal text-ink-soft"
+          >admin</span
+        >
+      </span>
+    </a>
+    {
+      userEmail && (
+        <div class="flex items-center gap-4.5 font-body text-[0.86rem] text-ink-soft">
+          <span class="max-[480px]:hidden">{userEmail}</span>
+          <a
+            href="/admin/logout"
+            class="underline-offset-2 hover:text-ink hover:underline"
+          >
+            Log out
+          </a>
+        </div>
+      )
+    }
+    <ThemeToggle />
+  </div>
+</header>

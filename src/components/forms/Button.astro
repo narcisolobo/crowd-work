@@ -1,0 +1,32 @@
+---
+interface Props {
+  type?: "submit" | "button";
+  variant?: "primary" | "outline";
+  disabled?: boolean;
+  class?: string;
+}
+
+const {
+  type = "submit",
+  variant = "primary",
+  disabled = false,
+  class: className = "",
+} = Astro.props;
+
+const variants = {
+  primary: "border-ink bg-ink text-paper",
+  outline: "border-rule bg-transparent text-ink hover:border-ink",
+};
+---
+
+<button
+  type={type}
+  disabled={disabled}
+  class:list={[
+    "cursor-pointer rounded-sm border px-4 py-2 font-display text-[0.95rem] font-bold tracking-wide uppercase disabled:cursor-not-allowed disabled:opacity-50",
+    variants[variant],
+    className,
+  ]}
+>
+  <slot />
+</button>
