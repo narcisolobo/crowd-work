@@ -4,10 +4,20 @@ interface Props {
   date: string;
   month: string;
   isSoon: boolean;
+  size?: 'default' | 'large';
   class?: string;
 }
 
-const { day, date, month, isSoon, class: className = '' } = Astro.props;
+const {
+  day,
+  date,
+  month,
+  isSoon,
+  size = 'default',
+  class: className = '',
+} = Astro.props;
+
+const large = size === 'large';
 
 const edgeColor = isSoon
   ? 'border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)]'
@@ -15,18 +25,29 @@ const edgeColor = isSoon
 ---
 
 <div
-  class={`stub flex flex-col items-center justify-center rounded-sm border-l-[3px] bg-paper-shadow px-0.5 py-1.5 text-center ${edgeColor} ${className}`}
+  class:list={[
+    'stub flex flex-col items-center justify-center rounded-sm bg-paper-shadow text-center',
+    edgeColor,
+    large ? 'border-l-4 px-2 py-3' : 'border-l-[3px] px-0.5 py-1.5',
+    className,
+  ]}
 >
   <span
-    class="font-body text-[0.68rem] font-semibold tracking-wider text-ink-soft uppercase"
-    >{day}</span
+    class:list={[
+      'font-body font-semibold tracking-wider text-ink-soft uppercase',
+      large ? 'text-[0.78rem]' : 'text-[0.68rem]',
+    ]}>{day}</span
   >
   <span
-    class="font-mono text-[1.15rem] leading-tight font-semibold tabular-nums"
-    >{date}</span
+    class:list={[
+      'font-mono leading-tight font-semibold tabular-nums',
+      large ? 'text-[2.1rem]' : 'text-[1.15rem]',
+    ]}>{date}</span
   >
   <span
-    class="font-body text-[0.62rem] font-semibold tracking-wider text-ink-soft uppercase"
-    >{month}</span
+    class:list={[
+      'font-body font-semibold tracking-wider text-ink-soft uppercase',
+      large ? 'text-[0.72rem]' : 'text-[0.62rem]',
+    ]}>{month}</span
   >
 </div>

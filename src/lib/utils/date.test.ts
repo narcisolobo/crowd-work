@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getTodayInLA } from './date';
+import { getTodayInLA, addDaysToDateStr } from './date';
 
 describe('getTodayInLA', () => {
   it('returns the LA calendar date, not the UTC calendar date, in the evening', () => {
@@ -18,5 +18,23 @@ describe('getTodayInLA', () => {
     // 00:30 PDT on Sep 3 is 07:30 UTC on Sep 3 — both agree Sep 3 has begun.
     const justAfterMidnightInLA = new Date('2026-09-03T07:30:00.000Z');
     expect(getTodayInLA(justAfterMidnightInLA)).toBe('2026-09-03');
+  });
+});
+
+describe('addDaysToDateStr', () => {
+  it('adds days within a month', () => {
+    expect(addDaysToDateStr('2026-09-02', 7)).toBe('2026-09-09');
+  });
+
+  it('rolls over a month boundary', () => {
+    expect(addDaysToDateStr('2026-09-25', 10)).toBe('2026-10-05');
+  });
+
+  it('rolls over a year boundary', () => {
+    expect(addDaysToDateStr('2026-12-28', 10)).toBe('2027-01-07');
+  });
+
+  it('supports zero days as a no-op', () => {
+    expect(addDaysToDateStr('2026-09-02', 0)).toBe('2026-09-02');
   });
 });

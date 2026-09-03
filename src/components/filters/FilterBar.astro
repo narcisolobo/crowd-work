@@ -117,13 +117,23 @@ const areaOptions = [
 
     function applyFilters() {
       let visibleCount = 0;
+      let lastVisibleRow: HTMLElement | null = null;
       for (const row of rows) {
         const matchesType = !activeType || row.dataset.type === activeType;
         const matchesDay = !activeDay || row.dataset.day === activeDay;
         const matchesArea = !activeArea || row.dataset.area === activeArea;
         const visible = matchesType && matchesDay && matchesArea;
         row.hidden = !visible;
-        if (visible) visibleCount++;
+        if (visible) {
+          visibleCount++;
+          lastVisibleRow = row;
+        }
+      }
+      // The last visible row skips its own bottom rule so the footer's top
+      // border closes the list instead of stacking a second rule under it;
+      // "last visible" moves as filters change, so every row is re-synced.
+      for (const row of rows) {
+        row.classList.toggle('border-b', row !== lastVisibleRow);
       }
       if (emptyState) emptyState.hidden = visibleCount > 0;
       if (listingCount) {

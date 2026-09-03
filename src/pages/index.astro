@@ -10,7 +10,7 @@ import {
   toRecurrenceListing,
 } from "../lib/data/listings";
 import { resolveOccurrences } from "../lib/utils/recurrence";
-import { getTodayInLA } from "../lib/utils/date";
+import { getTodayInLA, addDaysToDateStr } from "../lib/utils/date";
 
 const typeFilter = Astro.url.searchParams.get("type") || null;
 const dayFilter = Astro.url.searchParams.get("day") || null;
@@ -27,18 +27,12 @@ const exceptionsByListing = await getExceptionsForListings(
 const today = new Date();
 const todayInLA = getTodayInLA(today);
 
-function daysFromToday(days: number): string {
-  const date = new Date(`${todayInLA}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-
-const rangeStart = daysFromToday(0);
+const rangeStart = todayInLA;
 // The browse window (what's fetched/shown) is wider than the "soon" window
 // (what gets the gold This-week flag) — two distinct ranges sharing the same
 // start, not one range reused for both purposes.
-const browseRangeEnd = daysFromToday(30);
-const soonRangeEnd = daysFromToday(7);
+const browseRangeEnd = addDaysToDateStr(todayInLA, 30);
+const soonRangeEnd = addDaysToDateStr(todayInLA, 7);
 
 // Every listing in range is always rendered (hidden via a boolean prop
 // rather than filtered out server-side) so the client-side filter script
@@ -82,10 +76,23 @@ const rows = listings
       note: occurrence.note,
       isSoon,
       hidden: !(matchesType && matchesDay && matchesArea),
+      isLastVisible: false,
     };
   });
 
 const visibleCount = rows.filter((row) => !row.hidden).length;
+
+// The last visible row skips its own bottom rule — the footer's top border
+// closes the list instead, so the two don't stack right on top of each
+// other. "Last visible" shifts with the filters, so this is recomputed
+// from the same hidden flags rather than baked in at sort time.
+let lastVisibleIndex = -1;
+rows.forEach((row, index) => {
+  if (!row.hidden) lastVisibleIndex = index;
+});
+if (lastVisibleIndex !== -1) {
+  rows[lastVisibleIndex] = { ...rows[lastVisibleIndex], isLastVisible: true };
+}
 
 const dateLabel = new Intl.DateTimeFormat("en-US", {
   weekday: "short",

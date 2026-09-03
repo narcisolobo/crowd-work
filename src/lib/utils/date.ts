@@ -14,3 +14,14 @@ export function getTodayInLA(now: Date = new Date()): string {
     day: '2-digit',
   }).format(now);
 }
+
+/**
+ * Adds `days` to a YYYY-MM-DD calendar date, treating it the same
+ * UTC-midnight way recurrence.ts does, so results stay compatible with
+ * the recurrence resolver's date range arguments.
+ */
+export function addDaysToDateStr(dateStr: string, days: number): string {
+  const date = new Date(`${dateStr}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}

@@ -68,8 +68,26 @@
  */
 
 @layer base {
+  html {
+    /*
+     * Reserve the scrollbar's gutter on every page, whether or not that
+     * page is tall enough to need one — otherwise a short page (e.g. a
+     * single listing) centers its content a scrollbar-width wider than a
+     * long one (e.g. the full listings list), and the centered column
+     * visibly shifts between pages.
+     */
+    scrollbar-gutter: stable;
+  }
+
   body {
-    background-color: var(--paper);
+    /*
+     * The page canvas sits a tone deeper than the content column itself
+     * (set explicitly to --paper on the header, .page, and footer) — a
+     * soft letterbox around the content, the same tonal-shift device the
+     * ticket stub already uses, just at page scale instead of component
+     * scale. No shadow, no border: pure --paper / --paper-shadow contrast.
+     */
+    background-color: var(--paper-shadow);
     color: var(--ink);
     font-family: var(--font-body);
   }

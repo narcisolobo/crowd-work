@@ -30,10 +30,14 @@ const { title } = Astro.props;
     <Font cssVariable="--font-ibm-plex-sans" preload />
     <Font cssVariable="--font-ibm-plex-mono" />
   </head>
-  <body class="font-body text-base text-ink antialiased">
+  <body class="flex min-h-screen flex-col font-body text-base text-ink antialiased">
     <SiteHeader />
-    <div class="page mx-auto max-w-180 px-5 pb-16">
-      <slot />
+    <div
+      class="page mx-auto flex w-full max-w-180 flex-1 flex-col bg-paper px-5 pb-16"
+    >
+      <div class="flex-1">
+        <slot />
+      </div>
       <SiteFooter />
     </div>
   </body>

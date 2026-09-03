@@ -19,6 +19,7 @@ export interface ListingRowData {
   note?: string;
   isSoon: boolean;
   hidden: boolean;
+  isLastVisible?: boolean;
 }
 
 const {
@@ -38,6 +39,7 @@ const {
   note,
   isSoon,
   hidden,
+  isLastVisible = false,
 } = Astro.props as ListingRowData;
 
 const stub = formatStubDate(date);
@@ -46,7 +48,10 @@ const priceAmount = type === "mic" ? costToPerform : ticketPrice;
 ---
 
 <li
-  class="row grid gap-x-4.5 border-b border-rule py-5.5 max-[600px]:gap-y-1.5"
+  class:list={[
+    "row grid gap-x-4.5 border-rule py-5.5 max-[600px]:gap-y-1.5",
+    !isLastVisible && "border-b",
+  ]}
   data-listing-row
   data-type={type}
   data-day={dayOfWeek}

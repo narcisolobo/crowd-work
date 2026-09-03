@@ -45,25 +45,18 @@ export async function getAreas(): Promise<Area[]> {
   return data ?? [];
 }
 
-export async function getPublishedListings(): Promise<ListingWithVenue[]> {
-  const { data, error } = await supabase
-    .from('listings')
-    .select(
-      `
-      id, type, title, host, description, start_time, one_off_date,
-      sign_up_method, cost_to_perform, ticket_price, ticket_url,
-      venue:venues (
-        id, name, address, google_maps_url,
-        neighborhood:neighborhoods ( id, area_id )
-      ),
-      recurrence_rules ( frequency, day_of_week, week_of_month )
-    `,
-    )
-    .eq('status', 'published');
+const LISTING_WITH_VENUE_SELECT = `
+  id, type, title, host, description, start_time, one_off_date,
+  sign_up_method, cost_to_perform, ticket_price, ticket_url,
+  venue:venues (
+    id, name, address, google_maps_url,
+    neighborhood:neighborhoods ( id, area_id )
+  ),
+  recurrence_rules ( frequency, day_of_week, week_of_month )
+`;
 
-  if (error) throw new Error(`Failed to load listings: ${error.message}`);
-
-  return (data ?? []).map((row: any) => ({
+function mapListingRow(row: any): ListingWithVenue {
+  return {
     id: row.id,
     type: row.type,
     title: row.title,
@@ -90,7 +83,40 @@ export async function getPublishedListings(): Promise<ListingWithVenue[]> {
         }
       : null,
     oneOffDate: row.one_off_date,
-  }));
+  };
+}
+
+export async function getPublishedListings(): Promise<ListingWithVenue[]> {
+  const { data, error } = await supabase
+    .from('listings')
+    .select(LISTING_WITH_VENUE_SELECT)
+    .eq('status', 'published');
+
+  if (error) throw new Error(`Failed to load listings: ${error.message}`);
+
+  return (data ?? []).map(mapListingRow);
+}
+
+export async function getListingById(
+  id: string,
+): Promise<ListingWithVenue | null> {
+  const { data, error } = await supabase
+    .from('listings')
+    .select(LISTING_WITH_VENUE_SELECT)
+    .eq('id', id)
+    .eq('status', 'published')
+    .maybeSingle();
+
+  if (error) {
+    // Postgres' invalid_text_representation — id isn't even a well-formed
+    // UUID (e.g. a stray/typo'd URL). Same "not found" outcome as a real
+    // miss, not a server error.
+    if (error.code === '22P02') return null;
+    throw new Error(`Failed to load listing ${id}: ${error.message}`);
+  }
+  if (!data) return null;
+
+  return mapListingRow(data);
 }
 
 export async function getExceptionsForListings(
