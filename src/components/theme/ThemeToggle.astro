@@ -1,54 +1,54 @@
 ---
+
 ---
 
 <button
   type="button"
   id="theme-toggle"
-  class="theme-toggle inline-flex cursor-pointer items-center gap-[7px] rounded-full border border-rule bg-transparent py-[5px] pr-3 pl-2 font-body text-[0.82rem] text-ink-soft hover:border-ink-soft max-[480px]:p-1.5"
+  class="theme-toggle inline-flex cursor-pointer items-center gap-1.75 rounded-full border border-rule bg-transparent py-1.25 pr-3 pl-2 font-body text-[0.82rem] text-ink-soft hover:border-ink-soft max-[480px]:p-1.5"
   aria-pressed="false"
   aria-label="Switch to dark theme"
 >
   <span
     id="theme-toggle-bulb"
     class="h-2.5 w-2.5 flex-none rounded-full bg-gold"
-    aria-hidden="true"
-  ></span>
+    aria-hidden="true"></span>
   <span id="theme-toggle-label" class="max-[480px]:hidden">Lights on</span>
 </button>
 
 <script>
   const root = document.documentElement;
-  const toggle = document.getElementById('theme-toggle');
-  const label = document.getElementById('theme-toggle-label');
-  const bulb = document.getElementById('theme-toggle-bulb');
-  const THEME_KEY = 'theme';
+  const toggle = document.getElementById("theme-toggle");
+  const label = document.getElementById("theme-toggle-label");
+  const bulb = document.getElementById("theme-toggle-bulb");
+  const THEME_KEY = "theme";
 
   const systemPrefersDark = () =>
-    window.matchMedia('(prefers-color-scheme: dark)').matches;
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  function currentTheme(): 'light' | 'dark' {
-    const explicit = root.getAttribute('data-theme');
-    if (explicit === 'light' || explicit === 'dark') return explicit;
-    return systemPrefersDark() ? 'dark' : 'light';
+  function currentTheme(): "light" | "dark" {
+    const explicit = root.getAttribute("data-theme");
+    if (explicit === "light" || explicit === "dark") return explicit;
+    return systemPrefersDark() ? "dark" : "light";
   }
 
-  function sync(theme: 'light' | 'dark') {
-    const isDark = theme === 'dark';
-    toggle?.setAttribute('aria-pressed', String(isDark));
+  function sync(theme: "light" | "dark") {
+    const isDark = theme === "dark";
+    toggle?.setAttribute("aria-pressed", String(isDark));
     toggle?.setAttribute(
-      'aria-label',
-      isDark ? 'Switch to light theme' : 'Switch to dark theme',
+      "aria-label",
+      isDark ? "Switch to light theme" : "Switch to dark theme",
     );
-    if (label) label.textContent = isDark ? 'Lights off' : 'Lights on';
-    bulb?.classList.toggle('bg-gold', !isDark);
-    bulb?.classList.toggle('bg-ink-soft', isDark);
+    if (label) label.textContent = isDark ? "Lights off" : "Lights on";
+    bulb?.classList.toggle("bg-gold", !isDark);
+    bulb?.classList.toggle("bg-ink-soft", isDark);
   }
 
   sync(currentTheme());
 
-  toggle?.addEventListener('click', () => {
-    const next = currentTheme() === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
+  toggle?.addEventListener("click", () => {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
     try {
       localStorage.setItem(THEME_KEY, next);
     } catch {
@@ -58,8 +58,8 @@
   });
 
   window
-    .matchMedia('(prefers-color-scheme: dark)')
-    .addEventListener('change', () => {
-      if (!root.getAttribute('data-theme')) sync(currentTheme());
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", () => {
+      if (!root.getAttribute("data-theme")) sync(currentTheme());
     });
 </script>

@@ -1,4 +1,6 @@
 ---
+import FilterSelect from './FilterSelect.astro';
+
 interface Area {
   id: string;
   name: string;
@@ -7,15 +9,34 @@ interface Area {
 interface Props {
   areas: Area[];
   typeFilter: string | null;
+  dayFilter: string | null;
   areaFilter: string | null;
 }
 
-const { areas, typeFilter, areaFilter } = Astro.props;
+const { areas, typeFilter, dayFilter, areaFilter } = Astro.props;
 
 const tabs = [
   { value: '', label: 'All' },
   { value: 'mic', label: 'Mics' },
   { value: 'show', label: 'Shows' },
+];
+
+const dayNames = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
+const dayOptions = [
+  { value: '', label: 'All days' },
+  ...dayNames.map((name, index) => ({ value: String(index), label: name })),
+];
+const areaOptions = [
+  { value: '', label: 'All of LA' },
+  ...areas.map((area) => ({ value: area.id, label: area.name })),
 ];
 ---
 
@@ -48,37 +69,20 @@ const tabs = [
     }
   </div>
   <div class="flex items-center gap-2.5">
-    <div class="relative">
-      <select
-        name="area"
-        id="area-select"
-        aria-label="Filter by area"
-        class="appearance-none rounded-sm border border-rule bg-paper py-1.75 pr-7 pl-2.5 font-body text-[0.92rem] text-ink"
-      >
-        <option value="" selected={!areaFilter}>All of LA</option>
-        {
-          areas.map((area) => (
-            <option value={area.id} selected={areaFilter === area.id}>
-              {area.name}
-            </option>
-          ))
-        }
-      </select>
-      <svg
-        class="pointer-events-none absolute top-1/2 right-2.5 h-3 w-3 -translate-y-1/2 text-ink-soft"
-        viewBox="0 0 12 12"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path
-          d="M3 4.5L6 7.5L9 4.5"
-          stroke="currentColor"
-          stroke-width="1.3"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </div>
+    <FilterSelect
+      name="day"
+      id="day-select"
+      ariaLabel="Filter by day of week"
+      options={dayOptions}
+      value={dayFilter}
+    />
+    <FilterSelect
+      name="area"
+      id="area-select"
+      ariaLabel="Filter by area"
+      options={areaOptions}
+      value={areaFilter}
+    />
     <button
       type="submit"
       id="apply-filter"
@@ -95,6 +99,7 @@ const tabs = [
     const typeButtons = Array.from(
       form.querySelectorAll<HTMLButtonElement>('button[name="type"]'),
     );
+    const daySelect = form.querySelector<HTMLSelectElement>('select[name="day"]');
     const areaSelect = form.querySelector<HTMLSelectElement>('select[name="area"]');
     const applyButton = document.getElementById('apply-filter');
     const rows = Array.from(
@@ -107,14 +112,16 @@ const tabs = [
     let activeType =
       typeButtons.find((btn) => btn.getAttribute('aria-pressed') === 'true')
         ?.value ?? '';
+    let activeDay = daySelect?.value ?? '';
     let activeArea = areaSelect?.value ?? '';
 
     function applyFilters() {
       let visibleCount = 0;
       for (const row of rows) {
         const matchesType = !activeType || row.dataset.type === activeType;
+        const matchesDay = !activeDay || row.dataset.day === activeDay;
         const matchesArea = !activeArea || row.dataset.area === activeArea;
-        const visible = matchesType && matchesArea;
+        const visible = matchesType && matchesDay && matchesArea;
         row.hidden = !visible;
         if (visible) visibleCount++;
       }
@@ -132,31 +139,56 @@ const tabs = [
       const url = new URL(window.location.href);
       if (activeType) url.searchParams.set('type', activeType);
       else url.searchParams.delete('type');
+      if (activeDay) url.searchParams.set('day', activeDay);
+      else url.searchParams.delete('day');
       if (activeArea) url.searchParams.set('area', activeArea);
       else url.searchParams.delete('area');
       window.history.pushState({}, '', url);
     }
 
+    function setActiveType(value: string) {
+      activeType = value;
+      for (const btn of typeButtons) {
+        const pressed = btn.value === value;
+        btn.setAttribute('aria-pressed', String(pressed));
+        btn.classList.toggle('border-ink', pressed);
+        btn.classList.toggle('bg-ink', pressed);
+        btn.classList.toggle('text-paper', pressed);
+        btn.classList.toggle('border-rule', !pressed);
+        btn.classList.toggle('bg-transparent', !pressed);
+        btn.classList.toggle('text-ink-soft', !pressed);
+      }
+    }
+
     for (const button of typeButtons) {
       button.addEventListener('click', (event) => {
         event.preventDefault();
-        activeType = button.value;
-        for (const btn of typeButtons) {
-          btn.setAttribute('aria-pressed', String(btn === button));
-          btn.classList.toggle('border-ink', btn === button);
-          btn.classList.toggle('bg-ink', btn === button);
-          btn.classList.toggle('text-paper', btn === button);
-          btn.classList.toggle('border-rule', btn !== button);
-          btn.classList.toggle('bg-transparent', btn !== button);
-          btn.classList.toggle('text-ink-soft', btn !== button);
-        }
+        setActiveType(button.value);
         applyFilters();
         updateUrl();
       });
     }
 
+    daySelect?.addEventListener('change', () => {
+      activeDay = daySelect.value;
+      applyFilters();
+      updateUrl();
+    });
+
     areaSelect?.addEventListener('change', () => {
       activeArea = areaSelect.value;
+      applyFilters();
+      updateUrl();
+    });
+
+    const clearFilters = document.getElementById('clear-filters');
+    clearFilters?.addEventListener('click', (event) => {
+      event.preventDefault();
+      setActiveType('');
+      activeDay = '';
+      if (daySelect) daySelect.value = '';
+      activeArea = '';
+      if (areaSelect) areaSelect.value = '';
       applyFilters();
       updateUrl();
     });

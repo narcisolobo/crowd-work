@@ -12,6 +12,7 @@ import {
 import { resolveOccurrences } from "../lib/utils/recurrence";
 
 const typeFilter = Astro.url.searchParams.get("type") || null;
+const dayFilter = Astro.url.searchParams.get("day") || null;
 const areaFilter = Astro.url.searchParams.get("area") || null;
 
 const [listings, areas] = await Promise.all([
@@ -53,7 +54,12 @@ const rows = listings
   })
   .sort((a, b) => a.occurrence.date.localeCompare(b.occurrence.date))
   .map(({ listing, occurrence }) => {
+    // getUTCDay() on a UTC-midnight parse matches recurrence.ts's own
+    // date-handling convention (see toUTCDate), so this stays consistent
+    // with however the occurrence date was resolved in the first place.
+    const dayOfWeek = new Date(`${occurrence.date}T00:00:00Z`).getUTCDay();
     const matchesType = !typeFilter || listing.type === typeFilter;
+    const matchesDay = !dayFilter || String(dayOfWeek) === dayFilter;
     const matchesArea = !areaFilter || listing.venue.areaId === areaFilter;
     const isSoon =
       occurrence.date >= rangeStart && occurrence.date <= soonRangeEnd;
@@ -61,6 +67,7 @@ const rows = listings
       id: listing.id,
       title: listing.title,
       type: listing.type,
+      dayOfWeek,
       areaId: listing.venue.areaId,
       venueName: listing.venue.name,
       host: listing.host,
@@ -72,7 +79,7 @@ const rows = listings
       startTime: occurrence.startTime,
       note: occurrence.note,
       isSoon,
-      hidden: !(matchesType && matchesArea),
+      hidden: !(matchesType && matchesDay && matchesArea),
     };
   });
 
@@ -97,6 +104,11 @@ const scopeLabel = areaName ? `in ${areaName}` : "across LA";
     listingCount={visibleCount}
     scopeLabel={scopeLabel}
   />
-  <FilterBar areas={areas} typeFilter={typeFilter} areaFilter={areaFilter} />
+  <FilterBar
+    areas={areas}
+    typeFilter={typeFilter}
+    dayFilter={dayFilter}
+    areaFilter={areaFilter}
+  />
   <ListingList rows={rows} />
 </Base>

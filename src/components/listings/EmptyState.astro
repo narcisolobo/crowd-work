@@ -11,5 +11,9 @@ const { hidden = false } = Astro.props;
   class="empty-state py-10 text-[0.95rem] text-ink-soft"
   hidden={hidden}
 >
-  No listings match this filter right now.
+  No listings match this filter right now. <a
+    href="/"
+    id="clear-filters"
+    class="text-gold-ink underline underline-offset-2">Clear filters</a
+  >.
 </p>

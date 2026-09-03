@@ -73,4 +73,14 @@
     color: var(--ink);
     font-family: var(--font-body);
   }
+
+  /*
+   * Every focusable control gets a themed ring instead of the browser
+   * default — DESIGN.md's Inputs/Fields and "Do's" both call for a
+   * consistent `--gold-ink` focus-visible outline site-wide.
+   */
+  :focus-visible {
+    outline: 2px solid var(--gold-ink);
+    outline-offset: 2px;
+  }
 }

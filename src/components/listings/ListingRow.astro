@@ -6,6 +6,7 @@ export interface ListingRowData {
   id: string;
   title: string;
   type: 'mic' | 'show';
+  dayOfWeek: number;
   areaId: string;
   venueName: string;
   host?: string | null;
@@ -24,6 +25,7 @@ const {
   id,
   title,
   type,
+  dayOfWeek,
   areaId,
   venueName,
   host,
@@ -47,6 +49,7 @@ const priceAmount = type === 'mic' ? costToPerform : ticketPrice;
   class="row grid gap-x-[18px] border-b border-rule py-[22px] max-[600px]:gap-y-1.5"
   data-listing-row
   data-type={type}
+  data-day={dayOfWeek}
   data-area={areaId}
   hidden={hidden}
 >
@@ -81,7 +84,7 @@ const priceAmount = type === 'mic' ? costToPerform : ticketPrice;
     {host && <p class="mt-[3px] text-[0.86rem] text-ink-soft">Hosted by {host}</p>}
     {
       type === 'mic' && signUpMethod && (
-        <p class="mt-[3px] text-[0.86rem] text-ink-soft">
+        <p class="mt-[3px] text-[0.86rem] font-medium text-ink">
           Sign-up: {signUpMethod}
         </p>
       )
