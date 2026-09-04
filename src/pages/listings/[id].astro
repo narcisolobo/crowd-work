@@ -1,5 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
+import Button from "../../components/forms/Button.astro";
 import TicketStub from "../../components/listings/TicketStub.astro";
 import {
   getListingById,
@@ -209,14 +210,14 @@ const label = "font-body text-[0.65rem] font-semibold tracking-wider text-ink-so
           </p>
         )}
         {listing.ticketUrl && (
-          <a
+          <Button
             href={listing.ticketUrl}
             target="_blank"
             rel="noopener"
-            class="mt-3 inline-block rounded-sm border border-ink bg-ink px-4 py-1.75 font-display text-[0.95rem] font-bold tracking-wide text-paper uppercase"
+            class="mt-3"
           >
             Buy tickets
-          </a>
+          </Button>
         )}
       </div>
     )
