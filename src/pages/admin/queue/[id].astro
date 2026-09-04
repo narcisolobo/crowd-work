@@ -5,7 +5,7 @@ import AdminUtilityBar from "../../../components/layout/AdminUtilityBar.astro";
 import CancellationApprovalForm from "../../../components/moderation/CancellationApprovalForm.astro";
 import ListingApprovalForm from "../../../components/moderation/ListingApprovalForm.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { getVenues } from "../../../lib/data/listings";
+import { getNeighborhoods, getVenues } from "../../../lib/data/listings";
 import {
   getPrefillForEntry,
   getQueueEntryById,
@@ -13,7 +13,10 @@ import {
   type ProposedCancellation,
   type QueueChangeType,
 } from "../../../lib/data/moderation";
-import { ORIGIN_LABEL, STATUS_LABEL } from "../../../lib/utils/moderation-labels";
+import {
+  ORIGIN_LABEL,
+  STATUS_LABEL,
+} from "../../../lib/utils/moderation-labels";
 
 const { id } = Astro.params;
 const supabase = Astro.locals.supabase!;
@@ -29,7 +32,10 @@ if (!entry) {
   return Astro.redirect("/admin");
 }
 
-const venues = await getVenues();
+const [venues, neighborhoods] = await Promise.all([
+  getVenues(),
+  getNeighborhoods(),
+]);
 let errorMessage: string | null = null;
 
 if (Astro.request.method === "POST") {
@@ -66,6 +72,11 @@ const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
 const venueOptions = venues.map((venue) => ({
   value: venue.id,
   label: venue.name,
+}));
+
+const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
+  value: neighborhood.id,
+  label: neighborhood.name,
 }));
 ---
 
@@ -124,6 +135,7 @@ const venueOptions = venues.map((venue) => ({
         entry={entry}
         prefill={prefill}
         venueOptions={venueOptions}
+        neighborhoodOptions={neighborhoodOptions}
       />
     )
   }

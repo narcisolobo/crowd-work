@@ -1,0 +1,190 @@
+---
+import FormField from "../forms/FormField.astro";
+import FormSelect from "../forms/FormSelect.astro";
+import FormTextarea from "../forms/FormTextarea.astro";
+import type { ProposedListingFields } from "../../lib/data/moderation";
+import {
+  DAY_OF_WEEK_OPTIONS,
+  FREQUENCY_OPTIONS,
+  TYPE_OPTIONS,
+  WEEK_OF_MONTH_OPTIONS,
+} from "../../lib/utils/moderation-labels";
+
+interface Props {
+  prefill: ProposedListingFields | null;
+  venueOptions: { value: string; label: string }[];
+  neighborhoodOptions: { value: string; label: string }[];
+}
+
+const { prefill, venueOptions, neighborhoodOptions } = Astro.props;
+
+const venueSelectOptions = [
+  ...venueOptions,
+  { value: "__new__", label: "Add a new venue…" },
+];
+const isNewVenue = Boolean(prefill?.newVenue);
+const initialType = prefill?.type ?? "mic";
+---
+
+<div class="flex flex-col gap-4">
+  <p
+    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+  >
+    Listing details
+  </p>
+  <FormSelect
+    label="Type"
+    name="type"
+    options={TYPE_OPTIONS}
+    value={initialType}
+  />
+  <FormField label="Title" name="title" value={prefill?.title ?? ""} required />
+  <div data-field-for="mic" hidden={initialType === "show"}>
+    <FormField label="Host" name="host" value={prefill?.host ?? ""} />
+  </div>
+  <FormTextarea
+    label="Description"
+    name="description"
+    value={prefill?.description ?? ""}
+  />
+  <FormSelect
+    label="Venue"
+    name="venueId"
+    options={venueSelectOptions}
+    value={isNewVenue ? "__new__" : (prefill?.venueId ?? "")}
+    required
+  />
+  <div data-new-venue hidden={!isNewVenue} class="flex flex-col gap-4">
+    <FormField
+      label="Venue name"
+      name="newVenueName"
+      value={prefill?.newVenue?.name ?? ""}
+      required
+    />
+    <FormField
+      label="Venue address"
+      name="newVenueAddress"
+      value={prefill?.newVenue?.address ?? ""}
+      required
+    />
+    <FormSelect
+      label="Neighborhood"
+      name="newVenueNeighborhoodId"
+      options={neighborhoodOptions}
+      value={prefill?.newVenue?.neighborhoodId ?? ""}
+      required
+    />
+    <FormField
+      label="Google Maps URL"
+      name="newVenueGoogleMapsUrl"
+      type="url"
+      value={prefill?.newVenue?.googleMapsUrl ?? ""}
+    />
+  </div>
+  <FormField
+    label="Start time"
+    name="startTime"
+    type="time"
+    value={prefill?.startTime ?? ""}
+    required
+  />
+  <div data-field-for="mic" hidden={initialType === "show"}>
+    <FormField
+      label="Sign-up method"
+      name="signUpMethod"
+      value={prefill?.signUpMethod ?? ""}
+    />
+  </div>
+  <div data-field-for="mic" hidden={initialType === "show"}>
+    <FormField
+      label="Cost to perform"
+      name="costToPerform"
+      value={prefill?.costToPerform ?? ""}
+    />
+  </div>
+  <div data-field-for="show" hidden={initialType !== "show"}>
+    <FormField
+      label="Ticket price"
+      name="ticketPrice"
+      value={prefill?.ticketPrice ?? ""}
+    />
+  </div>
+  <div data-field-for="show" hidden={initialType !== "show"}>
+    <FormField
+      label="Ticket URL"
+      name="ticketUrl"
+      type="url"
+      value={prefill?.ticketUrl ?? ""}
+    />
+  </div>
+</div>
+
+<div class="border-rule flex flex-col gap-4 border-t pt-6">
+  <p
+    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+  >
+    Recurrence
+  </p>
+  <FormSelect
+    label="Frequency"
+    name="frequency"
+    options={FREQUENCY_OPTIONS}
+    value={prefill?.recurrence?.frequency ?? ""}
+  />
+  <FormSelect
+    label="Day of week"
+    name="dayOfWeek"
+    options={DAY_OF_WEEK_OPTIONS}
+    value={prefill?.recurrence?.dayOfWeek ?? ""}
+  />
+  <FormSelect
+    label="Week of month"
+    name="weekOfMonth"
+    options={WEEK_OF_MONTH_OPTIONS}
+    value={prefill?.recurrence?.weekOfMonth ?? ""}
+  />
+  <FormField
+    label="One-off date (if not recurring)"
+    name="oneOffDate"
+    type="date"
+    value={prefill?.oneOffDate ?? ""}
+  />
+</div>
+
+<script>
+  const typeSelects = document.querySelectorAll<HTMLSelectElement>(
+    'select[name="type"]',
+  );
+  for (const select of typeSelects) {
+    const form = select.closest("form");
+    if (!form) continue;
+    const micFields = form.querySelectorAll<HTMLElement>(
+      '[data-field-for="mic"]',
+    );
+    const showFields = form.querySelectorAll<HTMLElement>(
+      '[data-field-for="show"]',
+    );
+    const sync = () => {
+      const isShow = select.value === "show";
+      for (const el of micFields) el.hidden = isShow;
+      for (const el of showFields) el.hidden = !isShow;
+    };
+    select.addEventListener("change", sync);
+    sync();
+  }
+
+  const venueSelects = document.querySelectorAll<HTMLSelectElement>(
+    'select[name="venueId"]',
+  );
+  for (const select of venueSelects) {
+    const container = select
+      .closest("form")
+      ?.querySelector<HTMLElement>("[data-new-venue]");
+    if (!container) continue;
+    const sync = () => {
+      container.hidden = select.value !== "__new__";
+    };
+    select.addEventListener("change", sync);
+    sync();
+  }
+</script>

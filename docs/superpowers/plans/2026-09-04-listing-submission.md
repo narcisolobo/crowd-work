@@ -1318,7 +1318,7 @@ EOF
 
 This task is UI-only; per this project's existing testing convention, verify manually rather than with an automated test.
 
-- [ ] **Step 1: Write `ListingFieldsFields.astro`**
+- [x] **Step 1: Write `ListingFieldsFields.astro`**
 
 Create `src/components/moderation/ListingFieldsFields.astro`:
 
@@ -1515,7 +1515,7 @@ const initialType = prefill?.type ?? "mic";
 </script>
 ```
 
-- [ ] **Step 2: Wire it into `ListingApprovalForm.astro`**
+- [x] **Step 2: Wire it into `ListingApprovalForm.astro`**
 
 In `src/components/moderation/ListingApprovalForm.astro`, replace the imports and Props to drop the fields this component no longer renders directly, and swap in `ListingFieldsFields`:
 
@@ -1580,7 +1580,7 @@ const { entry, prefill, venueOptions, neighborhoodOptions } = Astro.props;
 
 (`FormField` is no longer used directly in this file — remove its import along with the option-array imports (`TYPE_OPTIONS`, `FREQUENCY_OPTIONS`, `DAY_OF_WEEK_OPTIONS`, `WEEK_OF_MONTH_OPTIONS`), since `ListingFieldsFields` owns those now.)
 
-- [ ] **Step 3: Pass `neighborhoodOptions` from `queue/[id].astro`**
+- [x] **Step 3: Pass `neighborhoodOptions` from `queue/[id].astro`**
 
 In `src/pages/admin/queue/[id].astro`, update the import and venue/neighborhood loading:
 
@@ -1617,7 +1617,7 @@ Update the `<ListingApprovalForm>` usage to pass it through:
 />
 ```
 
-- [ ] **Step 4: Type-check**
+- [x] **Step 4: Type-check**
 
 ```bash
 pnpm exec astro check
@@ -1625,7 +1625,7 @@ pnpm exec astro check
 
 Expected: no errors.
 
-- [ ] **Step 5: Verify manually**
+- [x] **Step 5: Verify manually**
 
 ```bash
 astro dev --background
@@ -1643,7 +1643,7 @@ astro dev logs
 
 Expected: no errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/moderation/ListingFieldsFields.astro src/components/moderation/ListingApprovalForm.astro src/pages/admin/queue/\[id\].astro
