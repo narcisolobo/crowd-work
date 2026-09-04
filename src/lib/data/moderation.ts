@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../supabase/database.types";
+import type { Database, Json } from "../supabase/database.types";
 
 export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
@@ -26,6 +26,7 @@ export interface ProposedListingFields {
 
 export interface ProposedCancellation {
   originalDate: string;
+  note?: string | null;
 }
 
 export interface QueueEntry {
@@ -39,11 +40,15 @@ export interface QueueEntry {
   proposedBy: string | null;
   proposedReason: string | null;
   confirmedBy: string | null;
+  approvedBy: string | null;
+  approvedData: ProposedListingFields | ProposedCancellation | null;
+  approvalNote: string | null;
+  decidedAt: string | null;
   createdAt: string;
 }
 
 export const QUEUE_ENTRY_SELECT =
-  "id, listing_id, change_type, proposed_data, correction_note, origin, status, proposed_by, proposed_reason, confirmed_by, created_at";
+  "id, listing_id, change_type, proposed_data, correction_note, origin, status, proposed_by, proposed_reason, confirmed_by, approved_by, approved_data, approval_note, decided_at, created_at";
 
 export function mapQueueEntryRow(row: any): QueueEntry {
   return {
@@ -57,6 +62,10 @@ export function mapQueueEntryRow(row: any): QueueEntry {
     proposedBy: row.proposed_by,
     proposedReason: row.proposed_reason,
     confirmedBy: row.confirmed_by,
+    approvedBy: row.approved_by,
+    approvedData: row.approved_data,
+    approvalNote: row.approval_note,
+    decidedAt: row.decided_at,
     createdAt: row.created_at,
   };
 }
@@ -137,7 +146,11 @@ export async function confirmRejection(
 
   const { data, error } = await client
     .from("moderation_queue")
-    .update({ status: "rejected", confirmed_by: user.id })
+    .update({
+      status: "rejected",
+      confirmed_by: user.id,
+      decided_at: new Date().toISOString(),
+    })
     .eq("id", entryId)
     .eq("status", "rejection_proposed")
     .select(QUEUE_ENTRY_SELECT)
@@ -178,6 +191,7 @@ export async function approveNewListing(
   client: SupabaseClient<Database>,
   entryId: string,
   fields: ProposedListingFields,
+  approvalNote: string | null = null,
 ): Promise<void> {
   const { data: listing, error: listingError } = await client
     .from("listings")
@@ -216,7 +230,7 @@ export async function approveNewListing(
       );
   }
 
-  await markApproved(client, entryId, listing.id);
+  await markApproved(client, entryId, listing.id, fields, approvalNote);
 }
 
 export async function approveListingUpdate(
@@ -224,6 +238,7 @@ export async function approveListingUpdate(
   entryId: string,
   listingId: string,
   fields: ProposedListingFields,
+  approvalNote: string | null = null,
 ): Promise<void> {
   const { error: listingError } = await client
     .from("listings")
@@ -263,7 +278,7 @@ export async function approveListingUpdate(
       );
   }
 
-  await markApproved(client, entryId, listingId);
+  await markApproved(client, entryId, listingId, fields, approvalNote);
 }
 
 export async function approveCancellation(
@@ -272,6 +287,7 @@ export async function approveCancellation(
   listingId: string,
   originalDate: string,
   note: string | null,
+  approvalNote: string | null = null,
 ): Promise<void> {
   const { error: exceptionError } = await client
     .from("occurrence_exceptions")
@@ -285,17 +301,37 @@ export async function approveCancellation(
   if (exceptionError)
     throw new Error(`Failed to record cancellation: ${exceptionError.message}`);
 
-  await markApproved(client, entryId, listingId);
+  await markApproved(
+    client,
+    entryId,
+    listingId,
+    { originalDate, note },
+    approvalNote,
+  );
 }
 
 async function markApproved(
   client: SupabaseClient<Database>,
   entryId: string,
   listingId: string,
+  approvedData: ProposedListingFields | ProposedCancellation,
+  approvalNote: string | null,
 ): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
   const { data, error } = await client
     .from("moderation_queue")
-    .update({ status: "approved", listing_id: listingId })
+    .update({
+      status: "approved",
+      listing_id: listingId,
+      approved_by: user.id,
+      approved_data: approvedData as unknown as Json,
+      approval_note: approvalNote,
+      decided_at: new Date().toISOString(),
+    })
     .eq("id", entryId)
     .eq("status", "pending")
     .select("id")
@@ -307,4 +343,19 @@ async function markApproved(
     throw new Error(
       "Could not mark this entry approved — it is no longer pending.",
     );
+}
+
+export async function getArchiveEntries(
+  client: SupabaseClient<Database>,
+): Promise<QueueEntry[]> {
+  const { data, error } = await client
+    .from("moderation_queue")
+    .select(QUEUE_ENTRY_SELECT)
+    .in("status", ["approved", "rejected"])
+    .order("decided_at", { ascending: false });
+
+  if (error)
+    throw new Error(`Failed to load moderation archive: ${error.message}`);
+
+  return (data ?? []).map(mapQueueEntryRow);
 }

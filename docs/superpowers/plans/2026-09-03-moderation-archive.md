@@ -276,7 +276,7 @@ EOF
 - Consumes: `approved_by`/`approved_data`/`approval_note`/`decided_at` columns from Task 1
 - Produces: `QueueEntry.approvedBy/approvedData/approvalNote/decidedAt`; `approveNewListing`/`approveListingUpdate`/`approveCancellation` gain an optional trailing `approvalNote?: string | null` parameter; `getArchiveEntries(client): Promise<QueueEntry[]>` — consumed by Task 7's archive page
 
-- [ ] **Step 1: Extend the failing tests first**
+- [x] **Step 1: Extend the failing tests first**
 
 In `src/lib/data/moderation-approve.test.ts`, change the `approveNewListing` test's call and add assertions (replacing the existing `await approveNewListing(moderator1, entryId, edited);` line and everything after it up to the closing of that `it` block):
 
@@ -561,7 +561,7 @@ describe("getArchiveEntries", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 pnpm test moderation
@@ -569,7 +569,7 @@ pnpm test moderation
 
 Expected: FAIL — `approveNewListing`/`approveListingUpdate`/`approveCancellation` don't yet accept a fourth `approvalNote` argument, `approved_by`/`approved_data`/`decided_at` are null, `getArchiveEntries` doesn't exist, and the RLS forgery tests currently pass through unblocked (`with check` doesn't yet reference `approved_by`/`confirmed_by`).
 
-- [ ] **Step 3: Update the type definitions**
+- [x] **Step 3: Update the type definitions**
 
 In `src/lib/data/moderation.ts`, replace the `ProposedCancellation` interface (lines 27-29):
 
@@ -629,7 +629,7 @@ export function mapQueueEntryRow(row: any): QueueEntry {
 }
 ```
 
-- [ ] **Step 4: Update `confirmRejection` to set `decided_at`**
+- [x] **Step 4: Update `confirmRejection` to set `decided_at`**
 
 Replace the `.update(...)` call inside `confirmRejection` (currently `.update({ status: "rejected", confirmed_by: user.id })`):
 
@@ -641,7 +641,7 @@ Replace the `.update(...)` call inside `confirmRejection` (currently `.update({ 
     })
 ```
 
-- [ ] **Step 5: Update `markApproved` and the three approve functions**
+- [x] **Step 5: Update `markApproved` and the three approve functions**
 
 Replace `markApproved` (lines 291-310) with:
 
@@ -742,7 +742,7 @@ await markApproved(
 );
 ```
 
-- [ ] **Step 6: Add `getArchiveEntries`**
+- [x] **Step 6: Add `getArchiveEntries`**
 
 Add to the end of `src/lib/data/moderation.ts`:
 
@@ -763,7 +763,7 @@ export async function getArchiveEntries(
 }
 ```
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation
@@ -771,7 +771,7 @@ pnpm test moderation
 
 Expected: PASS — all `moderation*.test.ts` files green, including the two new RLS forgery tests.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-approve.test.ts src/lib/data/moderation-transitions.test.ts src/lib/data/moderation-archive.test.ts

@@ -82,7 +82,12 @@ describe("approveNewListing", () => {
       oneOffDate: null,
     };
 
-    await approveNewListing(moderator1, entryId, edited);
+    await approveNewListing(
+      moderator1,
+      entryId,
+      edited,
+      "Verified independently",
+    );
 
     const admin = createAdminClient();
     const { data: listing } = await admin
@@ -102,13 +107,26 @@ describe("approveNewListing", () => {
       .single();
     expect(rule!.day_of_week).toBe(1);
 
+    const {
+      data: { user: moderator1User },
+    } = await moderator1.auth.getUser();
     const { data: entry } = await admin
       .from("moderation_queue")
-      .select("status, listing_id")
+      .select(
+        "status, listing_id, approved_by, approved_data, approval_note, decided_at",
+      )
       .eq("id", entryId)
       .single();
     expect(entry!.status).toBe("approved");
     expect(entry!.listing_id).toBe(listing!.id);
+    expect(entry!.approved_by).toBe(moderator1User!.id);
+    expect(entry!.approval_note).toBe("Verified independently");
+    expect(entry!.decided_at).not.toBeNull();
+    // approved_data is a snapshot of the moderator-edited values, not the
+    // original proposal — matches `edited`, not `proposed_data` above.
+    expect((entry!.approved_data as { title: string }).title).toBe(
+      "Moderator-Corrected Title",
+    );
   });
 });
 
@@ -152,7 +170,13 @@ describe("approveListingUpdate", () => {
       oneOffDate: "2026-10-01",
     };
 
-    await approveListingUpdate(moderator1, entryId, original.id, edited);
+    await approveListingUpdate(
+      moderator1,
+      entryId,
+      original.id,
+      edited,
+      "Accurate after minor edits",
+    );
 
     const { data: updated } = await admin
       .from("listings")
@@ -160,6 +184,16 @@ describe("approveListingUpdate", () => {
       .eq("id", original.id)
       .single();
     expect(updated!.start_time).toBe("20:30:00");
+
+    const { data: entry } = await admin
+      .from("moderation_queue")
+      .select("approved_data, approval_note")
+      .eq("id", entryId)
+      .single();
+    expect(entry!.approval_note).toBe("Accurate after minor edits");
+    expect((entry!.approved_data as { startTime: string }).startTime).toBe(
+      "20:30",
+    );
   });
 });
 
@@ -195,6 +229,7 @@ describe("approveCancellation", () => {
       listing.id,
       "2026-09-15",
       "Venue closed that night",
+      "Accurate as submitted",
     );
 
     const { data: exception } = await admin
@@ -204,5 +239,47 @@ describe("approveCancellation", () => {
       .eq("original_date", "2026-09-15")
       .single();
     expect(exception!.type).toBe("cancelled");
+
+    const { data: entry } = await admin
+      .from("moderation_queue")
+      .select("approved_data, approval_note")
+      .eq("id", entryId)
+      .single();
+    expect(entry!.approval_note).toBe("Accurate as submitted");
+    expect(entry!.approved_data).toEqual({
+      originalDate: "2026-09-15",
+      note: "Venue closed that night",
+    });
+  });
+});
+
+describe("approval RLS", () => {
+  it("blocks a moderator from forging another moderator's id into approved_by", async () => {
+    const entryId = await createPendingEntry({
+      change_type: "cancellation",
+      listing_id: "d0000000-0000-0000-0000-000000000001",
+      proposed_data: { originalDate: "2026-09-15" },
+      correction_note: "test entry",
+    });
+
+    const moderator1 = await signInTestModerator(1);
+    const moderator2 = await signInTestModerator(2);
+    const {
+      data: { user: moderator2User },
+    } = await moderator2.auth.getUser();
+
+    const { data, error } = await moderator1
+      .from("moderation_queue")
+      .update({
+        status: "approved",
+        approved_by: moderator2User!.id,
+        decided_at: new Date().toISOString(),
+      })
+      .eq("id", entryId)
+      .eq("status", "pending")
+      .select("id");
+
+    expect(error).not.toBeNull();
+    expect(data).toBeNull();
   });
 });
