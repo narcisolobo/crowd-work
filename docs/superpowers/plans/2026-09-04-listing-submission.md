@@ -619,7 +619,7 @@ EOF
 - Consumes: `ProposedVenue`, `ProposedListingFields` from Task 2
 - Produces: exported `parseProposedListingFields(formData): ProposedListingFields` (previously private) — consumed by Task 5's `submitNewListingProposal`, Task 6's `directAddListing`, and the existing `handleQueueReviewAction`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/lib/data/moderation-parse.test.ts`:
 
@@ -691,7 +691,7 @@ describe("parseProposedListingFields", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 ```bash
 pnpm test moderation-parse
@@ -699,7 +699,7 @@ pnpm test moderation-parse
 
 Expected: FAIL — `parseProposedListingFields` isn't exported yet.
 
-- [ ] **Step 3: Export and extend `parseProposedListingFields`**
+- [x] **Step 3: Export and extend `parseProposedListingFields`**
 
 In `src/lib/data/moderation.ts`, replace the existing (private) `parseProposedListingFields` function with:
 
@@ -753,7 +753,7 @@ export function parseProposedListingFields(
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation-parse
@@ -761,7 +761,7 @@ pnpm test moderation-parse
 
 Expected: PASS
 
-- [ ] **Step 5: Run the full moderation suite to check for regressions**
+- [x] **Step 5: Run the full moderation suite to check for regressions**
 
 ```bash
 pnpm test moderation
@@ -769,7 +769,7 @@ pnpm test moderation
 
 Expected: PASS — `handleQueueReviewAction`'s existing callers of `parseProposedListingFields` are unaffected by the export change.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-parse.test.ts

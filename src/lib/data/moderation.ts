@@ -399,15 +399,35 @@ async function markApproved(
     );
 }
 
-function parseProposedListingFields(formData: FormData): ProposedListingFields {
+function parseVenueSelection(formData: FormData): {
+  venueId: string | null;
+  newVenue: ProposedVenue | null;
+} {
+  const venueId = formData.get("venueId")?.toString() ?? "";
+  if (venueId !== "__new__") {
+    return { venueId: venueId || null, newVenue: null };
+  }
+  return {
+    venueId: null,
+    newVenue: {
+      name: formData.get("newVenueName")?.toString() ?? "",
+      address: formData.get("newVenueAddress")?.toString() ?? "",
+      neighborhoodId: formData.get("newVenueNeighborhoodId")?.toString() ?? "",
+      googleMapsUrl: formData.get("newVenueGoogleMapsUrl")?.toString() || null,
+    },
+  };
+}
+
+export function parseProposedListingFields(
+  formData: FormData,
+): ProposedListingFields {
   const frequency = formData.get("frequency")?.toString();
   return {
     type: formData.get("type")?.toString() === "show" ? "show" : "mic",
     title: formData.get("title")?.toString() ?? "",
     host: formData.get("host")?.toString() || null,
     description: formData.get("description")?.toString() || null,
-    venueId: formData.get("venueId")?.toString() ?? "",
-    newVenue: null,
+    ...parseVenueSelection(formData),
     startTime: formData.get("startTime")?.toString() ?? "",
     signUpMethod: formData.get("signUpMethod")?.toString() || null,
     costToPerform: formData.get("costToPerform")?.toString() || null,
