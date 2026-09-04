@@ -1,11 +1,13 @@
 ---
 import { Font } from "astro:assets";
 import "../styles/global.css";
+import AdminHeader from "../components/layout/AdminHeader.astro";
 
 interface Props {
   title: string;
+  userEmail?: string | null;
 }
-const { title } = Astro.props;
+const { title, userEmail = null } = Astro.props;
 ---
 
 <!doctype html>
@@ -28,12 +30,9 @@ const { title } = Astro.props;
     <Font cssVariable="--font-ibm-plex-sans" preload />
     <Font cssVariable="--font-ibm-plex-mono" />
   </head>
-  <body
-    class="font-body text-ink flex min-h-screen flex-col text-base antialiased"
-  >
-    <div
-      class="bg-paper mx-auto flex w-full max-w-180 flex-1 flex-col px-5 pb-16"
-    >
+  <body class="flex min-h-screen flex-col font-body text-base text-ink antialiased">
+    <AdminHeader userEmail={userEmail} />
+    <div class="page mx-auto flex w-full max-w-180 flex-1 flex-col bg-paper px-5 pb-16">
       <slot />
     </div>
   </body>

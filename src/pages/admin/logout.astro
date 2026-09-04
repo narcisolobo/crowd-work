@@ -1,7 +1,25 @@
 ---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import Button from "../../components/forms/Button.astro";
 import { createServerSupabaseClient } from "../../lib/supabase/server";
 
-const supabase = createServerSupabaseClient(Astro.request, Astro.cookies);
-await supabase.auth.signOut();
-return Astro.redirect("/admin/login");
+if (Astro.request.method === "POST") {
+  const supabase = createServerSupabaseClient(Astro.request, Astro.cookies);
+  await supabase.auth.signOut();
+  return Astro.redirect("/admin/login");
+}
 ---
+
+<AdminLayout title="Logging out — Crowd Work admin">
+  <div class="flex flex-col items-start gap-4 pt-16 pb-10">
+    <p class="text-[0.95rem] text-ink-soft">Logging out…</p>
+    <form id="logout-form" method="post">
+      <Button type="submit" variant="outline">Continue</Button>
+    </form>
+  </div>
+</AdminLayout>
+
+<script>
+  const form = document.getElementById("logout-form") as HTMLFormElement | null;
+  form?.requestSubmit();
+</script>

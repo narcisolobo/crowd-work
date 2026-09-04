@@ -1,0 +1,37 @@
+---
+interface Props {
+  label: string;
+  name: string;
+  type?: "text" | "email" | "password" | "date" | "time" | "url" | "number";
+  value?: string | number | null;
+  required?: boolean;
+  min?: string | number;
+  max?: string | number;
+  autocomplete?: string;
+}
+
+const {
+  label,
+  name,
+  type = "text",
+  value = "",
+  required = false,
+  min,
+  max,
+  autocomplete,
+} = Astro.props;
+---
+
+<label class="flex flex-col gap-1.5 text-[0.82rem] font-medium text-ink-soft">
+  {label}
+  <input
+    type={type}
+    name={name}
+    value={value ?? ""}
+    required={required}
+    min={min}
+    max={max}
+    autocomplete={autocomplete}
+    class="rounded-sm border border-rule bg-paper px-3 py-2 font-body text-[0.95rem] text-ink"
+  />
+</label>

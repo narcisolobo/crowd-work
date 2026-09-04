@@ -35,6 +35,24 @@ export interface ListingWithVenue {
   } | null;
   oneOffDate: string | null;
 }
+export interface Neighborhood {
+  id: string;
+  name: string;
+  areaId: string;
+}
+
+export async function getNeighborhoods(): Promise<Neighborhood[]> {
+  const { data, error } = await supabase
+    .from("neighborhoods")
+    .select("id, name, area_id")
+    .order("name");
+  if (error) throw new Error(`Failed to load neighborhoods: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    areaId: row.area_id,
+  }));
+}
 
 export async function getAreas(): Promise<Area[]> {
   const { data, error } = await supabase

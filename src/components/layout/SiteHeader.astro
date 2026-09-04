@@ -3,12 +3,12 @@ import BrandMark from "./BrandMark.astro";
 import ThemeToggle from "../theme/ThemeToggle.astro";
 ---
 
-<header class="site-nav sticky top-0 z-20 bg-paper-shadow">
+<header class="site-nav bg-paper-shadow sticky top-0 z-20">
   <div
-    class="mx-auto flex h-14 max-w-180 items-center gap-5.5 border-b border-b-[color-mix(in_srgb,var(--ink)_25%,var(--paper)_75%)] bg-paper px-5"
+    class="bg-paper mx-auto flex h-14 max-w-180 items-center gap-5.5 border-b border-b-[color-mix(in_srgb,var(--ink)_25%,var(--paper)_75%)] px-5"
   >
-    <a href="/" class="mr-auto flex items-center gap-2 text-ink no-underline">
-      <BrandMark class="h-5.75 w-5.75 flex-none text-ink" />
+    <a href="/" class="text-ink mr-auto flex items-center gap-2 no-underline">
+      <BrandMark class="text-ink h-5.75 w-5.75 flex-none" />
       <span class="font-display text-[1.15rem] font-bold tracking-tight"
         >Crowd Work</span
       >
@@ -16,12 +16,12 @@ import ThemeToggle from "../theme/ThemeToggle.astro";
     <nav class="flex items-center gap-4.5" aria-label="Primary">
       <a
         href="/"
-        class="font-body text-[0.9rem] text-ink-soft underline-offset-2 hover:text-ink hover:underline max-[480px]:hidden"
+        class="font-body text-ink-soft hover:text-ink text-[0.9rem] underline-offset-2 hover:underline max-[480px]:hidden"
         >Browse</a
       >
       <a
-        href="#"
-        class="font-body text-[0.9rem] text-ink-soft underline-offset-2 hover:text-ink hover:underline"
+        href="/listings/new"
+        class="font-body text-ink-soft hover:text-ink text-[0.9rem] underline-offset-2 hover:underline"
       >
         <span class="max-[480px]:hidden">Submit a listing</span>
         <span class="hidden max-[480px]:inline">Submit</span>

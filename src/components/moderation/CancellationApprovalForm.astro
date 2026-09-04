@@ -1,0 +1,49 @@
+---
+import Button from "../forms/Button.astro";
+import FormField from "../forms/FormField.astro";
+import FormSelect from "../forms/FormSelect.astro";
+import FormTextarea from "../forms/FormTextarea.astro";
+import type { ProposedCancellation, QueueEntry } from "../../lib/data/moderation";
+import { APPROVAL_REASON_OPTIONS } from "../../lib/utils/moderation-labels";
+
+interface Props {
+  entry: QueueEntry;
+  proposedCancellation: ProposedCancellation | null;
+}
+
+const { entry, proposedCancellation } = Astro.props;
+---
+
+<form method="post" class="mt-8 flex max-w-104 flex-col gap-4">
+  <input type="hidden" name="action" value="approve_cancellation" />
+  <FormField
+    label="Date being cancelled"
+    name="originalDate"
+    type="date"
+    value={proposedCancellation?.originalDate}
+    required
+  />
+  <FormTextarea label="Note" name="note" value={entry.correctionNote ?? ""} />
+  <div class="border-rule flex flex-col gap-4 border-t pt-6">
+    <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+      Approval
+    </p>
+    <FormSelect
+      label="Reason"
+      name="reason"
+      options={APPROVAL_REASON_OPTIONS}
+      value=""
+    />
+    <div data-other-reason hidden>
+      <FormTextarea label="Other reason" name="otherReason" />
+    </div>
+  </div>
+  <Button
+    type="submit"
+    variant="primary"
+    disabled={entry.status !== "pending"}
+    class="mt-2 self-start"
+  >
+    Approve cancellation
+  </Button>
+</form>

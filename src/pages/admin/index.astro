@@ -1,35 +1,100 @@
 ---
+import AdminUtilityBar from "../../components/layout/AdminUtilityBar.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getReviewableQueueEntries } from "../../lib/data/moderation";
+import {
+  CHANGE_TYPE_LABEL,
+  ORIGIN_LABEL,
+  previewFor,
+} from "../../lib/utils/moderation-labels";
 
 const supabase = Astro.locals.supabase!;
+const user = Astro.locals.user!;
 const entries = await getReviewableQueueEntries(supabase);
+
+function dateLabel(createdAt: string): string {
+  return new Date(createdAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Moderation queue — Crowd Work</title>
-  </head>
-  <body>
-    <div>
-      <span>Logged in as {Astro.locals.user!.email}</span>
-      <a href="/admin/logout">Log out</a>
-    </div>
-    <h1>Moderation queue</h1>
-    {
-      entries.length === 0 ? (
-        <p>Nothing to review right now.</p>
-      ) : (
-        <ul>
-          {entries.map((entry) => (
-            <li>
-              <a href={`/admin/queue/${entry.id}`}>
-                {entry.changeType} — {entry.origin} — {entry.status}
+<AdminLayout title="Moderation queue — Crowd Work admin" userEmail={user.email}>
+  <AdminUtilityBar />
+
+  <div class="border-rule mt-5 border-b pb-5">
+    <h1 class="font-display text-[1.28rem] font-bold">Moderation queue</h1>
+    <p class="mt-2 text-[0.95rem]">
+      <strong class="text-gold-ink font-semibold">
+        {entries.length}
+        {entries.length === 1 ? "entry" : "entries"}
+      </strong>{" "}
+      waiting on review.
+    </p>
+  </div>
+
+  {
+    entries.length === 0 ? (
+      <p class="text-ink-soft py-10 text-[0.95rem]">
+        Nothing to review right now.
+      </p>
+    ) : (
+      <ul class="m-0 list-none p-0">
+        {entries.map((entry) => {
+          const needsAttention = entry.status === "rejection_proposed";
+          return (
+            <li
+              class:list={[
+                "border-rule flex items-start justify-between gap-4 border-b py-5",
+                needsAttention &&
+                  "border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] pl-3.5",
+              ]}
+            >
+              <div class="flex items-start gap-3.5">
+                <span class="border-rule font-body text-ink-soft mt-0.5 rounded-sm border px-1.5 py-px text-[0.65rem] font-semibold tracking-wider whitespace-nowrap uppercase">
+                  {CHANGE_TYPE_LABEL[entry.changeType]}
+                </span>
+                <div>
+                  <h2 class="font-body text-[0.95rem] font-medium">
+                    <a
+                      href={`/admin/queue/${entry.id}`}
+                      class="underline-offset-2 hover:underline"
+                    >
+                      {previewFor(entry)}
+                    </a>
+                  </h2>
+                  <p class="text-ink-soft mt-1 text-[0.82rem]">
+                    {ORIGIN_LABEL[entry.origin] ?? entry.origin} ·{" "}
+                    {dateLabel(entry.createdAt)}
+                  </p>
+                  {needsAttention && (
+                    <span class="text-gold-ink before:bg-gold mt-1.5 inline-flex items-center gap-1.5 text-[0.78rem] font-medium before:h-1.75 before:w-1.75 before:flex-none before:rounded-full">
+                      Rejection proposed — needs a second moderator
+                    </span>
+                  )}
+                </div>
+              </div>
+              <a
+                href={`/admin/queue/${entry.id}`}
+                aria-hidden="true"
+                tabindex="-1"
+                class="text-ink-soft mt-1.5 flex-none"
+              >
+                <svg class="h-3 w-3 -rotate-90" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M3 4.5L6 7.5L9 4.5"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
               </a>
             </li>
-          ))}
-        </ul>
-      )
-    }
-  </body>
-</html>
+          );
+        })}
+      </ul>
+    )
+  }
+</AdminLayout>

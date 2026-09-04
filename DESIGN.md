@@ -75,6 +75,15 @@ components:
     textColor: "{colors.ink-soft}"
     rounded: "{rounded.full}"
     padding: "5px 12px 5px 8px"
+  account-menu-trigger:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink-soft}"
+    typography: "{typography.body}"
+    padding: "0"
+  account-menu-panel:
+    backgroundColor: "{colors.paper-shadow}"
+    rounded: "{rounded.sm}"
+    padding: "6px 0"
 ---
 
 # Design System: Crowd Work
@@ -188,6 +197,10 @@ Controls throughout are tactile and confident: small in footprint, but state cha
 - **Sticky header:** persistent across all pages, `position: sticky; top: 0`, `1px --ink` bottom border. Holds the brand mark + wordmark, primary nav ("Browse," "Submit a listing"), and the theme switcher.
 - **Nav links:** Body-face, `--ink-soft`, underline on hover
 - **Mobile treatment:** below 480px, "Browse" hides and "Submit a listing" shortens to "Submit"
+- **Admin variant:** the admin header separates two jobs instead of listing everything flat — feature links (Archive, and future admin surfaces) stay as plain visible nav links, while session identity collapses into the Account Menu below. The row is `flex-wrap` with `min-height` rather than a fixed height, so it reflows to a second line as feature links accumulate or at high browser zoom, instead of clipping or scrolling horizontally.
+
+### Account Menu
+The moderator's email, styled as a plain nav link with a trailing chevron, discloses "Log out" on click rather than sitting inline as its own nav item — the fix for an admin nav that grows a feature link at a time while session actions stay constant. Built as a native `<details>`/`<summary>` disclosure: it opens and closes with no JavaScript required, and a small script only adds outside-click and Escape dismissal on top of that native behavior. The opened panel is `--paper-shadow` fill with a `1px --rule` border and `4px` radius — the same tonal-elevation vocabulary as everywhere else in the system, never a `box-shadow` (The No Card, No Gimmick Rule applies here too). The chevron rotates 180° when open as the only state cue beyond the panel itself.
 
 ### Ticket Stub (signature component)
 The date block at the left of every listing row — day/date/month stacked, `--paper-shadow` fill, `4px` radius. Gets a gold-mixed left edge (`color-mix(in srgb, var(--gold) 60%, var(--paper) 40%)`) only when the listing's occurrence falls within the next 7 days, computed against the page's actual date range rather than a second, separately-invented threshold. This is the system's most distinctive device — a physical ticket-stub silhouette doing double duty as both a date display and a "how soon" signal.
@@ -203,6 +216,7 @@ Styled as a bulb pill ("Lights on" / "Lights off") rather than a generic sun/moo
 - **Do** use relative units (`rem`, `clamp()`) with no fixed-width containers on every layout, public or admin — a working moderator navigates at 400%+ zoom.
 - **Do** keep every interactive control's `:focus-visible` state a visible `--gold-ink` outline.
 - **Do** gate any new transition or animation behind `(prefers-reduced-motion: no-preference)`, matching the one existing row-fade transition.
+- **Do** build any new disclosure or menu (account actions, overflow nav, etc.) on native `<details>`/`<summary>` so it works with no JavaScript, adding script only for the polish a browser doesn't provide for free (outside-click, Escape) — see Account Menu.
 
 ### Don't:
 - **Don't** introduce a card, a rounded tile, or a `box-shadow` for grouping or elevation — use a tonal background (`--paper-shadow`) or a hairline rule instead (The No Card, No Gimmick Rule).

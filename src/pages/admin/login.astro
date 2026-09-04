@@ -1,5 +1,7 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
+import FormField from "../../components/forms/FormField.astro";
+import Button from "../../components/forms/Button.astro";
 import { createServerSupabaseClient } from "../../lib/supabase/server";
 
 let errorMessage: string | null = null;
@@ -27,18 +29,42 @@ if (Astro.request.method === "POST") {
 }
 ---
 
-<AdminLayout title="Moderator login — Crowd Work">
-  <h1>Moderator login</h1>
-  {errorMessage && <p role="alert">{errorMessage}</p>}
-  <form method="post">
-    <label>
-      Email
-      <input type="email" name="email" required />
-    </label>
-    <label>
-      Password
-      <input type="password" name="password" required />
-    </label>
-    <button type="submit">Log in</button>
-  </form>
+<AdminLayout title="Moderator login — Crowd Work admin">
+  <div class="mx-auto w-full max-w-104 pt-16 pb-10">
+    <h1 class="font-display text-[1.28rem] font-bold">Moderator login</h1>
+    <p class="mt-1.5 text-[0.92rem] text-ink-soft">
+      Sign in to review the moderation queue.
+    </p>
+
+    {
+      errorMessage && (
+        <p
+          role="alert"
+          class="mt-5 rounded-sm bg-paper-shadow px-3.5 py-2.5 text-[0.86rem] font-medium text-ink"
+        >
+          {errorMessage}
+        </p>
+      )
+    }
+
+    <form method="post" class="mt-6 flex flex-col gap-4">
+      <FormField
+        label="Email"
+        name="email"
+        type="email"
+        required
+        autocomplete="email"
+      />
+      <FormField
+        label="Password"
+        name="password"
+        type="password"
+        required
+        autocomplete="current-password"
+      />
+      <Button type="submit" variant="primary" class="mt-2 self-start">
+        Log in
+      </Button>
+    </form>
+  </div>
 </AdminLayout>

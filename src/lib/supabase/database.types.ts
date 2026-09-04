@@ -110,10 +110,14 @@ export type Database = {
       }
       moderation_queue: {
         Row: {
+          approval_note: string | null
+          approved_by: string | null
+          approved_data: Json | null
           change_type: Database["public"]["Enums"]["moderation_change_type"]
           confirmed_by: string | null
           correction_note: string | null
           created_at: string
+          decided_at: string | null
           id: string
           listing_id: string | null
           origin: string
@@ -123,10 +127,14 @@ export type Database = {
           status: Database["public"]["Enums"]["moderation_status"]
         }
         Insert: {
+          approval_note?: string | null
+          approved_by?: string | null
+          approved_data?: Json | null
           change_type: Database["public"]["Enums"]["moderation_change_type"]
           confirmed_by?: string | null
           correction_note?: string | null
           created_at?: string
+          decided_at?: string | null
           id?: string
           listing_id?: string | null
           origin: string
@@ -136,10 +144,14 @@ export type Database = {
           status?: Database["public"]["Enums"]["moderation_status"]
         }
         Update: {
+          approval_note?: string | null
+          approved_by?: string | null
+          approved_data?: Json | null
           change_type?: Database["public"]["Enums"]["moderation_change_type"]
           confirmed_by?: string | null
           correction_note?: string | null
           created_at?: string
+          decided_at?: string | null
           id?: string
           listing_id?: string | null
           origin?: string
@@ -157,6 +169,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      moderators: {
+        Row: {
+          email: string
+          id: string
+        }
+        Insert: {
+          email: string
+          id: string
+        }
+        Update: {
+          email?: string
+          id?: string
+        }
+        Relationships: []
       }
       neighborhoods: {
         Row: {

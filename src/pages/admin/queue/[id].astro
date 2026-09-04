@@ -1,16 +1,22 @@
 ---
+import Button from "../../../components/forms/Button.astro";
+import FormTextarea from "../../../components/forms/FormTextarea.astro";
+import AdminUtilityBar from "../../../components/layout/AdminUtilityBar.astro";
+import CancellationApprovalForm from "../../../components/moderation/CancellationApprovalForm.astro";
+import ListingApprovalForm from "../../../components/moderation/ListingApprovalForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getNeighborhoods, getVenues } from "../../../lib/data/listings";
 import {
+  getPrefillForEntry,
   getQueueEntryById,
-  approveNewListing,
-  approveListingUpdate,
-  approveCancellation,
-  proposeRejection,
-  confirmRejection,
-  sendBackToPending,
-  type ProposedListingFields,
+  handleQueueReviewAction,
   type ProposedCancellation,
+  type QueueChangeType,
 } from "../../../lib/data/moderation";
-import { getListingById, getVenues } from "../../../lib/data/listings";
+import {
+  ORIGIN_LABEL,
+  STATUS_LABEL,
+} from "../../../lib/utils/moderation-labels";
 
 const { id } = Astro.params;
 const supabase = Astro.locals.supabase!;
@@ -26,85 +32,22 @@ if (!entry) {
   return Astro.redirect("/admin");
 }
 
-const venues = await getVenues();
+const [venues, neighborhoods] = await Promise.all([
+  getVenues(),
+  getNeighborhoods(),
+]);
 let errorMessage: string | null = null;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
-  const action = formData.get("action")?.toString();
 
   try {
-    if (action === "approve") {
-      const frequency = formData.get("frequency")?.toString();
-      const fields: ProposedListingFields = {
-        type: formData.get("type")?.toString() === "show" ? "show" : "mic",
-        title: formData.get("title")?.toString() ?? "",
-        host: formData.get("host")?.toString() || null,
-        description: formData.get("description")?.toString() || null,
-        venueId: formData.get("venueId")?.toString() ?? "",
-        startTime: formData.get("startTime")?.toString() ?? "",
-        signUpMethod: formData.get("signUpMethod")?.toString() || null,
-        costToPerform: formData.get("costToPerform")?.toString() || null,
-        ticketPrice: formData.get("ticketPrice")?.toString() || null,
-        ticketUrl: formData.get("ticketUrl")?.toString() || null,
-        recurrence:
-          frequency === "weekly" || frequency === "monthly"
-            ? {
-                frequency,
-                dayOfWeek: Number(formData.get("dayOfWeek")),
-                weekOfMonth: formData.get("weekOfMonth")
-                  ? Number(formData.get("weekOfMonth"))
-                  : null,
-              }
-            : null,
-        oneOffDate: formData.get("oneOffDate")?.toString() || null,
-      };
-
-      if (entry.changeType === "new") {
-        await approveNewListing(supabase, entry.id, fields);
-      } else if (entry.changeType === "update") {
-        await approveListingUpdate(
-          supabase,
-          entry.id,
-          entry.listingId!,
-          fields,
-        );
-      }
-
+    const result = await handleQueueReviewAction(supabase, entry, formData);
+    if (result?.type === "redirect") {
       return Astro.redirect("/admin");
     }
-
-    if (action === "approve_cancellation") {
-      const originalDate = formData.get("originalDate")?.toString() ?? "";
-      const note = formData.get("note")?.toString() || null;
-      await approveCancellation(
-        supabase,
-        entry.id,
-        entry.listingId!,
-        originalDate,
-        note,
-      );
-      return Astro.redirect("/admin");
-    }
-
-    if (action === "propose_reject") {
-      const reason = formData.get("reason")?.toString();
-      if (!reason) {
-        errorMessage = "A reason is required to propose rejection.";
-      } else {
-        await proposeRejection(supabase, entry.id, reason);
-        return Astro.redirect("/admin");
-      }
-    }
-
-    if (action === "confirm_reject") {
-      await confirmRejection(supabase, entry.id);
-      return Astro.redirect("/admin");
-    }
-
-    if (action === "send_back") {
-      await sendBackToPending(supabase, entry.id);
-      return Astro.redirect("/admin");
+    if (result?.type === "validation_error") {
+      errorMessage = result.message;
     }
   } catch (error) {
     errorMessage =
@@ -113,259 +56,150 @@ if (Astro.request.method === "POST") {
   }
 }
 
-// Pre-fill the edit form from proposed_data when there is a structured
-// proposal (new listings, and updates simulating a future sourcing-agent
-// proposal). A report-form 'update' has no proposed_data — pre-fill from
-// the listing's current values instead, since the moderator is translating
-// free text into field edits, not reviewing a structured diff.
-let prefill: ProposedListingFields | null = null;
-if (entry.changeType === "new") {
-  prefill = entry.proposedData as ProposedListingFields;
-} else if (entry.changeType === "update") {
-  if (entry.proposedData) {
-    prefill = entry.proposedData as ProposedListingFields;
-  } else {
-    const current = await getListingById(entry.listingId!);
-    if (current) {
-      prefill = {
-        type: current.type,
-        title: current.title,
-        host: current.host,
-        description: current.description,
-        venueId: current.venue.id,
-        startTime: current.startTime,
-        signUpMethod: current.signUpMethod,
-        costToPerform: current.costToPerform,
-        ticketPrice: current.ticketPrice,
-        ticketUrl: current.ticketUrl,
-        recurrence: current.recurrenceRule,
-        oneOffDate: current.oneOffDate,
-      };
-    }
-  }
-}
+const prefill = await getPrefillForEntry(entry);
 const proposedCancellation =
   entry.changeType === "cancellation"
     ? (entry.proposedData as ProposedCancellation)
     : null;
 const isOwnProposal = entry.proposedBy === user.id;
+
+const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
+  new: "New listing",
+  update: "Update",
+  cancellation: "Cancellation",
+};
+
+const venueOptions = venues.map((venue) => ({
+  value: venue.id,
+  label: venue.name,
+}));
+
+const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
+  value: neighborhood.id,
+  label: neighborhood.name,
+}));
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Review entry — Crowd Work admin</title>
-  </head>
-  <body>
-    <a href="/admin">Back to queue</a>
-    <h1>{entry.changeType} — {entry.origin}</h1>
-    <p>Status: {entry.status}</p>
-    {errorMessage && <p role="alert">{errorMessage}</p>}
-    {entry.correctionNote && <p>Reporter's note: {entry.correctionNote}</p>}
+<AdminLayout title="Review entry — Crowd Work admin" userEmail={user.email}>
+  <AdminUtilityBar backHref="/admin" backLabel="Back to queue" />
 
-    {
-      entry.changeType === "cancellation" ? (
-        <form method="post">
-          <input type="hidden" name="action" value="approve_cancellation" />
-          <label>
-            Date being cancelled
-            <input
-              type="date"
-              name="originalDate"
-              value={proposedCancellation?.originalDate}
-              required
-            />
-          </label>
-          <label>
-            Note
-            <textarea name="note">{entry.correctionNote ?? ""}</textarea>
-          </label>
-          <button type="submit" disabled={entry.status !== "pending"}>
-            Approve cancellation
-          </button>
-        </form>
-      ) : (
-        <form method="post">
-          <input type="hidden" name="action" value="approve" />
-          <label>
-            Type
-            <select name="type">
-              <option value="mic" selected={prefill?.type !== "show"}>
-                Mic
-              </option>
-              <option value="show" selected={prefill?.type === "show"}>
-                Show
-              </option>
-            </select>
-          </label>
-          <label>
-            Title
-            <input
-              type="text"
-              name="title"
-              value={prefill?.title ?? ""}
-              required
-            />
-          </label>
-          <label>
-            Host
-            <input type="text" name="host" value={prefill?.host ?? ""} />
-          </label>
-          <label>
-            Description
-            <textarea name="description">{prefill?.description ?? ""}</textarea>
-          </label>
-          <label>
-            Venue
-            <select name="venueId" required>
-              {venues.map((venue) => (
-                <option
-                  value={venue.id}
-                  selected={venue.id === prefill?.venueId}
-                >
-                  {venue.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Start time
-            <input
-              type="time"
-              name="startTime"
-              value={prefill?.startTime ?? ""}
-              required
-            />
-          </label>
-          <label>
-            Sign-up method
-            <input
-              type="text"
-              name="signUpMethod"
-              value={prefill?.signUpMethod ?? ""}
-            />
-          </label>
-          <label>
-            Cost to perform
-            <input
-              type="text"
-              name="costToPerform"
-              value={prefill?.costToPerform ?? ""}
-            />
-          </label>
-          <label>
-            Ticket price
-            <input
-              type="text"
-              name="ticketPrice"
-              value={prefill?.ticketPrice ?? ""}
-            />
-          </label>
-          <label>
-            Ticket URL
-            <input
-              type="text"
-              name="ticketUrl"
-              value={prefill?.ticketUrl ?? ""}
-            />
-          </label>
-          <fieldset>
-            <legend>Recurrence</legend>
-            <label>
-              Frequency
-              <select name="frequency">
-                <option value="" selected={!prefill?.recurrence}>
-                  One-time
-                </option>
-                <option
-                  value="weekly"
-                  selected={prefill?.recurrence?.frequency === "weekly"}
-                >
-                  Weekly
-                </option>
-                <option
-                  value="monthly"
-                  selected={prefill?.recurrence?.frequency === "monthly"}
-                >
-                  Monthly
-                </option>
-              </select>
-            </label>
-            <label>
-              Day of week (0=Sunday..6=Saturday)
-              <input
-                type="number"
-                name="dayOfWeek"
-                min="0"
-                max="6"
-                value={prefill?.recurrence?.dayOfWeek}
-              />
-            </label>
-            <label>
-              Week of month (1-4, or -1 for last)
-              <input
-                type="number"
-                name="weekOfMonth"
-                min="-1"
-                max="4"
-                value={prefill?.recurrence?.weekOfMonth ?? ""}
-              />
-            </label>
-            <label>
-              One-off date (if not recurring)
-              <input
-                type="date"
-                name="oneOffDate"
-                value={prefill?.oneOffDate ?? ""}
-              />
-            </label>
-          </fieldset>
-          <button type="submit" disabled={entry.status !== "pending"}>
-            Approve
-          </button>
-        </form>
-      )
-    }
+  <div class="mt-5 flex flex-wrap items-center gap-3">
+    <h1 class="font-display text-[1.28rem] font-bold">
+      {CHANGE_TYPE_LABEL[entry.changeType]}
+    </h1>
+    <span
+      class="border-rule font-body text-ink-soft rounded-sm border px-1.5 py-px text-[0.65rem] font-semibold tracking-wider uppercase"
+    >
+      {ORIGIN_LABEL[entry.origin] ?? entry.origin}
+    </span>
+  </div>
 
-    {
-      entry.status === "pending" && (
-        <form method="post">
-          <input type="hidden" name="action" value="propose_reject" />
-          <label>
-            Reason for rejection
-            <textarea name="reason" required />
-          </label>
-          <button type="submit">Propose rejection</button>
-        </form>
-      )
-    }
+  <p class="text-ink-soft mt-1.5 text-[0.86rem]">
+    Status: <span class="text-ink font-medium"
+      >{STATUS_LABEL[entry.status]}</span
+    >
+  </p>
 
-    {
-      entry.status === "rejection_proposed" && (
-        <div>
-          <p>
-            Rejection proposed by moderator {entry.proposedBy}:{" "}
-            {entry.proposedReason}
+  {
+    errorMessage && (
+      <p
+        role="alert"
+        class="bg-paper-shadow text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
+      >
+        <strong>Error:</strong> {errorMessage}
+      </p>
+    )
+  }
+
+  {
+    entry.correctionNote && (
+      <div class="border-l-rule bg-paper-shadow mt-6 rounded-sm border-l-[3px] px-4 py-3.5">
+        <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+          Reporter's note
+        </p>
+        <p class="text-ink mt-1.5 text-[0.95rem] italic">
+          "{entry.correctionNote}"
+        </p>
+      </div>
+    )
+  }
+
+  {
+    entry.changeType === "cancellation" ? (
+      <CancellationApprovalForm
+        entry={entry}
+        proposedCancellation={proposedCancellation}
+      />
+    ) : (
+      <ListingApprovalForm
+        entry={entry}
+        prefill={prefill}
+        venueOptions={venueOptions}
+        neighborhoodOptions={neighborhoodOptions}
+      />
+    )
+  }
+
+  {
+    entry.status === "pending" && (
+      <form
+        method="post"
+        class="border-rule mt-10 flex max-w-104 flex-col gap-3 border-t pt-6"
+      >
+        <input type="hidden" name="action" value="propose_reject" />
+        <FormTextarea label="Reason for rejection" name="reason" required />
+        <Button type="submit" variant="outline" class="self-start">
+          Propose rejection
+        </Button>
+      </form>
+    )
+  }
+
+  {
+    entry.status === "rejection_proposed" && (
+      <div class="border-rule mt-10 border-t pt-6">
+        <p class="text-[0.94rem]">
+          <span class="font-medium">Rejection proposed</span> —{" "}
+          {entry.proposedReason}
+        </p>
+        {isOwnProposal ? (
+          <p class="text-ink-soft mt-3 text-[0.86rem]">
+            You proposed this rejection — a different moderator must confirm it.
           </p>
-          {isOwnProposal ? (
-            <p>
-              You proposed this rejection — a different moderator must confirm
-              it.
-            </p>
-          ) : (
-            <>
-              <form method="post">
-                <input type="hidden" name="action" value="confirm_reject" />
-                <button type="submit">Confirm rejection</button>
-              </form>
-              <form method="post">
-                <input type="hidden" name="action" value="send_back" />
-                <button type="submit">Send back to pending</button>
-              </form>
-            </>
-          )}
-        </div>
-      )
-    }
-  </body>
-</html>
+        ) : (
+          <div class="mt-4 flex flex-wrap gap-3">
+            <form method="post">
+              <input type="hidden" name="action" value="confirm_reject" />
+              <Button type="submit" variant="outline">
+                Confirm rejection
+              </Button>
+            </form>
+            <form method="post">
+              <input type="hidden" name="action" value="send_back" />
+              <Button type="submit" variant="outline">
+                Send back to pending
+              </Button>
+            </form>
+          </div>
+        )}
+      </div>
+    )
+  }
+</AdminLayout>
+
+<script>
+  const reasonSelects = document.querySelectorAll<HTMLSelectElement>(
+    'select[name="reason"]',
+  );
+  for (const select of reasonSelects) {
+    const container = select
+      .closest("form")
+      ?.querySelector<HTMLElement>("[data-other-reason]");
+    if (!container) continue;
+    const sync = () => {
+      container.hidden = select.value !== "other";
+    };
+    select.addEventListener("change", sync);
+    sync();
+  }
+</script>

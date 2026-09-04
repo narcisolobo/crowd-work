@@ -60,6 +60,7 @@ describe("rejection state machine", () => {
 
     const result = await confirmRejection(moderator2, entryId);
     expect(result.status).toBe("rejected");
+    expect(result.decidedAt).not.toBeNull();
   });
 
   it("lets a different moderator send the entry back to pending", async () => {
@@ -71,5 +72,29 @@ describe("rejection state machine", () => {
     expect(result.status).toBe("pending");
     expect(result.proposedBy).toBeNull();
     expect(result.proposedReason).toBeNull();
+  });
+
+  it("blocks a moderator from forging another moderator's id into confirmed_by", async () => {
+    const moderator1 = await signInTestModerator(1);
+    const moderator2 = await signInTestModerator(2);
+    await proposeRejection(moderator1, entryId, "Duplicate of another entry");
+
+    const {
+      data: { user: moderator1User },
+    } = await moderator1.auth.getUser();
+
+    const { data, error } = await moderator2
+      .from("moderation_queue")
+      .update({
+        status: "rejected",
+        confirmed_by: moderator1User!.id,
+        decided_at: new Date().toISOString(),
+      })
+      .eq("id", entryId)
+      .eq("status", "rejection_proposed")
+      .select("id");
+
+    expect(error).not.toBeNull();
+    expect(data).toBeNull();
   });
 });

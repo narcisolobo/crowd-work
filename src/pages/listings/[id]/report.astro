@@ -1,4 +1,8 @@
 ---
+import { Font } from "astro:assets";
+import "../../../styles/global.css";
+import FormTextarea from "../../../components/forms/FormTextarea.astro";
+import Button from "../../../components/forms/Button.astro";
 import { supabase } from "../../../lib/supabase/supabase";
 import { getListingById } from "../../../lib/data/listings";
 
@@ -16,12 +20,14 @@ if (!listing) {
 
 let submitted = false;
 let errorMessage: string | null = null;
+let selectedReason: string | null = null;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const honeypot = formData.get("company")?.toString() ?? "";
   const reason = formData.get("reason")?.toString();
   const note = formData.get("note")?.toString();
+  selectedReason = reason ?? null;
 
   if (honeypot !== "") {
     // Silently succeed for bots without writing anything.
@@ -48,56 +54,120 @@ if (Astro.request.method === "POST") {
     }
   }
 }
+
+const reasonOptions = [
+  { value: "not_happening", label: "This isn't happening anymore" },
+  { value: "something_else", label: "Something else is wrong" },
+];
 ---
 
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Report a problem — {listing.title} — Crowd Work</title>
+    <script is:inline>
+      (function () {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light" || stored === "dark") {
+          document.documentElement.setAttribute("data-theme", stored);
+        }
+      })();
+    </script>
+    <Font cssVariable="--font-big-shoulders" preload />
+    <Font cssVariable="--font-ibm-plex-sans" preload />
+    <Font cssVariable="--font-ibm-plex-mono" />
   </head>
-  <body>
-    <a href={`/listings/${listing.id}`}>Back to {listing.title}</a>
-    <h1>Report a problem with {listing.title}</h1>
-    {
-      submitted ? (
-        <p>Thanks — a moderator will review this shortly.</p>
-      ) : (
-        <form method="post">
-          {errorMessage && <p role="alert">{errorMessage}</p>}
-          <div hidden>
-            <label>
-              Company
-              <input
-                type="text"
-                name="company"
-                tabindex={-1}
-                autocomplete="off"
-              />
-            </label>
+  <body class="flex min-h-screen flex-col font-body text-base text-ink antialiased">
+    <div class="mx-auto flex w-full max-w-136 flex-1 flex-col px-5 py-10">
+      <a
+        href={`/listings/${listing.id}`}
+        class="inline-flex items-center gap-1.5 text-[0.86rem] text-ink-soft underline-offset-2 hover:underline"
+      >
+        <svg class="h-2.5 w-2.5 rotate-90" viewBox="0 0 12 12" fill="none">
+          <path
+            d="M3 4.5L6 7.5L9 4.5"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        Back to {listing.title}
+      </a>
+
+      {
+        submitted ? (
+          <div class="mt-10">
+            <h1 class="font-display text-[1.28rem] font-bold">
+              Thanks — a moderator will review this shortly.
+            </h1>
+            <p class="mt-2.5 max-w-[45ch] text-[0.95rem] text-ink-soft">
+              Crowd Work listings are reviewed by working comics, not one
+              person's spreadsheet — reports like yours are how the list
+              stays accurate.
+            </p>
           </div>
-          <fieldset>
-            <legend>What's wrong?</legend>
-            <label>
-              <input
-                type="radio"
-                name="reason"
-                value="not_happening"
-                required
-              />
-              This isn't happening anymore
-            </label>
-            <label>
-              <input type="radio" name="reason" value="something_else" />
-              Something else is wrong
-            </label>
-          </fieldset>
-          <label>
-            Details
-            <textarea name="note" required />
-          </label>
-          <button type="submit">Submit report</button>
-        </form>
-      )
-    }
+        ) : (
+          <div class="mt-8 rounded-sm border-l-[3px] border-l-rule bg-paper-shadow px-5 py-6 sm:px-7 sm:py-7">
+            <h1 class="font-display text-[1.28rem] font-bold">
+              Report a problem
+            </h1>
+            <p class="mt-1.5 text-[0.9rem] text-ink-soft">
+              with {listing.title}
+            </p>
+
+            {errorMessage && (
+              <p
+                role="alert"
+                class="mt-5 rounded-sm bg-paper px-3.5 py-2.5 text-[0.86rem] font-medium text-ink"
+              >
+                <strong>Error:</strong> {errorMessage}
+              </p>
+            )}
+
+            <form method="post" class="mt-6 flex flex-col gap-5">
+              <div hidden>
+                <label>
+                  Company
+                  <input
+                    type="text"
+                    name="company"
+                    tabindex={-1}
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+
+              <fieldset class="flex flex-col gap-2.5">
+                <legend class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+                  What's wrong?
+                </legend>
+                {reasonOptions.map((option) => (
+                  <label class="flex cursor-pointer items-start gap-3 rounded-sm border border-rule bg-paper px-4 py-3 has-checked:border-ink">
+                    <input
+                      type="radio"
+                      name="reason"
+                      value={option.value}
+                      required
+                      checked={selectedReason === option.value}
+                      class="mt-0.5 h-4 w-4 accent-ink"
+                    />
+                    <span class="text-[0.95rem]">{option.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+
+              <FormTextarea label="Details" name="note" required rows={4} />
+
+              <Button type="submit" variant="primary" class="self-start">
+                Submit report
+              </Button>
+            </form>
+          </div>
+        )
+      }
+    </div>
   </body>
 </html>

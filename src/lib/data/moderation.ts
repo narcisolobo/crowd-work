@@ -1,16 +1,25 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../supabase/database.types";
+import { getListingById } from "./listings";
+import type { Database, Json } from "../supabase/database.types";
 
 export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
 export type QueueChangeType = "new" | "update" | "cancellation";
+
+export interface ProposedVenue {
+  name: string;
+  address: string;
+  neighborhoodId: string;
+  googleMapsUrl: string | null;
+}
 
 export interface ProposedListingFields {
   type: "mic" | "show";
   title: string;
   host: string | null;
   description: string | null;
-  venueId: string;
+  venueId: string | null;
+  newVenue: ProposedVenue | null;
   startTime: string;
   signUpMethod: string | null;
   costToPerform: string | null;
@@ -26,6 +35,7 @@ export interface ProposedListingFields {
 
 export interface ProposedCancellation {
   originalDate: string;
+  note?: string | null;
 }
 
 export interface QueueEntry {
@@ -39,11 +49,15 @@ export interface QueueEntry {
   proposedBy: string | null;
   proposedReason: string | null;
   confirmedBy: string | null;
+  approvedBy: string | null;
+  approvedData: ProposedListingFields | ProposedCancellation | null;
+  approvalNote: string | null;
+  decidedAt: string | null;
   createdAt: string;
 }
 
 export const QUEUE_ENTRY_SELECT =
-  "id, listing_id, change_type, proposed_data, correction_note, origin, status, proposed_by, proposed_reason, confirmed_by, created_at";
+  "id, listing_id, change_type, proposed_data, correction_note, origin, status, proposed_by, proposed_reason, confirmed_by, approved_by, approved_data, approval_note, decided_at, created_at";
 
 export function mapQueueEntryRow(row: any): QueueEntry {
   return {
@@ -57,6 +71,10 @@ export function mapQueueEntryRow(row: any): QueueEntry {
     proposedBy: row.proposed_by,
     proposedReason: row.proposed_reason,
     confirmedBy: row.confirmed_by,
+    approvedBy: row.approved_by,
+    approvedData: row.approved_data,
+    approvalNote: row.approval_note,
+    decidedAt: row.decided_at,
     createdAt: row.created_at,
   };
 }
@@ -137,7 +155,11 @@ export async function confirmRejection(
 
   const { data, error } = await client
     .from("moderation_queue")
-    .update({ status: "rejected", confirmed_by: user.id })
+    .update({
+      status: "rejected",
+      confirmed_by: user.id,
+      decided_at: new Date().toISOString(),
+    })
     .eq("id", entryId)
     .eq("status", "rejection_proposed")
     .select(QUEUE_ENTRY_SELECT)
@@ -174,11 +196,88 @@ export async function sendBackToPending(
   return mapQueueEntryRow(data);
 }
 
-export async function approveNewListing(
+export async function submitNewListingProposal(
   client: SupabaseClient<Database>,
-  entryId: string,
-  fields: ProposedListingFields,
+  formData: FormData,
 ): Promise<void> {
+  const fields = parseProposedListingFields(formData);
+
+  const { error } = await client.from("moderation_queue").insert({
+    change_type: "new",
+    listing_id: null,
+    proposed_data: fields as unknown as Json,
+    correction_note: null,
+    origin: "submission_form",
+    status: "pending",
+  });
+
+  if (error) throw new Error(`Failed to submit listing: ${error.message}`);
+}
+
+export async function directAddListing(
+  client: SupabaseClient<Database>,
+  formData: FormData,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const fields = parseProposedListingFields(formData);
+  const approvalNote = parseApprovalNote(formData);
+  const { listingId, venueId } = await createListingFromFields(client, fields);
+  const approvedData: ProposedListingFields = {
+    ...fields,
+    venueId,
+    newVenue: null,
+  };
+
+  const { error } = await client.from("moderation_queue").insert({
+    change_type: "new",
+    listing_id: listingId,
+    proposed_data: null,
+    correction_note: null,
+    origin: "moderator_direct_add",
+    status: "approved",
+    approved_by: user.id,
+    approved_data: approvedData as unknown as Json,
+    approval_note: approvalNote,
+    decided_at: new Date().toISOString(),
+  });
+
+  if (error)
+    throw new Error(`Failed to record direct-added listing: ${error.message}`);
+}
+
+async function resolveVenueId(
+  client: SupabaseClient<Database>,
+  fields: Pick<ProposedListingFields, "venueId" | "newVenue">,
+): Promise<string> {
+  if (fields.newVenue) {
+    const { data: venue, error } = await client
+      .from("venues")
+      .insert({
+        name: fields.newVenue.name,
+        address: fields.newVenue.address,
+        neighborhood_id: fields.newVenue.neighborhoodId,
+        google_maps_url: fields.newVenue.googleMapsUrl,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(`Failed to create venue: ${error.message}`);
+    return venue.id;
+  }
+  if (!fields.venueId)
+    throw new Error("A venue is required to create or update a listing.");
+  return fields.venueId;
+}
+
+export async function createListingFromFields(
+  client: SupabaseClient<Database>,
+  fields: ProposedListingFields,
+): Promise<{ listingId: string; venueId: string }> {
+  const venueId = await resolveVenueId(client, fields);
+
   const { data: listing, error: listingError } = await client
     .from("listings")
     .insert({
@@ -186,7 +285,7 @@ export async function approveNewListing(
       title: fields.title,
       host: fields.host,
       description: fields.description,
-      venue_id: fields.venueId,
+      venue_id: venueId,
       start_time: fields.startTime,
       one_off_date: fields.oneOffDate,
       sign_up_method: fields.signUpMethod,
@@ -216,7 +315,22 @@ export async function approveNewListing(
       );
   }
 
-  await markApproved(client, entryId, listing.id);
+  return { listingId: listing.id, venueId };
+}
+
+export async function approveNewListing(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  fields: ProposedListingFields,
+  approvalNote: string | null = null,
+): Promise<void> {
+  const { listingId, venueId } = await createListingFromFields(client, fields);
+  const approvedData: ProposedListingFields = {
+    ...fields,
+    venueId,
+    newVenue: null,
+  };
+  await markApproved(client, entryId, listingId, approvedData, approvalNote);
 }
 
 export async function approveListingUpdate(
@@ -224,7 +338,10 @@ export async function approveListingUpdate(
   entryId: string,
   listingId: string,
   fields: ProposedListingFields,
+  approvalNote: string | null = null,
 ): Promise<void> {
+  const venueId = await resolveVenueId(client, fields);
+
   const { error: listingError } = await client
     .from("listings")
     .update({
@@ -232,7 +349,7 @@ export async function approveListingUpdate(
       title: fields.title,
       host: fields.host,
       description: fields.description,
-      venue_id: fields.venueId,
+      venue_id: venueId,
       start_time: fields.startTime,
       one_off_date: fields.oneOffDate,
       sign_up_method: fields.signUpMethod,
@@ -263,7 +380,12 @@ export async function approveListingUpdate(
       );
   }
 
-  await markApproved(client, entryId, listingId);
+  const approvedData: ProposedListingFields = {
+    ...fields,
+    venueId,
+    newVenue: null,
+  };
+  await markApproved(client, entryId, listingId, approvedData, approvalNote);
 }
 
 export async function approveCancellation(
@@ -272,6 +394,7 @@ export async function approveCancellation(
   listingId: string,
   originalDate: string,
   note: string | null,
+  approvalNote: string | null = null,
 ): Promise<void> {
   const { error: exceptionError } = await client
     .from("occurrence_exceptions")
@@ -285,17 +408,37 @@ export async function approveCancellation(
   if (exceptionError)
     throw new Error(`Failed to record cancellation: ${exceptionError.message}`);
 
-  await markApproved(client, entryId, listingId);
+  await markApproved(
+    client,
+    entryId,
+    listingId,
+    { originalDate, note },
+    approvalNote,
+  );
 }
 
 async function markApproved(
   client: SupabaseClient<Database>,
   entryId: string,
   listingId: string,
+  approvedData: ProposedListingFields | ProposedCancellation,
+  approvalNote: string | null,
 ): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
   const { data, error } = await client
     .from("moderation_queue")
-    .update({ status: "approved", listing_id: listingId })
+    .update({
+      status: "approved",
+      listing_id: listingId,
+      approved_by: user.id,
+      approved_data: approvedData as unknown as Json,
+      approval_note: approvalNote,
+      decided_at: new Date().toISOString(),
+    })
     .eq("id", entryId)
     .eq("status", "pending")
     .select("id")
@@ -307,4 +450,181 @@ async function markApproved(
     throw new Error(
       "Could not mark this entry approved — it is no longer pending.",
     );
+}
+
+function parseVenueSelection(formData: FormData): {
+  venueId: string | null;
+  newVenue: ProposedVenue | null;
+} {
+  const venueId = formData.get("venueId")?.toString() ?? "";
+  if (venueId !== "__new__") {
+    return { venueId: venueId || null, newVenue: null };
+  }
+  return {
+    venueId: null,
+    newVenue: {
+      name: formData.get("newVenueName")?.toString() ?? "",
+      address: formData.get("newVenueAddress")?.toString() ?? "",
+      neighborhoodId: formData.get("newVenueNeighborhoodId")?.toString() ?? "",
+      googleMapsUrl: formData.get("newVenueGoogleMapsUrl")?.toString() || null,
+    },
+  };
+}
+
+export function parseProposedListingFields(
+  formData: FormData,
+): ProposedListingFields {
+  const frequency = formData.get("frequency")?.toString();
+  return {
+    type: formData.get("type")?.toString() === "show" ? "show" : "mic",
+    title: formData.get("title")?.toString() ?? "",
+    host: formData.get("host")?.toString() || null,
+    description: formData.get("description")?.toString() || null,
+    ...parseVenueSelection(formData),
+    startTime: formData.get("startTime")?.toString() ?? "",
+    signUpMethod: formData.get("signUpMethod")?.toString() || null,
+    costToPerform: formData.get("costToPerform")?.toString() || null,
+    ticketPrice: formData.get("ticketPrice")?.toString() || null,
+    ticketUrl: formData.get("ticketUrl")?.toString() || null,
+    recurrence:
+      frequency === "weekly" || frequency === "monthly"
+        ? {
+            frequency,
+            dayOfWeek: Number(formData.get("dayOfWeek")),
+            weekOfMonth: formData.get("weekOfMonth")
+              ? Number(formData.get("weekOfMonth"))
+              : null,
+          }
+        : null,
+    oneOffDate: formData.get("oneOffDate")?.toString() || null,
+  };
+}
+
+function parseApprovalNote(formData: FormData): string | null {
+  const reason = formData.get("reason")?.toString() ?? "";
+  const otherReason = formData.get("otherReason")?.toString().trim() || null;
+  return reason === "other" ? otherReason : reason || null;
+}
+
+export type QueueActionResult =
+  { type: "redirect" } | { type: "validation_error"; message: string };
+
+/** Applies a moderator's form submission for a queue entry. Returns null if
+ * the form's `action` doesn't match any known review action. */
+export async function handleQueueReviewAction(
+  client: SupabaseClient<Database>,
+  entry: QueueEntry,
+  formData: FormData,
+): Promise<QueueActionResult | null> {
+  const action = formData.get("action")?.toString();
+
+  if (action === "approve") {
+    const fields = parseProposedListingFields(formData);
+    const approvalNote = parseApprovalNote(formData);
+
+    if (entry.changeType === "new") {
+      await approveNewListing(client, entry.id, fields, approvalNote);
+    } else if (entry.changeType === "update") {
+      await approveListingUpdate(
+        client,
+        entry.id,
+        entry.listingId!,
+        fields,
+        approvalNote,
+      );
+    }
+    return { type: "redirect" };
+  }
+
+  if (action === "approve_cancellation") {
+    const originalDate = formData.get("originalDate")?.toString() ?? "";
+    const note = formData.get("note")?.toString() || null;
+    const approvalNote = parseApprovalNote(formData);
+    await approveCancellation(
+      client,
+      entry.id,
+      entry.listingId!,
+      originalDate,
+      note,
+      approvalNote,
+    );
+    return { type: "redirect" };
+  }
+
+  if (action === "propose_reject") {
+    const reason = formData.get("reason")?.toString();
+    if (!reason) {
+      return {
+        type: "validation_error",
+        message: "A reason is required to propose rejection.",
+      };
+    }
+    await proposeRejection(client, entry.id, reason);
+    return { type: "redirect" };
+  }
+
+  if (action === "confirm_reject") {
+    await confirmRejection(client, entry.id);
+    return { type: "redirect" };
+  }
+
+  if (action === "send_back") {
+    await sendBackToPending(client, entry.id);
+    return { type: "redirect" };
+  }
+
+  return null;
+}
+
+// Pre-fill the edit form from proposed_data when there is a structured
+// proposal (new listings, and updates simulating a future sourcing-agent
+// proposal). A report-form 'update' has no proposed_data — pre-fill from
+// the listing's current values instead, since the moderator is translating
+// free text into field edits, not reviewing a structured diff.
+export async function getPrefillForEntry(
+  entry: QueueEntry,
+): Promise<ProposedListingFields | null> {
+  if (entry.changeType === "new") {
+    return entry.proposedData as ProposedListingFields;
+  }
+
+  if (entry.changeType !== "update") return null;
+
+  if (entry.proposedData) {
+    return entry.proposedData as ProposedListingFields;
+  }
+
+  const current = await getListingById(entry.listingId!);
+  if (!current) return null;
+
+  return {
+    type: current.type,
+    title: current.title,
+    host: current.host,
+    description: current.description,
+    venueId: current.venue.id,
+    newVenue: null,
+    startTime: current.startTime,
+    signUpMethod: current.signUpMethod,
+    costToPerform: current.costToPerform,
+    ticketPrice: current.ticketPrice,
+    ticketUrl: current.ticketUrl,
+    recurrence: current.recurrenceRule,
+    oneOffDate: current.oneOffDate,
+  };
+}
+
+export async function getArchiveEntries(
+  client: SupabaseClient<Database>,
+): Promise<QueueEntry[]> {
+  const { data, error } = await client
+    .from("moderation_queue")
+    .select(QUEUE_ENTRY_SELECT)
+    .in("status", ["approved", "rejected"])
+    .order("decided_at", { ascending: false });
+
+  if (error)
+    throw new Error(`Failed to load moderation archive: ${error.message}`);
+
+  return (data ?? []).map(mapQueueEntryRow);
 }

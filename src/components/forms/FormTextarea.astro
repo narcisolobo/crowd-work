@@ -1,0 +1,22 @@
+---
+interface Props {
+  label: string;
+  name: string;
+  value?: string | null;
+  required?: boolean;
+  rows?: number;
+}
+
+const { label, name, value = "", required = false, rows = 3 } = Astro.props;
+---
+
+<label class="flex flex-col gap-1.5 text-[0.82rem] font-medium text-ink-soft">
+  {label}
+  <textarea
+    name={name}
+    required={required}
+    rows={rows}
+    class="rounded-sm border border-rule bg-paper px-3 py-2 font-body text-[0.95rem] text-ink"
+    >{value ?? ""}</textarea
+  >
+</label>

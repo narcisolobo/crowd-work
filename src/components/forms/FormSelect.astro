@@ -1,0 +1,50 @@
+---
+interface Option {
+  value: string;
+  label: string;
+}
+
+interface Props {
+  label: string;
+  name: string;
+  options: Option[];
+  value?: string | number | null;
+  required?: boolean;
+}
+
+const { label, name, options, value = "", required = false } = Astro.props;
+const stringValue = value === null || value === undefined ? "" : String(value);
+---
+
+<label class="flex flex-col gap-1.5 text-[0.82rem] font-medium text-ink-soft">
+  {label}
+  <span class="relative block">
+    <select
+      name={name}
+      required={required}
+      class="w-full appearance-none rounded-sm border border-rule bg-paper px-3 py-2 pr-8 font-body text-[0.95rem] text-ink"
+    >
+      {
+        options.map((option) => (
+          <option value={option.value} selected={option.value === stringValue}>
+            {option.label}
+          </option>
+        ))
+      }
+    </select>
+    <svg
+      class="pointer-events-none absolute top-1/2 right-3 h-3 w-3 -translate-y-1/2 text-ink-soft"
+      viewBox="0 0 12 12"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 4.5L6 7.5L9 4.5"
+        stroke="currentColor"
+        stroke-width="1.3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </span>
+</label>
