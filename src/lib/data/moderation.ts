@@ -214,6 +214,41 @@ export async function submitNewListingProposal(
   if (error) throw new Error(`Failed to submit listing: ${error.message}`);
 }
 
+export async function directAddListing(
+  client: SupabaseClient<Database>,
+  formData: FormData,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const fields = parseProposedListingFields(formData);
+  const approvalNote = parseApprovalNote(formData);
+  const { listingId, venueId } = await createListingFromFields(client, fields);
+  const approvedData: ProposedListingFields = {
+    ...fields,
+    venueId,
+    newVenue: null,
+  };
+
+  const { error } = await client.from("moderation_queue").insert({
+    change_type: "new",
+    listing_id: listingId,
+    proposed_data: null,
+    correction_note: null,
+    origin: "moderator_direct_add",
+    status: "approved",
+    approved_by: user.id,
+    approved_data: approvedData as unknown as Json,
+    approval_note: approvalNote,
+    decided_at: new Date().toISOString(),
+  });
+
+  if (error)
+    throw new Error(`Failed to record direct-added listing: ${error.message}`);
+}
+
 async function resolveVenueId(
   client: SupabaseClient<Database>,
   fields: Pick<ProposedListingFields, "venueId" | "newVenue">,

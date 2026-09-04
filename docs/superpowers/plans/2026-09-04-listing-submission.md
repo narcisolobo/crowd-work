@@ -1085,7 +1085,7 @@ pnpm test moderation-submission
 
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-test-helpers.ts src/lib/data/moderation-submission.test.ts src/lib/utils/moderation-labels.ts
@@ -1111,7 +1111,7 @@ EOF
 - Consumes: `createListingFromFields` (Task 2), `parseProposedListingFields` (Task 3), the authenticated direct-add INSERT policy (Task 1)
 - Produces: `directAddListing(client, formData): Promise<void>` — consumed by Task 9's admin page
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/lib/data/moderation-direct-add.test.ts`:
 
@@ -1224,7 +1224,7 @@ describe("moderator_direct_add RLS", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 pnpm test moderation-direct-add
@@ -1232,7 +1232,7 @@ pnpm test moderation-direct-add
 
 Expected: FAIL — `directAddListing` doesn't exist yet.
 
-- [ ] **Step 3: Implement `directAddListing`**
+- [x] **Step 3: Implement `directAddListing`**
 
 In `src/lib/data/moderation.ts`, add after `submitNewListingProposal`:
 
@@ -1273,7 +1273,7 @@ export async function directAddListing(
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation-direct-add
@@ -1281,7 +1281,7 @@ pnpm test moderation-direct-add
 
 Expected: PASS
 
-- [ ] **Step 5: Run the full test suite**
+- [x] **Step 5: Run the full test suite**
 
 ```bash
 pnpm test
@@ -1289,7 +1289,7 @@ pnpm test
 
 Expected: PASS — everything from prior tasks plus this one.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-direct-add.test.ts
