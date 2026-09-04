@@ -367,7 +367,7 @@ it("creates and switches to a new venue when the update proposes one", async () 
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 pnpm test moderation-approve
@@ -375,7 +375,7 @@ pnpm test moderation-approve
 
 Expected: FAIL — `newVenue` doesn't exist on `ProposedListingFields` yet (type error), and the two new tests fail because venue creation isn't implemented.
 
-- [ ] **Step 3: Update the type definitions**
+- [x] **Step 3: Update the type definitions**
 
 In `src/lib/data/moderation.ts`, add a new interface above `ProposedListingFields` and update `ProposedListingFields` itself:
 
@@ -408,7 +408,7 @@ export interface ProposedListingFields {
 }
 ```
 
-- [ ] **Step 4: Fix the now-broken `getPrefillForEntry` literal**
+- [x] **Step 4: Fix the now-broken `getPrefillForEntry` literal**
 
 In `getPrefillForEntry`'s `update` fallback branch (the object built from `current` when there's no `proposedData`), add `newVenue: null,` after `venueId: current.venue.id,`:
 
@@ -432,7 +432,7 @@ return {
 
 (The `new`-entry branch above it, `return entry.proposedData as ProposedListingFields;`, needs no change — `newVenue` is already part of the type it's cast to.)
 
-- [ ] **Step 5: Add `resolveVenueId` and `createListingFromFields`, and rewrite `approveNewListing`/`approveListingUpdate`**
+- [x] **Step 5: Add `resolveVenueId` and `createListingFromFields`, and rewrite `approveNewListing`/`approveListingUpdate`**
 
 Replace `approveNewListing` and `approveListingUpdate` in full with:
 
@@ -577,7 +577,7 @@ export async function approveListingUpdate(
 }
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation-approve
@@ -585,7 +585,7 @@ pnpm test moderation-approve
 
 Expected: PASS — all `approveNewListing`/`approveListingUpdate` tests, including the two new venue-creation ones.
 
-- [ ] **Step 7: Type-check the whole project**
+- [x] **Step 7: Type-check the whole project**
 
 ```bash
 pnpm exec astro check
@@ -593,7 +593,7 @@ pnpm exec astro check
 
 Expected: no errors. (This will surface any other `ProposedListingFields` literal this step missed — fix inline if so.)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-approve.test.ts

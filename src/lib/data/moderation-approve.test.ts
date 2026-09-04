@@ -18,6 +18,7 @@ type ModerationQueueInsert =
 
 let insertedListingIds: string[] = [];
 let insertedEntryIds: string[] = [];
+let insertedVenueIds: string[] = [];
 
 afterEach(async () => {
   const admin = createAdminClient();
@@ -27,8 +28,12 @@ afterEach(async () => {
   if (insertedListingIds.length > 0) {
     await admin.from("listings").delete().in("id", insertedListingIds);
   }
+  if (insertedVenueIds.length > 0) {
+    await admin.from("venues").delete().in("id", insertedVenueIds);
+  }
   insertedListingIds = [];
   insertedEntryIds = [];
+  insertedVenueIds = [];
 });
 
 async function createPendingEntry(
@@ -56,6 +61,7 @@ describe("approveNewListing", () => {
         host: null,
         description: null,
         venueId: EXISTING_VENUE_ID,
+        newVenue: null,
         startTime: "19:00",
         signUpMethod: null,
         costToPerform: null,
@@ -73,6 +79,7 @@ describe("approveNewListing", () => {
       host: "Corrected Host",
       description: null,
       venueId: EXISTING_VENUE_ID,
+      newVenue: null,
       startTime: "19:30",
       signUpMethod: "text to sign up",
       costToPerform: "free",
@@ -128,6 +135,92 @@ describe("approveNewListing", () => {
       "Moderator-Corrected Title",
     );
   });
+
+  it("creates a new venue when the proposal includes one, and records the resolved venue id in approved_data", async () => {
+    const entryId = await createPendingEntry({
+      change_type: "new",
+      listing_id: null,
+      proposed_data: {
+        type: "mic",
+        title: "Listing At A New Venue",
+        host: null,
+        description: null,
+        venueId: null,
+        newVenue: {
+          name: "The Back Room",
+          address: "123 Fake St, Los Angeles, CA",
+          neighborhoodId: "b0000000-0000-0000-0000-000000000002",
+          googleMapsUrl: null,
+        },
+        startTime: "20:00",
+        signUpMethod: null,
+        costToPerform: null,
+        ticketPrice: null,
+        ticketUrl: null,
+        recurrence: null,
+        oneOffDate: "2026-10-01",
+      },
+    });
+
+    const moderator1 = await signInTestModerator(1);
+    const fields: ProposedListingFields = {
+      type: "mic",
+      title: "Listing At A New Venue",
+      host: null,
+      description: null,
+      venueId: null,
+      newVenue: {
+        name: "The Back Room",
+        address: "123 Fake St, Los Angeles, CA",
+        neighborhoodId: "b0000000-0000-0000-0000-000000000002",
+        googleMapsUrl: null,
+      },
+      startTime: "20:00",
+      signUpMethod: null,
+      costToPerform: null,
+      ticketPrice: null,
+      ticketUrl: null,
+      recurrence: null,
+      oneOffDate: "2026-10-01",
+    };
+
+    await approveNewListing(
+      moderator1,
+      entryId,
+      fields,
+      "Accurate as submitted",
+    );
+
+    const admin = createAdminClient();
+    const { data: venue } = await admin
+      .from("venues")
+      .select("id, name")
+      .eq("name", "The Back Room")
+      .single();
+    expect(venue).not.toBeNull();
+    insertedVenueIds.push(venue!.id);
+
+    const { data: listing } = await admin
+      .from("listings")
+      .select("id, venue_id")
+      .eq("title", "Listing At A New Venue")
+      .single();
+    expect(listing).not.toBeNull();
+    insertedListingIds.push(listing!.id);
+    expect(listing!.venue_id).toBe(venue!.id);
+
+    const { data: entry } = await admin
+      .from("moderation_queue")
+      .select("approved_data")
+      .eq("id", entryId)
+      .single();
+    const approvedData = entry!.approved_data as {
+      venueId: string;
+      newVenue: unknown;
+    };
+    expect(approvedData.venueId).toBe(venue!.id);
+    expect(approvedData.newVenue).toBeNull();
+  });
 });
 
 describe("approveListingUpdate", () => {
@@ -161,6 +254,7 @@ describe("approveListingUpdate", () => {
       host: null,
       description: null,
       venueId: EXISTING_VENUE_ID,
+      newVenue: null,
       startTime: "20:30",
       signUpMethod: null,
       costToPerform: null,
@@ -194,6 +288,69 @@ describe("approveListingUpdate", () => {
     expect((entry!.approved_data as { startTime: string }).startTime).toBe(
       "20:30",
     );
+  });
+
+  it("creates and switches to a new venue when the update proposes one", async () => {
+    const admin = createAdminClient();
+    const { data: original, error: createError } = await admin
+      .from("listings")
+      .insert({
+        type: "mic",
+        title: "Listing Moving Venues",
+        venue_id: EXISTING_VENUE_ID,
+        start_time: "18:00",
+        status: "published",
+      })
+      .select("id")
+      .single();
+    if (createError) throw createError;
+    insertedListingIds.push(original.id);
+
+    const entryId = await createPendingEntry({
+      change_type: "update",
+      listing_id: original.id,
+      proposed_data: null,
+      correction_note: "Venue changed",
+    });
+
+    const moderator1 = await signInTestModerator(1);
+    const edited: ProposedListingFields = {
+      type: "mic",
+      title: "Listing Moving Venues",
+      host: null,
+      description: null,
+      venueId: null,
+      newVenue: {
+        name: "The New Spot",
+        address: "456 Fake Ave, Los Angeles, CA",
+        neighborhoodId: "b0000000-0000-0000-0000-000000000001",
+        googleMapsUrl: null,
+      },
+      startTime: "18:00",
+      signUpMethod: null,
+      costToPerform: null,
+      ticketPrice: null,
+      ticketUrl: null,
+      recurrence: null,
+      oneOffDate: null,
+    };
+
+    await approveListingUpdate(moderator1, entryId, original.id, edited, null);
+
+    const { data: venue } = await admin
+      .from("venues")
+      .select("id")
+      .eq("name", "The New Spot")
+      .single();
+    expect(venue).not.toBeNull();
+    insertedVenueIds.push(venue!.id);
+
+    const { data: updated } = await admin
+      .from("listings")
+      .select("venue_id")
+      .eq("id", original.id)
+      .single();
+    expect(updated!.venue_id).toBe(venue!.id);
   });
 });
 

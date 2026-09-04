@@ -6,12 +6,20 @@ export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
 export type QueueChangeType = "new" | "update" | "cancellation";
 
+export interface ProposedVenue {
+  name: string;
+  address: string;
+  neighborhoodId: string;
+  googleMapsUrl: string | null;
+}
+
 export interface ProposedListingFields {
   type: "mic" | "show";
   title: string;
   host: string | null;
   description: string | null;
-  venueId: string;
+  venueId: string | null;
+  newVenue: ProposedVenue | null;
   startTime: string;
   signUpMethod: string | null;
   costToPerform: string | null;
@@ -188,12 +196,35 @@ export async function sendBackToPending(
   return mapQueueEntryRow(data);
 }
 
-export async function approveNewListing(
+async function resolveVenueId(
   client: SupabaseClient<Database>,
-  entryId: string,
+  fields: Pick<ProposedListingFields, "venueId" | "newVenue">,
+): Promise<string> {
+  if (fields.newVenue) {
+    const { data: venue, error } = await client
+      .from("venues")
+      .insert({
+        name: fields.newVenue.name,
+        address: fields.newVenue.address,
+        neighborhood_id: fields.newVenue.neighborhoodId,
+        google_maps_url: fields.newVenue.googleMapsUrl,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(`Failed to create venue: ${error.message}`);
+    return venue.id;
+  }
+  if (!fields.venueId)
+    throw new Error("A venue is required to create or update a listing.");
+  return fields.venueId;
+}
+
+export async function createListingFromFields(
+  client: SupabaseClient<Database>,
   fields: ProposedListingFields,
-  approvalNote: string | null = null,
-): Promise<void> {
+): Promise<{ listingId: string; venueId: string }> {
+  const venueId = await resolveVenueId(client, fields);
+
   const { data: listing, error: listingError } = await client
     .from("listings")
     .insert({
@@ -201,7 +232,7 @@ export async function approveNewListing(
       title: fields.title,
       host: fields.host,
       description: fields.description,
-      venue_id: fields.venueId,
+      venue_id: venueId,
       start_time: fields.startTime,
       one_off_date: fields.oneOffDate,
       sign_up_method: fields.signUpMethod,
@@ -231,7 +262,22 @@ export async function approveNewListing(
       );
   }
 
-  await markApproved(client, entryId, listing.id, fields, approvalNote);
+  return { listingId: listing.id, venueId };
+}
+
+export async function approveNewListing(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  fields: ProposedListingFields,
+  approvalNote: string | null = null,
+): Promise<void> {
+  const { listingId, venueId } = await createListingFromFields(client, fields);
+  const approvedData: ProposedListingFields = {
+    ...fields,
+    venueId,
+    newVenue: null,
+  };
+  await markApproved(client, entryId, listingId, approvedData, approvalNote);
 }
 
 export async function approveListingUpdate(
@@ -241,6 +287,8 @@ export async function approveListingUpdate(
   fields: ProposedListingFields,
   approvalNote: string | null = null,
 ): Promise<void> {
+  const venueId = await resolveVenueId(client, fields);
+
   const { error: listingError } = await client
     .from("listings")
     .update({
@@ -248,7 +296,7 @@ export async function approveListingUpdate(
       title: fields.title,
       host: fields.host,
       description: fields.description,
-      venue_id: fields.venueId,
+      venue_id: venueId,
       start_time: fields.startTime,
       one_off_date: fields.oneOffDate,
       sign_up_method: fields.signUpMethod,
@@ -279,7 +327,12 @@ export async function approveListingUpdate(
       );
   }
 
-  await markApproved(client, entryId, listingId, fields, approvalNote);
+  const approvedData: ProposedListingFields = {
+    ...fields,
+    venueId,
+    newVenue: null,
+  };
+  await markApproved(client, entryId, listingId, approvedData, approvalNote);
 }
 
 export async function approveCancellation(
@@ -354,6 +407,7 @@ function parseProposedListingFields(formData: FormData): ProposedListingFields {
     host: formData.get("host")?.toString() || null,
     description: formData.get("description")?.toString() || null,
     venueId: formData.get("venueId")?.toString() ?? "",
+    newVenue: null,
     startTime: formData.get("startTime")?.toString() ?? "",
     signUpMethod: formData.get("signUpMethod")?.toString() || null,
     costToPerform: formData.get("costToPerform")?.toString() || null,
@@ -380,8 +434,7 @@ function parseApprovalNote(formData: FormData): string | null {
 }
 
 export type QueueActionResult =
-  | { type: "redirect" }
-  | { type: "validation_error"; message: string };
+  { type: "redirect" } | { type: "validation_error"; message: string };
 
 /** Applies a moderator's form submission for a queue entry. Returns null if
  * the form's `action` doesn't match any known review action. */
@@ -477,6 +530,7 @@ export async function getPrefillForEntry(
     host: current.host,
     description: current.description,
     venueId: current.venue.id,
+    newVenue: null,
     startTime: current.startTime,
     signUpMethod: current.signUpMethod,
     costToPerform: current.costToPerform,
