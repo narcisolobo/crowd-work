@@ -1,27 +1,19 @@
 ---
 import Button from "../../../components/forms/Button.astro";
-import FormField from "../../../components/forms/FormField.astro";
-import FormSelect from "../../../components/forms/FormSelect.astro";
 import FormTextarea from "../../../components/forms/FormTextarea.astro";
 import AdminUtilityBar from "../../../components/layout/AdminUtilityBar.astro";
+import CancellationApprovalForm from "../../../components/moderation/CancellationApprovalForm.astro";
+import ListingApprovalForm from "../../../components/moderation/ListingApprovalForm.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { getListingById, getVenues } from "../../../lib/data/listings";
+import { getVenues } from "../../../lib/data/listings";
 import {
-  approveCancellation,
-  approveListingUpdate,
-  approveNewListing,
-  confirmRejection,
+  getPrefillForEntry,
   getQueueEntryById,
-  proposeRejection,
-  sendBackToPending,
+  handleQueueReviewAction,
   type ProposedCancellation,
-  type ProposedListingFields,
   type QueueChangeType,
 } from "../../../lib/data/moderation";
-import {
-  ORIGIN_LABEL,
-  STATUS_LABEL,
-} from "../../../lib/utils/moderation-labels";
+import { ORIGIN_LABEL, STATUS_LABEL } from "../../../lib/utils/moderation-labels";
 
 const { id } = Astro.params;
 const supabase = Astro.locals.supabase!;
@@ -42,91 +34,14 @@ let errorMessage: string | null = null;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
-  const action = formData.get("action")?.toString();
 
   try {
-    if (action === "approve") {
-      const frequency = formData.get("frequency")?.toString();
-      const fields: ProposedListingFields = {
-        type: formData.get("type")?.toString() === "show" ? "show" : "mic",
-        title: formData.get("title")?.toString() ?? "",
-        host: formData.get("host")?.toString() || null,
-        description: formData.get("description")?.toString() || null,
-        venueId: formData.get("venueId")?.toString() ?? "",
-        startTime: formData.get("startTime")?.toString() ?? "",
-        signUpMethod: formData.get("signUpMethod")?.toString() || null,
-        costToPerform: formData.get("costToPerform")?.toString() || null,
-        ticketPrice: formData.get("ticketPrice")?.toString() || null,
-        ticketUrl: formData.get("ticketUrl")?.toString() || null,
-        recurrence:
-          frequency === "weekly" || frequency === "monthly"
-            ? {
-                frequency,
-                dayOfWeek: Number(formData.get("dayOfWeek")),
-                weekOfMonth: formData.get("weekOfMonth")
-                  ? Number(formData.get("weekOfMonth"))
-                  : null,
-              }
-            : null,
-        oneOffDate: formData.get("oneOffDate")?.toString() || null,
-      };
-
-      const reason = formData.get("reason")?.toString() ?? "";
-      const otherReason =
-        formData.get("otherReason")?.toString().trim() || null;
-      const approvalNote = reason === "other" ? otherReason : reason || null;
-
-      if (entry.changeType === "new") {
-        await approveNewListing(supabase, entry.id, fields, approvalNote);
-      } else if (entry.changeType === "update") {
-        await approveListingUpdate(
-          supabase,
-          entry.id,
-          entry.listingId!,
-          fields,
-          approvalNote,
-        );
-      }
-
+    const result = await handleQueueReviewAction(supabase, entry, formData);
+    if (result?.type === "redirect") {
       return Astro.redirect("/admin");
     }
-
-    if (action === "approve_cancellation") {
-      const originalDate = formData.get("originalDate")?.toString() ?? "";
-      const note = formData.get("note")?.toString() || null;
-      const reason = formData.get("reason")?.toString() ?? "";
-      const otherReason =
-        formData.get("otherReason")?.toString().trim() || null;
-      const approvalNote = reason === "other" ? otherReason : reason || null;
-      await approveCancellation(
-        supabase,
-        entry.id,
-        entry.listingId!,
-        originalDate,
-        note,
-        approvalNote,
-      );
-      return Astro.redirect("/admin");
-    }
-
-    if (action === "propose_reject") {
-      const reason = formData.get("reason")?.toString();
-      if (!reason) {
-        errorMessage = "A reason is required to propose rejection.";
-      } else {
-        await proposeRejection(supabase, entry.id, reason);
-        return Astro.redirect("/admin");
-      }
-    }
-
-    if (action === "confirm_reject") {
-      await confirmRejection(supabase, entry.id);
-      return Astro.redirect("/admin");
-    }
-
-    if (action === "send_back") {
-      await sendBackToPending(supabase, entry.id);
-      return Astro.redirect("/admin");
+    if (result?.type === "validation_error") {
+      errorMessage = result.message;
     }
   } catch (error) {
     errorMessage =
@@ -135,37 +50,7 @@ if (Astro.request.method === "POST") {
   }
 }
 
-// Pre-fill the edit form from proposed_data when there is a structured
-// proposal (new listings, and updates simulating a future sourcing-agent
-// proposal). A report-form 'update' has no proposed_data — pre-fill from
-// the listing's current values instead, since the moderator is translating
-// free text into field edits, not reviewing a structured diff.
-let prefill: ProposedListingFields | null = null;
-if (entry.changeType === "new") {
-  prefill = entry.proposedData as ProposedListingFields;
-} else if (entry.changeType === "update") {
-  if (entry.proposedData) {
-    prefill = entry.proposedData as ProposedListingFields;
-  } else {
-    const current = await getListingById(entry.listingId!);
-    if (current) {
-      prefill = {
-        type: current.type,
-        title: current.title,
-        host: current.host,
-        description: current.description,
-        venueId: current.venue.id,
-        startTime: current.startTime,
-        signUpMethod: current.signUpMethod,
-        costToPerform: current.costToPerform,
-        ticketPrice: current.ticketPrice,
-        ticketUrl: current.ticketUrl,
-        recurrence: current.recurrenceRule,
-        oneOffDate: current.oneOffDate,
-      };
-    }
-  }
-}
+const prefill = await getPrefillForEntry(entry);
 const proposedCancellation =
   entry.changeType === "cancellation"
     ? (entry.proposedData as ProposedCancellation)
@@ -178,44 +63,10 @@ const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   cancellation: "Cancellation",
 };
 
-const typeOptions = [
-  { value: "mic", label: "Mic" },
-  { value: "show", label: "Show" },
-];
 const venueOptions = venues.map((venue) => ({
   value: venue.id,
   label: venue.name,
 }));
-const frequencyOptions = [
-  { value: "", label: "One-time" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-];
-const dayOptions = [
-  { value: "", label: "Choose a day" },
-  { value: "0", label: "Sunday" },
-  { value: "1", label: "Monday" },
-  { value: "2", label: "Tuesday" },
-  { value: "3", label: "Wednesday" },
-  { value: "4", label: "Thursday" },
-  { value: "5", label: "Friday" },
-  { value: "6", label: "Saturday" },
-];
-const weekOfMonthOptions = [
-  { value: "", label: "Every week" },
-  { value: "1", label: "1st" },
-  { value: "2", label: "2nd" },
-  { value: "3", label: "3rd" },
-  { value: "4", label: "4th" },
-  { value: "-1", label: "Last" },
-];
-const approvalReasonOptions = [
-  { value: "", label: "No reason provided" },
-  { value: "Accurate as submitted", label: "Accurate as submitted" },
-  { value: "Accurate after minor edits", label: "Accurate after minor edits" },
-  { value: "Verified independently", label: "Verified independently" },
-  { value: "other", label: "Other…" },
-];
 ---
 
 <AdminLayout title="Review entry — Crowd Work admin" userEmail={user.email}>
@@ -264,160 +115,16 @@ const approvalReasonOptions = [
 
   {
     entry.changeType === "cancellation" ? (
-      <form method="post" class="mt-8 flex max-w-104 flex-col gap-4">
-        <input type="hidden" name="action" value="approve_cancellation" />
-        <FormField
-          label="Date being cancelled"
-          name="originalDate"
-          type="date"
-          value={proposedCancellation?.originalDate}
-          required
-        />
-        <FormTextarea
-          label="Note"
-          name="note"
-          value={entry.correctionNote ?? ""}
-        />
-        <div class="border-rule flex flex-col gap-4 border-t pt-6">
-          <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
-            Approval
-          </p>
-          <FormSelect
-            label="Reason"
-            name="reason"
-            options={approvalReasonOptions}
-            value=""
-          />
-          <div data-other-reason hidden>
-            <FormTextarea label="Other reason" name="otherReason" />
-          </div>
-        </div>
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={entry.status !== "pending"}
-          class="mt-2 self-start"
-        >
-          Approve cancellation
-        </Button>
-      </form>
+      <CancellationApprovalForm
+        entry={entry}
+        proposedCancellation={proposedCancellation}
+      />
     ) : (
-      <form method="post" class="mt-8 flex max-w-104 flex-col gap-6">
-        <input type="hidden" name="action" value="approve" />
-
-        <div class="flex flex-col gap-4">
-          <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
-            Listing details
-          </p>
-          <FormSelect
-            label="Type"
-            name="type"
-            options={typeOptions}
-            value={prefill?.type ?? "mic"}
-          />
-          <FormField
-            label="Title"
-            name="title"
-            value={prefill?.title ?? ""}
-            required
-          />
-          <FormField label="Host" name="host" value={prefill?.host ?? ""} />
-          <FormTextarea
-            label="Description"
-            name="description"
-            value={prefill?.description ?? ""}
-          />
-          <FormSelect
-            label="Venue"
-            name="venueId"
-            options={venueOptions}
-            value={prefill?.venueId ?? ""}
-            required
-          />
-          <FormField
-            label="Start time"
-            name="startTime"
-            type="time"
-            value={prefill?.startTime ?? ""}
-            required
-          />
-          <FormField
-            label="Sign-up method"
-            name="signUpMethod"
-            value={prefill?.signUpMethod ?? ""}
-          />
-          <FormField
-            label="Cost to perform"
-            name="costToPerform"
-            value={prefill?.costToPerform ?? ""}
-          />
-          <FormField
-            label="Ticket price"
-            name="ticketPrice"
-            value={prefill?.ticketPrice ?? ""}
-          />
-          <FormField
-            label="Ticket URL"
-            name="ticketUrl"
-            type="url"
-            value={prefill?.ticketUrl ?? ""}
-          />
-        </div>
-
-        <div class="border-rule flex flex-col gap-4 border-t pt-6">
-          <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
-            Recurrence
-          </p>
-          <FormSelect
-            label="Frequency"
-            name="frequency"
-            options={frequencyOptions}
-            value={prefill?.recurrence?.frequency ?? ""}
-          />
-          <FormSelect
-            label="Day of week"
-            name="dayOfWeek"
-            options={dayOptions}
-            value={prefill?.recurrence?.dayOfWeek ?? ""}
-          />
-          <FormSelect
-            label="Week of month"
-            name="weekOfMonth"
-            options={weekOfMonthOptions}
-            value={prefill?.recurrence?.weekOfMonth ?? ""}
-          />
-          <FormField
-            label="One-off date (if not recurring)"
-            name="oneOffDate"
-            type="date"
-            value={prefill?.oneOffDate ?? ""}
-          />
-        </div>
-
-        <div class="border-rule flex flex-col gap-4 border-t pt-6">
-          <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
-            Approval
-          </p>
-          <FormSelect
-            label="Reason"
-            name="reason"
-            options={approvalReasonOptions}
-            value=""
-          />
-          <div data-other-reason hidden>
-            <FormTextarea label="Other reason" name="otherReason" />
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={entry.status !== "pending"}
-          class="self-start"
-        >
-          Approve
-        </Button>
-      </form>
+      <ListingApprovalForm
+        entry={entry}
+        prefill={prefill}
+        venueOptions={venueOptions}
+      />
     )
   }
 

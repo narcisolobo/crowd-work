@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getListingById } from "./listings";
 import type { Database, Json } from "../supabase/database.types";
 
 export type QueueStatus =
@@ -343,6 +344,147 @@ async function markApproved(
     throw new Error(
       "Could not mark this entry approved — it is no longer pending.",
     );
+}
+
+function parseProposedListingFields(formData: FormData): ProposedListingFields {
+  const frequency = formData.get("frequency")?.toString();
+  return {
+    type: formData.get("type")?.toString() === "show" ? "show" : "mic",
+    title: formData.get("title")?.toString() ?? "",
+    host: formData.get("host")?.toString() || null,
+    description: formData.get("description")?.toString() || null,
+    venueId: formData.get("venueId")?.toString() ?? "",
+    startTime: formData.get("startTime")?.toString() ?? "",
+    signUpMethod: formData.get("signUpMethod")?.toString() || null,
+    costToPerform: formData.get("costToPerform")?.toString() || null,
+    ticketPrice: formData.get("ticketPrice")?.toString() || null,
+    ticketUrl: formData.get("ticketUrl")?.toString() || null,
+    recurrence:
+      frequency === "weekly" || frequency === "monthly"
+        ? {
+            frequency,
+            dayOfWeek: Number(formData.get("dayOfWeek")),
+            weekOfMonth: formData.get("weekOfMonth")
+              ? Number(formData.get("weekOfMonth"))
+              : null,
+          }
+        : null,
+    oneOffDate: formData.get("oneOffDate")?.toString() || null,
+  };
+}
+
+function parseApprovalNote(formData: FormData): string | null {
+  const reason = formData.get("reason")?.toString() ?? "";
+  const otherReason = formData.get("otherReason")?.toString().trim() || null;
+  return reason === "other" ? otherReason : reason || null;
+}
+
+export type QueueActionResult =
+  | { type: "redirect" }
+  | { type: "validation_error"; message: string };
+
+/** Applies a moderator's form submission for a queue entry. Returns null if
+ * the form's `action` doesn't match any known review action. */
+export async function handleQueueReviewAction(
+  client: SupabaseClient<Database>,
+  entry: QueueEntry,
+  formData: FormData,
+): Promise<QueueActionResult | null> {
+  const action = formData.get("action")?.toString();
+
+  if (action === "approve") {
+    const fields = parseProposedListingFields(formData);
+    const approvalNote = parseApprovalNote(formData);
+
+    if (entry.changeType === "new") {
+      await approveNewListing(client, entry.id, fields, approvalNote);
+    } else if (entry.changeType === "update") {
+      await approveListingUpdate(
+        client,
+        entry.id,
+        entry.listingId!,
+        fields,
+        approvalNote,
+      );
+    }
+    return { type: "redirect" };
+  }
+
+  if (action === "approve_cancellation") {
+    const originalDate = formData.get("originalDate")?.toString() ?? "";
+    const note = formData.get("note")?.toString() || null;
+    const approvalNote = parseApprovalNote(formData);
+    await approveCancellation(
+      client,
+      entry.id,
+      entry.listingId!,
+      originalDate,
+      note,
+      approvalNote,
+    );
+    return { type: "redirect" };
+  }
+
+  if (action === "propose_reject") {
+    const reason = formData.get("reason")?.toString();
+    if (!reason) {
+      return {
+        type: "validation_error",
+        message: "A reason is required to propose rejection.",
+      };
+    }
+    await proposeRejection(client, entry.id, reason);
+    return { type: "redirect" };
+  }
+
+  if (action === "confirm_reject") {
+    await confirmRejection(client, entry.id);
+    return { type: "redirect" };
+  }
+
+  if (action === "send_back") {
+    await sendBackToPending(client, entry.id);
+    return { type: "redirect" };
+  }
+
+  return null;
+}
+
+// Pre-fill the edit form from proposed_data when there is a structured
+// proposal (new listings, and updates simulating a future sourcing-agent
+// proposal). A report-form 'update' has no proposed_data — pre-fill from
+// the listing's current values instead, since the moderator is translating
+// free text into field edits, not reviewing a structured diff.
+export async function getPrefillForEntry(
+  entry: QueueEntry,
+): Promise<ProposedListingFields | null> {
+  if (entry.changeType === "new") {
+    return entry.proposedData as ProposedListingFields;
+  }
+
+  if (entry.changeType !== "update") return null;
+
+  if (entry.proposedData) {
+    return entry.proposedData as ProposedListingFields;
+  }
+
+  const current = await getListingById(entry.listingId!);
+  if (!current) return null;
+
+  return {
+    type: current.type,
+    title: current.title,
+    host: current.host,
+    description: current.description,
+    venueId: current.venue.id,
+    startTime: current.startTime,
+    signUpMethod: current.signUpMethod,
+    costToPerform: current.costToPerform,
+    ticketPrice: current.ticketPrice,
+    ticketUrl: current.ticketUrl,
+    recurrence: current.recurrenceRule,
+    oneOffDate: current.oneOffDate,
+  };
 }
 
 export async function getArchiveEntries(
