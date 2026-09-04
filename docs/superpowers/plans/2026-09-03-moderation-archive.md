@@ -797,7 +797,7 @@ EOF
 - Consumes: `moderators` table from Task 2
 - Produces: `getModeratorEmails(client, ids: string[]): Promise<Record<string, string>>` — consumed by Task 7's archive page
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/lib/data/moderators.test.ts`:
 
@@ -831,7 +831,7 @@ describe("getModeratorEmails", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 ```bash
 pnpm test moderators
@@ -839,7 +839,7 @@ pnpm test moderators
 
 Expected: FAIL with "Cannot find module './moderators'" or similar.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `src/lib/data/moderators.ts`:
 
@@ -866,7 +866,7 @@ export async function getModeratorEmails(
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 ```bash
 pnpm test moderators
@@ -874,7 +874,7 @@ pnpm test moderators
 
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/data/moderators.ts src/lib/data/moderators.test.ts
