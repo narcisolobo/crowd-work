@@ -1,0 +1,76 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - link "Back to Crowd Work" [ref=f2e3] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f2e6]:
+      - heading "Submit a listing" [level=1] [ref=f2e7]
+      - paragraph [ref=f2e8]: A moderator reviews every submission before it goes live.
+      - generic [ref=f2e9]:
+        - generic [ref=f2e10]:
+          - paragraph [ref=f2e11]: Listing details
+          - generic [ref=f2e12]:
+            - text: Type
+            - combobox "Type" [ref=f2e14]:
+              - option "Mic" [selected]
+              - option "Show"
+          - generic [ref=f2e15]:
+            - text: Title
+            - textbox "Title" [ref=f2e16]
+          - generic [ref=f2e18]:
+            - text: Host
+            - textbox "Host" [ref=f2e19]
+          - generic [ref=f2e20]:
+            - text: Description
+            - textbox "Description" [ref=f2e21]
+          - generic [ref=f2e22]:
+            - text: Venue
+            - combobox "Venue" [ref=f2e24]:
+              - option "The Virgil" [selected]
+              - option "Westside Comedy Theater"
+              - option "Add a new venue…"
+          - generic [ref=f2e25]:
+            - text: Start time
+            - textbox "Start time" [ref=f2e26]
+          - generic [ref=f2e28]:
+            - text: Sign-up method
+            - textbox "Sign-up method" [ref=f2e29]
+          - generic [ref=f2e31]:
+            - text: Cost to perform
+            - textbox "Cost to perform" [ref=f2e32]
+        - generic [ref=f2e33]:
+          - paragraph [ref=f2e34]: Recurrence
+          - generic [ref=f2e35]:
+            - text: Frequency
+            - combobox "Frequency" [ref=f2e37]:
+              - option "One-time" [selected]
+              - option "Weekly"
+              - option "Monthly"
+          - generic [ref=f2e38]:
+            - text: Day of week
+            - combobox "Day of week" [ref=f2e40]:
+              - option "Choose a day" [selected]
+              - option "Sunday"
+              - option "Monday"
+              - option "Tuesday"
+              - option "Wednesday"
+              - option "Thursday"
+              - option "Friday"
+              - option "Saturday"
+          - generic [ref=f2e41]:
+            - text: Week of month
+            - combobox "Week of month" [ref=f2e43]:
+              - option "Every week" [selected]
+              - option "1st"
+              - option "2nd"
+              - option "3rd"
+              - option "4th"
+              - option "Last"
+          - generic [ref=f2e44]:
+            - text: One-off date (if not recurring)
+            - textbox "One-off date (if not recurring)" [ref=f2e45]
+        - button "Submit listing" [ref=f2e46] [cursor=pointer]
+  - generic [ref=f2e49]:
+    - button [ref=f2e50]
+    - button [ref=f2e56]
+    - button [ref=f2e60]
+    - button [ref=f2e65]

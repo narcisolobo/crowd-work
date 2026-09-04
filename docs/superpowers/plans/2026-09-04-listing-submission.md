@@ -1671,7 +1671,7 @@ EOF
 
 This task is UI-only; verify manually.
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 Create `src/pages/listings/new/index.astro`:
 
@@ -1827,7 +1827,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 </html>
 ```
 
-- [ ] **Step 2: Point the header's "Submit a listing" link at the new page**
+- [x] **Step 2: Point the header's "Submit a listing" link at the new page**
 
 In `src/components/layout/SiteHeader.astro`, replace the placeholder:
 
@@ -1847,7 +1847,7 @@ with:
 ></a>
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 ```bash
 pnpm exec astro check
@@ -1855,7 +1855,7 @@ pnpm exec astro check
 
 Expected: no errors.
 
-- [ ] **Step 4: Verify manually**
+- [x] **Step 4: Verify manually**
 
 ```bash
 astro dev --background
@@ -1871,7 +1871,7 @@ astro dev logs
 
 Expected: no errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pages/listings/new src/components/layout/SiteHeader.astro

@@ -181,8 +181,13 @@ const initialType = prefill?.type ?? "mic";
       .closest("form")
       ?.querySelector<HTMLElement>("[data-new-venue]");
     if (!container) continue;
+    const fields = container.querySelectorAll<
+      HTMLInputElement | HTMLSelectElement
+    >("input, select");
     const sync = () => {
-      container.hidden = select.value !== "__new__";
+      const isNewVenue = select.value === "__new__";
+      container.hidden = !isNewVenue;
+      for (const field of fields) field.disabled = !isNewVenue;
     };
     select.addEventListener("change", sync);
     sync();
