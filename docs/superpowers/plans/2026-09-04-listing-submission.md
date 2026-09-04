@@ -1899,7 +1899,7 @@ EOF
 
 This task is UI-only; verify manually.
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 Create `src/pages/admin/listings/new/index.astro`:
 
@@ -2013,7 +2013,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 </script>
 ```
 
-- [ ] **Step 2: Add the nav link**
+- [x] **Step 2: Add the nav link**
 
 In `src/components/layout/AdminHeader.astro`, add a "New listing" link before the existing "Archive" link (inside the same `userEmail &&` `<nav>` block):
 
@@ -2032,7 +2032,7 @@ In `src/components/layout/AdminHeader.astro`, add a "New listing" link before th
 </a>
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 ```bash
 pnpm exec astro check
@@ -2040,7 +2040,7 @@ pnpm exec astro check
 
 Expected: no errors.
 
-- [ ] **Step 4: Verify manually**
+- [x] **Step 4: Verify manually**
 
 ```bash
 astro dev --background
@@ -2054,7 +2054,7 @@ astro dev logs
 
 Expected: no errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pages/admin/listings/new src/components/layout/AdminHeader.astro
