@@ -795,7 +795,7 @@ EOF
 - Consumes: `neighborhoods` table (existing, publicly readable)
 - Produces: `getNeighborhoods(): Promise<{ id: string; name: string; areaId: string }[]>` — consumed by Task 7's `ListingFieldsFields.astro`, and Tasks 8–9's pages
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/lib/data/listings.test.ts`:
 
@@ -827,7 +827,7 @@ describe("getNeighborhoods", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 ```bash
 pnpm test listings
@@ -835,7 +835,7 @@ pnpm test listings
 
 Expected: FAIL — `getNeighborhoods` doesn't exist.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 In `src/lib/data/listings.ts`, add after `getAreas`:
 
@@ -860,7 +860,7 @@ export async function getNeighborhoods(): Promise<Neighborhood[]> {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 ```bash
 pnpm test listings
@@ -868,7 +868,7 @@ pnpm test listings
 
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/data/listings.ts src/lib/data/listings.test.ts
