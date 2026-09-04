@@ -1041,7 +1041,7 @@ EOF
 - Consumes: `approveNewListing`/`approveListingUpdate`/`approveCancellation`'s new `approvalNote` parameter from Task 3
 - Produces: both approve forms submit a `reason` (and, when `reason === "other"`, an `otherReason`) field, resolved server-side into the `approvalNote` string passed to the approve functions
 
-- [ ] **Step 1: Add the reason options and import `FormTextarea`'s sibling usage**
+- [x] **Step 1: Add the reason options and import `FormTextarea`'s sibling usage**
 
 `FormSelect` and `FormTextarea` are already imported in this file. Add this constant near the other option arrays (after `weekOfMonthOptions`):
 
@@ -1055,7 +1055,7 @@ const approvalReasonOptions = [
 ];
 ```
 
-- [ ] **Step 2: Resolve `approvalNote` in the POST handler**
+- [x] **Step 2: Resolve `approvalNote` in the POST handler**
 
 In the `if (action === "approve")` branch, before the `if (entry.changeType === "new")` check, add:
 
@@ -1102,7 +1102,7 @@ if (action === "approve_cancellation") {
 }
 ```
 
-- [ ] **Step 3: Add the fields to the standard approve form**
+- [x] **Step 3: Add the fields to the standard approve form**
 
 In the template, inside the non-cancellation `<form>` (the `else` branch of the `entry.changeType === "cancellation"` ternary), insert this block after the Recurrence `<div>` and before the `<Button type="submit" ...>Approve</Button>`:
 
@@ -1125,7 +1125,7 @@ In the template, inside the non-cancellation `<form>` (the `else` branch of the 
 </div>
 ```
 
-- [ ] **Step 4: Add the same fields to the cancellation approve form**
+- [x] **Step 4: Add the same fields to the cancellation approve form**
 
 In the `entry.changeType === "cancellation"` branch's `<form>`, insert the same block after the `FormTextarea label="Note"` field and before the `<Button type="submit" ...>Approve cancellation</Button>`:
 
@@ -1148,7 +1148,7 @@ In the `entry.changeType === "cancellation"` branch's `<form>`, insert the same 
 </div>
 ```
 
-- [ ] **Step 5: Add the reveal script**
+- [x] **Step 5: Add the reveal script**
 
 At the end of the file, after the closing `</AdminLayout>` tag, add:
 
@@ -1171,7 +1171,7 @@ At the end of the file, after the closing `</AdminLayout>` tag, add:
 </script>
 ```
 
-- [ ] **Step 6: Verify manually**
+- [x] **Step 6: Verify manually**
 
 ```bash
 astro dev --background
@@ -1189,7 +1189,7 @@ Check server logs for errors:
 astro dev logs
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/admin/queue/\[id\].astro

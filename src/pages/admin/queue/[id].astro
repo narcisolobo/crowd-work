@@ -70,14 +70,20 @@ if (Astro.request.method === "POST") {
         oneOffDate: formData.get("oneOffDate")?.toString() || null,
       };
 
+      const reason = formData.get("reason")?.toString() ?? "";
+      const otherReason =
+        formData.get("otherReason")?.toString().trim() || null;
+      const approvalNote = reason === "other" ? otherReason : reason || null;
+
       if (entry.changeType === "new") {
-        await approveNewListing(supabase, entry.id, fields);
+        await approveNewListing(supabase, entry.id, fields, approvalNote);
       } else if (entry.changeType === "update") {
         await approveListingUpdate(
           supabase,
           entry.id,
           entry.listingId!,
           fields,
+          approvalNote,
         );
       }
 
@@ -87,12 +93,17 @@ if (Astro.request.method === "POST") {
     if (action === "approve_cancellation") {
       const originalDate = formData.get("originalDate")?.toString() ?? "";
       const note = formData.get("note")?.toString() || null;
+      const reason = formData.get("reason")?.toString() ?? "";
+      const otherReason =
+        formData.get("otherReason")?.toString().trim() || null;
+      const approvalNote = reason === "other" ? otherReason : reason || null;
       await approveCancellation(
         supabase,
         entry.id,
         entry.listingId!,
         originalDate,
         note,
+        approvalNote,
       );
       return Astro.redirect("/admin");
     }
@@ -197,6 +208,13 @@ const weekOfMonthOptions = [
   { value: "4", label: "4th" },
   { value: "-1", label: "Last" },
 ];
+const approvalReasonOptions = [
+  { value: "", label: "No reason provided" },
+  { value: "Accurate as submitted", label: "Accurate as submitted" },
+  { value: "Accurate after minor edits", label: "Accurate after minor edits" },
+  { value: "Verified independently", label: "Verified independently" },
+  { value: "other", label: "Other…" },
+];
 ---
 
 <AdminLayout title="Review entry — Crowd Work admin" userEmail={user.email}>
@@ -282,6 +300,20 @@ const weekOfMonthOptions = [
           name="note"
           value={entry.correctionNote ?? ""}
         />
+        <div class="border-rule flex flex-col gap-4 border-t pt-6">
+          <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+            Approval
+          </p>
+          <FormSelect
+            label="Reason"
+            name="reason"
+            options={approvalReasonOptions}
+            value=""
+          />
+          <div data-other-reason hidden>
+            <FormTextarea label="Other reason" name="otherReason" />
+          </div>
+        </div>
         <Button
           type="submit"
           variant="primary"
@@ -384,6 +416,21 @@ const weekOfMonthOptions = [
           />
         </div>
 
+        <div class="border-rule flex flex-col gap-4 border-t pt-6">
+          <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+            Approval
+          </p>
+          <FormSelect
+            label="Reason"
+            name="reason"
+            options={approvalReasonOptions}
+            value=""
+          />
+          <div data-other-reason hidden>
+            <FormTextarea label="Other reason" name="otherReason" />
+          </div>
+        </div>
+
         <Button
           type="submit"
           variant="primary"
@@ -442,3 +489,20 @@ const weekOfMonthOptions = [
     )
   }
 </AdminLayout>
+
+<script>
+  const reasonSelects = document.querySelectorAll<HTMLSelectElement>(
+    'select[name="reason"]',
+  );
+  for (const select of reasonSelects) {
+    const container = select
+      .closest("form")
+      ?.querySelector<HTMLElement>("[data-other-reason]");
+    if (!container) continue;
+    const sync = () => {
+      container.hidden = select.value !== "other";
+    };
+    select.addEventListener("change", sync);
+    sync();
+  }
+</script>
