@@ -22,13 +22,17 @@ export const STATUS_LABEL: Record<string, string> = {
   rejected: "Rejected",
 };
 
+const PREVIEW_LENGTH = 90;
+
+export function truncate(text: string, length = PREVIEW_LENGTH): string {
+  return text.length > length ? `${text.slice(0, length)}…` : text;
+}
+
 export function previewFor(
   entry: Pick<QueueEntry, "correctionNote" | "proposedData" | "changeType">,
 ): string {
   if (entry.correctionNote) {
-    return entry.correctionNote.length > 90
-      ? `${entry.correctionNote.slice(0, 90)}…`
-      : entry.correctionNote;
+    return truncate(entry.correctionNote);
   }
   const data = entry.proposedData as ProposedListingFields | null;
   if (data?.title) {

@@ -1,4 +1,5 @@
 ---
+import AdminUtilityBar from "../../../components/layout/AdminUtilityBar.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import {
   getArchiveEntries,
@@ -10,6 +11,7 @@ import {
   ORIGIN_LABEL,
   STATUS_LABEL,
   previewFor,
+  truncate,
 } from "../../../lib/utils/moderation-labels";
 
 const supabase = Astro.locals.supabase!;
@@ -28,9 +30,10 @@ const moderatorEmails = await getModeratorEmails(supabase, moderatorIds);
 
 function whoFor(entry: QueueEntry): string {
   if (entry.status === "approved") {
-    return entry.approvedBy
+    const approver = entry.approvedBy
       ? (moderatorEmails[entry.approvedBy] ?? "Unknown moderator")
       : "Unknown moderator";
+    return `Approved by ${approver}`;
   }
   const proposer = entry.proposedBy
     ? (moderatorEmails[entry.proposedBy] ?? "Unknown moderator")
@@ -51,8 +54,9 @@ function whatFor(entry: QueueEntry): string {
 }
 
 function whyFor(entry: QueueEntry): string {
-  if (entry.status === "approved") return entry.approvalNote ?? "—";
-  return entry.proposedReason ?? "—";
+  const reason =
+    entry.status === "approved" ? entry.approvalNote : entry.proposedReason;
+  return reason ? truncate(reason) : "—";
 }
 
 function whenFor(decidedAt: string | null): string {
@@ -73,13 +77,18 @@ const rows = entries.map((entry) => ({
   entry,
   hidden: statusFilter !== "" && entry.status !== statusFilter,
 }));
+const hasVisibleRows = rows.some((row) => !row.hidden);
+const activeTabLabel =
+  tabs.find((tab) => tab.value === statusFilter)?.label ?? "";
 ---
 
 <AdminLayout
   title="Moderation Archive — Crowd Work Admin"
   userEmail={user.email}
 >
-  <div class="border-rule border-b pt-8 pb-5">
+  <AdminUtilityBar backHref="/admin" backLabel="Back to queue" />
+
+  <div class="border-rule mt-5 border-b pb-5">
     <h1 class="font-display text-[1.28rem] font-bold">Moderation Archive</h1>
     <p class="text-ink-soft mt-2 text-[0.95rem]">
       Every decided entry — who acted, what was written, and why.
@@ -122,32 +131,45 @@ const rows = entries.map((entry) => ({
         Nothing has been decided yet.
       </p>
     ) : (
-      <ul class="m-0 list-none p-0">
-        {rows.map(({ entry, hidden }) => (
-          <li
-            data-archive-row
-            data-status={entry.status}
-            hidden={hidden}
-            class="border-rule flex flex-col gap-1.5 border-b py-5"
-          >
-            <div class="flex flex-wrap items-center gap-3">
-              <span class="border-rule font-body text-ink-soft rounded-sm border px-1.5 py-px text-[0.65rem] font-semibold tracking-wider uppercase">
-                {CHANGE_TYPE_LABEL[entry.changeType]}
-              </span>
-              <span class="text-[0.95rem] font-medium">
-                {STATUS_LABEL[entry.status]}
-              </span>
-              <span class="text-ink-soft text-[0.82rem]">
-                {ORIGIN_LABEL[entry.origin] ?? entry.origin} ·{" "}
-                {whenFor(entry.decidedAt)}
-              </span>
-            </div>
-            <p class="text-[0.9rem]">{whatFor(entry)}</p>
-            <p class="text-ink-soft text-[0.82rem]">{whoFor(entry)}</p>
-            <p class="text-ink-soft text-[0.82rem] italic">{whyFor(entry)}</p>
-          </li>
-        ))}
-      </ul>
+      <>
+        <p
+          data-archive-empty-filter
+          hidden={hasVisibleRows}
+          class="text-ink-soft py-10 text-[0.95rem]"
+        >
+          No {activeTabLabel.toLowerCase()} entries.
+        </p>
+        <ul class="m-0 list-none p-0">
+          {rows.map(({ entry, hidden }) => (
+            <li
+              data-archive-row
+              data-status={entry.status}
+              hidden={hidden}
+              class="border-rule flex flex-col gap-1.5 border-b py-5"
+            >
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="border-rule font-body text-ink-soft rounded-sm border px-1.5 py-px text-[0.65rem] font-semibold tracking-wider uppercase">
+                  {CHANGE_TYPE_LABEL[entry.changeType]}
+                </span>
+                <span class="text-[0.95rem] font-medium">
+                  {STATUS_LABEL[entry.status]}
+                </span>
+                <span class="text-ink-soft text-[0.82rem]">
+                  {ORIGIN_LABEL[entry.origin] ?? entry.origin} ·{" "}
+                  {whenFor(entry.decidedAt)}
+                </span>
+              </div>
+              <p class="text-[0.9rem] wrap-break-word">{whatFor(entry)}</p>
+              <p class="text-ink-soft text-[0.82rem] wrap-break-word">
+                {whoFor(entry)}
+              </p>
+              <p class="text-ink-soft text-[0.82rem] italic wrap-break-word">
+                {whyFor(entry)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </>
     )
   }
 </AdminLayout>
@@ -163,13 +185,30 @@ const rows = entries.map((entry) => ({
     const rows = Array.from(
       document.querySelectorAll<HTMLElement>("[data-archive-row]"),
     );
+    const emptyFilterMessage = document.querySelector<HTMLElement>(
+      "[data-archive-empty-filter]",
+    );
     let activeStatus =
       buttons.find((btn) => btn.getAttribute("aria-pressed") === "true")
         ?.value ?? "";
 
     function applyFilter() {
+      let visibleCount = 0;
       for (const row of rows) {
-        row.hidden = activeStatus !== "" && row.dataset.status !== activeStatus;
+        const matches =
+          activeStatus === "" || row.dataset.status === activeStatus;
+        row.hidden = !matches;
+        if (matches) visibleCount += 1;
+      }
+      if (emptyFilterMessage) {
+        emptyFilterMessage.hidden = visibleCount > 0;
+        const activeLabel = buttons
+          .find((btn) => btn.value === activeStatus)
+          ?.textContent?.trim()
+          .toLowerCase();
+        if (activeLabel) {
+          emptyFilterMessage.textContent = `No ${activeLabel} entries.`;
+        }
       }
     }
 
