@@ -66,13 +66,13 @@ crowd-work/
 - Consumes: `moderation_queue` table from the moderation-queue-admin-review phase
 - Produces: columns `approved_by`, `approved_data`, `approval_note`, `decided_at` on `moderation_queue`; tightened `with check` clauses on the existing approve/reject-confirm UPDATE policies, consumed by Task 3's write-through changes
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new moderation_archive
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 Open the generated file and write:
 
@@ -111,7 +111,7 @@ create policy "a different moderator can confirm or return a proposed rejection"
   );
 ```
 
-- [ ] **Step 3: Apply the migration locally and verify**
+- [x] **Step 3: Apply the migration locally and verify**
 
 ```bash
 supabase db reset
@@ -119,7 +119,7 @@ supabase db reset
 
 Expected: all prior migrations plus `moderation_archive` apply with no errors.
 
-- [ ] **Step 4: Regenerate TypeScript types**
+- [x] **Step 4: Regenerate TypeScript types**
 
 ```bash
 supabase gen types typescript --local > src/lib/supabase/database.types.ts
@@ -127,7 +127,7 @@ supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
 Expected: `database.types.ts`'s `moderation_queue` entry now includes `approved_by`, `approved_data`, `approval_note`, and `decided_at`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations src/lib/supabase/database.types.ts
@@ -281,108 +281,106 @@ EOF
 In `src/lib/data/moderation-approve.test.ts`, change the `approveNewListing` test's call and add assertions (replacing the existing `await approveNewListing(moderator1, entryId, edited);` line and everything after it up to the closing of that `it` block):
 
 ```ts
-    await approveNewListing(moderator1, entryId, edited, "Verified independently");
+await approveNewListing(moderator1, entryId, edited, "Verified independently");
 
-    const admin = createAdminClient();
-    const { data: listing } = await admin
-      .from("listings")
-      .select("id, title, host, start_time")
-      .eq("title", "Moderator-Corrected Title")
-      .single();
-    expect(listing).not.toBeNull();
-    insertedListingIds.push(listing!.id);
-    expect(listing!.host).toBe("Corrected Host");
-    expect(listing!.start_time).toBe("19:30:00");
+const admin = createAdminClient();
+const { data: listing } = await admin
+  .from("listings")
+  .select("id, title, host, start_time")
+  .eq("title", "Moderator-Corrected Title")
+  .single();
+expect(listing).not.toBeNull();
+insertedListingIds.push(listing!.id);
+expect(listing!.host).toBe("Corrected Host");
+expect(listing!.start_time).toBe("19:30:00");
 
-    const { data: rule } = await admin
-      .from("recurrence_rules")
-      .select("day_of_week")
-      .eq("listing_id", listing!.id)
-      .single();
-    expect(rule!.day_of_week).toBe(1);
+const { data: rule } = await admin
+  .from("recurrence_rules")
+  .select("day_of_week")
+  .eq("listing_id", listing!.id)
+  .single();
+expect(rule!.day_of_week).toBe(1);
 
-    const {
-      data: { user: moderator1User },
-    } = await moderator1.auth.getUser();
-    const { data: entry } = await admin
-      .from("moderation_queue")
-      .select(
-        "status, listing_id, approved_by, approved_data, approval_note, decided_at",
-      )
-      .eq("id", entryId)
-      .single();
-    expect(entry!.status).toBe("approved");
-    expect(entry!.listing_id).toBe(listing!.id);
-    expect(entry!.approved_by).toBe(moderator1User!.id);
-    expect(entry!.approval_note).toBe("Verified independently");
-    expect(entry!.decided_at).not.toBeNull();
-    // approved_data is a snapshot of the moderator-edited values, not the
-    // original proposal — matches `edited`, not `proposed_data` above.
-    expect((entry!.approved_data as { title: string }).title).toBe(
-      "Moderator-Corrected Title",
-    );
+const {
+  data: { user: moderator1User },
+} = await moderator1.auth.getUser();
+const { data: entry } = await admin
+  .from("moderation_queue")
+  .select(
+    "status, listing_id, approved_by, approved_data, approval_note, decided_at",
+  )
+  .eq("id", entryId)
+  .single();
+expect(entry!.status).toBe("approved");
+expect(entry!.listing_id).toBe(listing!.id);
+expect(entry!.approved_by).toBe(moderator1User!.id);
+expect(entry!.approval_note).toBe("Verified independently");
+expect(entry!.decided_at).not.toBeNull();
+// approved_data is a snapshot of the moderator-edited values, not the
+// original proposal — matches `edited`, not `proposed_data` above.
+expect((entry!.approved_data as { title: string }).title).toBe(
+  "Moderator-Corrected Title",
+);
 ```
 
 In `describe("approveListingUpdate", ...)`, change the call and add assertions after the existing `updated!.start_time` check:
 
 ```ts
-    await approveListingUpdate(
-      moderator1,
-      entryId,
-      original.id,
-      edited,
-      "Accurate after minor edits",
-    );
+await approveListingUpdate(
+  moderator1,
+  entryId,
+  original.id,
+  edited,
+  "Accurate after minor edits",
+);
 
-    const { data: updated } = await admin
-      .from("listings")
-      .select("start_time")
-      .eq("id", original.id)
-      .single();
-    expect(updated!.start_time).toBe("20:30:00");
+const { data: updated } = await admin
+  .from("listings")
+  .select("start_time")
+  .eq("id", original.id)
+  .single();
+expect(updated!.start_time).toBe("20:30:00");
 
-    const { data: entry } = await admin
-      .from("moderation_queue")
-      .select("approved_data, approval_note")
-      .eq("id", entryId)
-      .single();
-    expect(entry!.approval_note).toBe("Accurate after minor edits");
-    expect((entry!.approved_data as { startTime: string }).startTime).toBe(
-      "20:30",
-    );
+const { data: entry } = await admin
+  .from("moderation_queue")
+  .select("approved_data, approval_note")
+  .eq("id", entryId)
+  .single();
+expect(entry!.approval_note).toBe("Accurate after minor edits");
+expect((entry!.approved_data as { startTime: string }).startTime).toBe("20:30");
 ```
 
 In `describe("approveCancellation", ...)`, change the call and add an assertion:
 
 ```ts
-    const moderator1 = await signInTestModerator(1);
-    await approveCancellation(
-      moderator1,
-      entryId,
-      listing.id,
-      "2026-09-15",
-      "Venue closed that night",
-      "Accurate as submitted",
-    );
+const moderator1 = await signInTestModerator(1);
+await approveCancellation(
+  moderator1,
+  entryId,
+  listing.id,
+  "2026-09-15",
+  "Venue closed that night",
+  "Accurate as submitted",
+);
 
-    const { data: exception } = await admin
-      .from("occurrence_exceptions")
-      .select("type, original_date")
-      .eq("listing_id", listing.id)
-      .eq("original_date", "2026-09-15")
-      .single();
-    expect(exception!.type).toBe("cancelled");
+const { data: exception } = await admin
+  .from("occurrence_exceptions")
+  .select("type, original_date")
+  .eq("listing_id", listing.id)
+  .eq("original_date", "2026-09-15")
+  .single();
+expect(exception!.type).toBe("cancelled");
 
-    const { data: entry } = await admin
-      .from("moderation_queue")
-      .select("approved_data, approval_note")
-      .eq("id", entryId)
-      .single();
-    expect(entry!.approval_note).toBe("Accurate as submitted");
-    expect(entry!.approved_data).toEqual({
-      originalDate: "2026-09-15",
-      note: "Venue closed that night",
-    });
+const { data: entry } = await admin
+  .from("moderation_queue")
+  .select("approved_data, approval_note")
+  .eq("id", entryId)
+  .single();
+expect(entry!.approval_note).toBe("Accurate as submitted");
+expect(entry!.approved_data).toEqual({
+  originalDate: "2026-09-15",
+  note: "Venue closed that night",
+});
 ```
 
 Add a new describe block at the end of the file (after the `approveCancellation` block):
@@ -423,43 +421,43 @@ describe("approval RLS", () => {
 In `src/lib/data/moderation-transitions.test.ts`, change the "lets a different moderator confirm the rejection" test:
 
 ```ts
-  it("lets a different moderator confirm the rejection", async () => {
-    const moderator1 = await signInTestModerator(1);
-    const moderator2 = await signInTestModerator(2);
-    await proposeRejection(moderator1, entryId, "Duplicate of another entry");
+it("lets a different moderator confirm the rejection", async () => {
+  const moderator1 = await signInTestModerator(1);
+  const moderator2 = await signInTestModerator(2);
+  await proposeRejection(moderator1, entryId, "Duplicate of another entry");
 
-    const result = await confirmRejection(moderator2, entryId);
-    expect(result.status).toBe("rejected");
-    expect(result.decidedAt).not.toBeNull();
-  });
+  const result = await confirmRejection(moderator2, entryId);
+  expect(result.status).toBe("rejected");
+  expect(result.decidedAt).not.toBeNull();
+});
 ```
 
 Add a new test inside the same `describe("rejection state machine", ...)` block:
 
 ```ts
-  it("blocks a moderator from forging another moderator's id into confirmed_by", async () => {
-    const moderator1 = await signInTestModerator(1);
-    const moderator2 = await signInTestModerator(2);
-    await proposeRejection(moderator1, entryId, "Duplicate of another entry");
+it("blocks a moderator from forging another moderator's id into confirmed_by", async () => {
+  const moderator1 = await signInTestModerator(1);
+  const moderator2 = await signInTestModerator(2);
+  await proposeRejection(moderator1, entryId, "Duplicate of another entry");
 
-    const {
-      data: { user: moderator1User },
-    } = await moderator1.auth.getUser();
+  const {
+    data: { user: moderator1User },
+  } = await moderator1.auth.getUser();
 
-    const { data, error } = await moderator2
-      .from("moderation_queue")
-      .update({
-        status: "rejected",
-        confirmed_by: moderator1User!.id,
-        decided_at: new Date().toISOString(),
-      })
-      .eq("id", entryId)
-      .eq("status", "rejection_proposed")
-      .select("id");
+  const { data, error } = await moderator2
+    .from("moderation_queue")
+    .update({
+      status: "rejected",
+      confirmed_by: moderator1User!.id,
+      decided_at: new Date().toISOString(),
+    })
+    .eq("id", entryId)
+    .eq("status", "rejection_proposed")
+    .select("id");
 
-    expect(error).not.toBeNull();
-    expect(data).toBeNull();
-  });
+  expect(error).not.toBeNull();
+  expect(data).toBeNull();
+});
 ```
 
 Create `src/lib/data/moderation-archive.test.ts`:
@@ -698,7 +696,7 @@ export async function approveNewListing(
 (body unchanged down to the recurrence insert) then replace the final line `await markApproved(client, entryId, listing.id);` with:
 
 ```ts
-  await markApproved(client, entryId, listing.id, fields, approvalNote);
+await markApproved(client, entryId, listing.id, fields, approvalNote);
 ```
 
 `approveListingUpdate` — change its signature and final call:
@@ -716,7 +714,7 @@ export async function approveListingUpdate(
 replace the final line `await markApproved(client, entryId, listingId);` with:
 
 ```ts
-  await markApproved(client, entryId, listingId, fields, approvalNote);
+await markApproved(client, entryId, listingId, fields, approvalNote);
 ```
 
 `approveCancellation` — change its signature and final call:
@@ -735,13 +733,13 @@ export async function approveCancellation(
 replace the final line `await markApproved(client, entryId, listingId);` with:
 
 ```ts
-  await markApproved(
-    client,
-    entryId,
-    listingId,
-    { originalDate, note },
-    approvalNote,
-  );
+await markApproved(
+  client,
+  entryId,
+  listingId,
+  { originalDate, note },
+  approvalNote,
+);
 ```
 
 - [ ] **Step 6: Add `getArchiveEntries`**
@@ -819,10 +817,7 @@ describe("getModeratorEmails", () => {
       data: { user: user2 },
     } = await moderator2.auth.getUser();
 
-    const emails = await getModeratorEmails(moderator1, [
-      user1!.id,
-      user2!.id,
-    ]);
+    const emails = await getModeratorEmails(moderator1, [user1!.id, user2!.id]);
 
     expect(emails[user1!.id]).toBe(process.env.TEST_MODERATOR_1_EMAIL);
     expect(emails[user2!.id]).toBe(process.env.TEST_MODERATOR_2_EMAIL);
@@ -1065,48 +1060,46 @@ const approvalReasonOptions = [
 In the `if (action === "approve")` branch, before the `if (entry.changeType === "new")` check, add:
 
 ```ts
-      const reason = formData.get("reason")?.toString() ?? "";
-      const otherReason =
-        formData.get("otherReason")?.toString().trim() || null;
-      const approvalNote = reason === "other" ? otherReason : reason || null;
+const reason = formData.get("reason")?.toString() ?? "";
+const otherReason = formData.get("otherReason")?.toString().trim() || null;
+const approvalNote = reason === "other" ? otherReason : reason || null;
 ```
 
 Then change the two calls in that branch:
 
 ```ts
-      if (entry.changeType === "new") {
-        await approveNewListing(supabase, entry.id, fields, approvalNote);
-      } else if (entry.changeType === "update") {
-        await approveListingUpdate(
-          supabase,
-          entry.id,
-          entry.listingId!,
-          fields,
-          approvalNote,
-        );
-      }
+if (entry.changeType === "new") {
+  await approveNewListing(supabase, entry.id, fields, approvalNote);
+} else if (entry.changeType === "update") {
+  await approveListingUpdate(
+    supabase,
+    entry.id,
+    entry.listingId!,
+    fields,
+    approvalNote,
+  );
+}
 ```
 
 In the `if (action === "approve_cancellation")` branch, add the same resolution before the `approveCancellation` call and pass it through:
 
 ```ts
-    if (action === "approve_cancellation") {
-      const originalDate = formData.get("originalDate")?.toString() ?? "";
-      const note = formData.get("note")?.toString() || null;
-      const reason = formData.get("reason")?.toString() ?? "";
-      const otherReason =
-        formData.get("otherReason")?.toString().trim() || null;
-      const approvalNote = reason === "other" ? otherReason : reason || null;
-      await approveCancellation(
-        supabase,
-        entry.id,
-        entry.listingId!,
-        originalDate,
-        note,
-        approvalNote,
-      );
-      return Astro.redirect("/admin");
-    }
+if (action === "approve_cancellation") {
+  const originalDate = formData.get("originalDate")?.toString() ?? "";
+  const note = formData.get("note")?.toString() || null;
+  const reason = formData.get("reason")?.toString() ?? "";
+  const otherReason = formData.get("otherReason")?.toString().trim() || null;
+  const approvalNote = reason === "other" ? otherReason : reason || null;
+  await approveCancellation(
+    supabase,
+    entry.id,
+    entry.listingId!,
+    originalDate,
+    note,
+    approvalNote,
+  );
+  return Astro.redirect("/admin");
+}
 ```
 
 - [ ] **Step 3: Add the fields to the standard approve form**
@@ -1114,21 +1107,22 @@ In the `if (action === "approve_cancellation")` branch, add the same resolution 
 In the template, inside the non-cancellation `<form>` (the `else` branch of the `entry.changeType === "cancellation"` ternary), insert this block after the Recurrence `<div>` and before the `<Button type="submit" ...>Approve</Button>`:
 
 ```astro
-        <div class="flex flex-col gap-4 border-t border-rule pt-6">
-          <p class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
-            Approval
-          </p>
-          <FormSelect
-            label="Reason"
-            name="reason"
-            options={approvalReasonOptions}
-            value=""
-          />
-          <div data-other-reason hidden>
-            <FormTextarea label="Other reason" name="otherReason" />
-          </div>
-        </div>
-
+<div class="border-rule flex flex-col gap-4 border-t pt-6">
+  <p
+    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+  >
+    Approval
+  </p>
+  <FormSelect
+    label="Reason"
+    name="reason"
+    options={approvalReasonOptions}
+    value=""
+  />
+  <div data-other-reason hidden>
+    <FormTextarea label="Other reason" name="otherReason" />
+  </div>
+</div>
 ```
 
 - [ ] **Step 4: Add the same fields to the cancellation approve form**
@@ -1136,21 +1130,22 @@ In the template, inside the non-cancellation `<form>` (the `else` branch of the 
 In the `entry.changeType === "cancellation"` branch's `<form>`, insert the same block after the `FormTextarea label="Note"` field and before the `<Button type="submit" ...>Approve cancellation</Button>`:
 
 ```astro
-        <div class="flex flex-col gap-4 border-t border-rule pt-6">
-          <p class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
-            Approval
-          </p>
-          <FormSelect
-            label="Reason"
-            name="reason"
-            options={approvalReasonOptions}
-            value=""
-          />
-          <div data-other-reason hidden>
-            <FormTextarea label="Other reason" name="otherReason" />
-          </div>
-        </div>
-
+<div class="border-rule flex flex-col gap-4 border-t pt-6">
+  <p
+    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+  >
+    Approval
+  </p>
+  <FormSelect
+    label="Reason"
+    name="reason"
+    options={approvalReasonOptions}
+    value=""
+  />
+  <div data-other-reason hidden>
+    <FormTextarea label="Other reason" name="otherReason" />
+  </div>
+</div>
 ```
 
 - [ ] **Step 5: Add the reveal script**
@@ -1158,7 +1153,6 @@ In the `entry.changeType === "cancellation"` branch's `<form>`, insert the same 
 At the end of the file, after the closing `</AdminLayout>` tag, add:
 
 ```astro
-
 <script>
   const reasonSelects = document.querySelectorAll<HTMLSelectElement>(
     'select[name="reason"]',
@@ -1184,6 +1178,7 @@ astro dev --background
 ```
 
 Sign in at `/admin/login` with a provisioned moderator account, open a pending entry from `/admin`, and confirm:
+
 - The Reason select appears with the four canned options plus "Other…".
 - Selecting "Other…" reveals the free-text field; selecting anything else hides it.
 - Approving with a canned reason selected succeeds and the entry leaves the queue.
@@ -1271,7 +1266,8 @@ function whoFor(entry: QueueEntry): string {
 function whatFor(entry: QueueEntry): string {
   return previewFor({
     correctionNote: entry.correctionNote,
-    proposedData: entry.status === "approved" ? entry.approvedData : entry.proposedData,
+    proposedData:
+      entry.status === "approved" ? entry.approvedData : entry.proposedData,
     changeType: entry.changeType,
   });
 }
@@ -1301,10 +1297,13 @@ const rows = entries.map((entry) => ({
 }));
 ---
 
-<AdminLayout title="Moderation archive — Crowd Work admin" userEmail={user.email}>
-  <div class="border-b border-rule pt-8 pb-5">
+<AdminLayout
+  title="Moderation archive — Crowd Work admin"
+  userEmail={user.email}
+>
+  <div class="border-rule border-b pt-8 pb-5">
     <h1 class="font-display text-[1.28rem] font-bold">Moderation archive</h1>
-    <p class="mt-2 text-[0.95rem] text-ink-soft">
+    <p class="text-ink-soft mt-2 text-[0.95rem]">
       Every decided entry — who acted, what was written, and why.
     </p>
   </div>
@@ -1312,7 +1311,7 @@ const rows = entries.map((entry) => ({
   <form
     method="get"
     id="archive-filter"
-    class="flex gap-1.5 border-b border-rule py-5"
+    class="border-rule flex gap-1.5 border-b py-5"
     role="group"
     aria-label="Filter by status"
   >
@@ -1326,10 +1325,10 @@ const rows = entries.map((entry) => ({
             value={tab.value}
             aria-pressed={pressed}
             class:list={[
-              "cursor-pointer rounded-sm border px-4 py-1.75 font-display text-[0.95rem] font-bold tracking-wide uppercase",
+              "font-display cursor-pointer rounded-sm border px-4 py-1.75 text-[0.95rem] font-bold tracking-wide uppercase",
               pressed
                 ? "border-ink bg-ink text-paper"
-                : "border-rule bg-transparent text-ink-soft",
+                : "border-rule text-ink-soft bg-transparent",
             ]}
           >
             {tab.label}
@@ -1341,7 +1340,7 @@ const rows = entries.map((entry) => ({
 
   {
     entries.length === 0 ? (
-      <p class="py-10 text-[0.95rem] text-ink-soft">
+      <p class="text-ink-soft py-10 text-[0.95rem]">
         Nothing has been decided yet.
       </p>
     ) : (
@@ -1351,22 +1350,23 @@ const rows = entries.map((entry) => ({
             data-archive-row
             data-status={entry.status}
             hidden={hidden}
-            class="flex flex-col gap-1.5 border-b border-rule py-5"
+            class="border-rule flex flex-col gap-1.5 border-b py-5"
           >
             <div class="flex flex-wrap items-center gap-3">
-              <span class="rounded-sm border border-rule px-1.5 py-px font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+              <span class="border-rule font-body text-ink-soft rounded-sm border px-1.5 py-px text-[0.65rem] font-semibold tracking-wider uppercase">
                 {CHANGE_TYPE_LABEL[entry.changeType]}
               </span>
               <span class="text-[0.95rem] font-medium">
                 {STATUS_LABEL[entry.status]}
               </span>
-              <span class="text-[0.82rem] text-ink-soft">
-                {ORIGIN_LABEL[entry.origin] ?? entry.origin} · {whenFor(entry.decidedAt)}
+              <span class="text-ink-soft text-[0.82rem]">
+                {ORIGIN_LABEL[entry.origin] ?? entry.origin} ·{" "}
+                {whenFor(entry.decidedAt)}
               </span>
             </div>
             <p class="text-[0.9rem]">{whatFor(entry)}</p>
-            <p class="text-[0.82rem] text-ink-soft">{whoFor(entry)}</p>
-            <p class="text-[0.82rem] text-ink-soft italic">{whyFor(entry)}</p>
+            <p class="text-ink-soft text-[0.82rem]">{whoFor(entry)}</p>
+            <p class="text-ink-soft text-[0.82rem] italic">{whyFor(entry)}</p>
           </li>
         ))}
       </ul>
@@ -1431,25 +1431,25 @@ const rows = entries.map((entry) => ({
 Modify `src/components/layout/AdminHeader.astro`. In the `userEmail &&` block, add an Archive link before the existing "Log out" link:
 
 ```astro
-      {
-        userEmail && (
-          <div class="flex items-center gap-4.5 font-body text-[0.86rem] text-ink-soft">
-            <span class="max-[480px]:hidden">{userEmail}</span>
-            <a
-              href="/admin/archive"
-              class="underline-offset-2 hover:text-ink hover:underline"
-            >
-              Archive
-            </a>
-            <a
-              href="/admin/logout"
-              class="underline-offset-2 hover:text-ink hover:underline"
-            >
-              Log out
-            </a>
-          </div>
-        )
-      }
+{
+  userEmail && (
+    <div class="font-body text-ink-soft flex items-center gap-4.5 text-[0.86rem]">
+      <span class="max-[480px]:hidden">{userEmail}</span>
+      <a
+        href="/admin/archive"
+        class="hover:text-ink underline-offset-2 hover:underline"
+      >
+        Archive
+      </a>
+      <a
+        href="/admin/logout"
+        class="hover:text-ink underline-offset-2 hover:underline"
+      >
+        Log out
+      </a>
+    </div>
+  )
+}
 ```
 
 - [ ] **Step 3: Verify manually**
@@ -1459,6 +1459,7 @@ astro dev --background
 ```
 
 Sign in and open `/admin/archive`. Confirm:
+
 - The page loads with no entries yet (if you haven't approved/rejected anything locally).
 - The All / Approved / Rejected tabs render with "All" pressed by default.
 
@@ -1505,6 +1506,7 @@ As moderator 1, propose rejection on a different pending entry with a reason. Lo
 - [ ] **Step 4: Check the archive**
 
 Open `/admin/archive`. Confirm:
+
 - Both the approved and rejected entries appear, most recent first.
 - The approved row shows moderator 1's email as "who" and "Verified independently" as "why".
 - The rejected row shows "Proposed by <moderator 1's email>, confirmed by <moderator 2's email>" and the rejection reason as "why".
