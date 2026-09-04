@@ -903,7 +903,7 @@ EOF
 
 This is a pure refactor — no behavior change to either existing page.
 
-- [ ] **Step 1: Create the shared helpers module**
+- [x] **Step 1: Create the shared helpers module**
 
 Create `src/lib/utils/moderation-labels.ts`:
 
@@ -950,7 +950,7 @@ export function previewFor(
 }
 ```
 
-- [ ] **Step 2: Update `src/pages/admin/index.astro`**
+- [x] **Step 2: Update `src/pages/admin/index.astro`**
 
 Replace the frontmatter's local `CHANGE_TYPE_LABEL`, `ORIGIN_LABEL`, and `previewFor` (lines 14-38) with an import, keeping only `dateLabel` locally:
 
@@ -979,7 +979,7 @@ function dateLabel(createdAt: string): string {
 
 The rest of the file (the template) is unchanged — it already calls `CHANGE_TYPE_LABEL[entry.changeType]`, `ORIGIN_LABEL[entry.origin]`, and `previewFor(entry)`, which now resolve to the imports instead of local definitions.
 
-- [ ] **Step 3: Update `src/pages/admin/queue/[id].astro`**
+- [x] **Step 3: Update `src/pages/admin/queue/[id].astro`**
 
 Remove the local `ORIGIN_LABEL` and `STATUS_LABEL` definitions (currently just after `CHANGE_TYPE_LABEL`, around lines 164-173), keeping the local `CHANGE_TYPE_LABEL` as-is:
 
@@ -1002,7 +1002,7 @@ import {
 
 The template's `ORIGIN_LABEL[entry.origin]` and `STATUS_LABEL[entry.status]` references are unchanged.
 
-- [ ] **Step 4: Verify nothing broke**
+- [x] **Step 4: Verify nothing broke**
 
 ```bash
 pnpm exec astro check
@@ -1016,7 +1016,7 @@ astro dev --background
 
 Open `/admin` and `/admin/queue/<a pending entry's id>` in your browser and confirm both pages render exactly as before (same badge text, same labels).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/utils/moderation-labels.ts src/pages/admin/index.astro src/pages/admin/queue/\[id\].astro

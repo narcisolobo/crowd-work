@@ -1,22 +1,26 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import FormField from "../../../components/forms/FormField.astro";
-import FormTextarea from "../../../components/forms/FormTextarea.astro";
-import FormSelect from "../../../components/forms/FormSelect.astro";
 import Button from "../../../components/forms/Button.astro";
-import {
-  getQueueEntryById,
-  approveNewListing,
-  approveListingUpdate,
-  approveCancellation,
-  proposeRejection,
-  confirmRejection,
-  sendBackToPending,
-  type QueueChangeType,
-  type ProposedListingFields,
-  type ProposedCancellation,
-} from "../../../lib/data/moderation";
+import FormField from "../../../components/forms/FormField.astro";
+import FormSelect from "../../../components/forms/FormSelect.astro";
+import FormTextarea from "../../../components/forms/FormTextarea.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { getListingById, getVenues } from "../../../lib/data/listings";
+import {
+  approveCancellation,
+  approveListingUpdate,
+  approveNewListing,
+  confirmRejection,
+  getQueueEntryById,
+  proposeRejection,
+  sendBackToPending,
+  type ProposedCancellation,
+  type ProposedListingFields,
+  type QueueChangeType,
+} from "../../../lib/data/moderation";
+import {
+  ORIGIN_LABEL,
+  STATUS_LABEL,
+} from "../../../lib/utils/moderation-labels";
 
 const { id } = Astro.params;
 const supabase = Astro.locals.supabase!;
@@ -161,16 +165,6 @@ const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   update: "Update",
   cancellation: "Cancellation",
 };
-const ORIGIN_LABEL: Record<string, string> = {
-  seed: "Seed data",
-  report_form: "Public report",
-};
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending",
-  rejection_proposed: "Rejection proposed",
-  approved: "Approved",
-  rejected: "Rejected",
-};
 
 const typeOptions = [
   { value: "mic", label: "Mic" },
@@ -209,7 +203,7 @@ const weekOfMonthOptions = [
   <div class="flex items-center justify-between gap-4 pt-6 text-[0.86rem]">
     <a
       href="/admin"
-      class="inline-flex items-center gap-1.5 text-ink-soft underline-offset-2 hover:underline"
+      class="text-ink-soft inline-flex items-center gap-1.5 underline-offset-2 hover:underline"
     >
       <svg class="h-2.5 w-2.5 rotate-90" viewBox="0 0 12 12" fill="none">
         <path
@@ -217,8 +211,7 @@ const weekOfMonthOptions = [
           stroke="currentColor"
           stroke-width="1.3"
           stroke-linecap="round"
-          stroke-linejoin="round"
-        />
+          stroke-linejoin="round"></path>
       </svg>
       Back to queue
     </a>
@@ -236,20 +229,24 @@ const weekOfMonthOptions = [
     <h1 class="font-display text-[1.28rem] font-bold">
       {CHANGE_TYPE_LABEL[entry.changeType]}
     </h1>
-    <span class="rounded-sm border border-rule px-1.5 py-px font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+    <span
+      class="border-rule font-body text-ink-soft rounded-sm border px-1.5 py-px text-[0.65rem] font-semibold tracking-wider uppercase"
+    >
       {ORIGIN_LABEL[entry.origin] ?? entry.origin}
     </span>
   </div>
 
-  <p class="mt-1.5 text-[0.86rem] text-ink-soft">
-    Status: <span class="font-medium text-ink">{STATUS_LABEL[entry.status]}</span>
+  <p class="text-ink-soft mt-1.5 text-[0.86rem]">
+    Status: <span class="text-ink font-medium"
+      >{STATUS_LABEL[entry.status]}</span
+    >
   </p>
 
   {
     errorMessage && (
       <p
         role="alert"
-        class="mt-5 rounded-sm bg-paper-shadow px-3.5 py-2.5 text-[0.86rem] font-medium text-ink"
+        class="bg-paper-shadow text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
       >
         <strong>Error:</strong> {errorMessage}
       </p>
@@ -258,11 +255,11 @@ const weekOfMonthOptions = [
 
   {
     entry.correctionNote && (
-      <div class="mt-6 rounded-sm border-l-[3px] border-l-rule bg-paper-shadow px-4 py-3.5">
-        <p class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+      <div class="border-l-rule bg-paper-shadow mt-6 rounded-sm border-l-[3px] px-4 py-3.5">
+        <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
           Reporter's note
         </p>
-        <p class="mt-1.5 text-[0.95rem] text-ink italic">
+        <p class="text-ink mt-1.5 text-[0.95rem] italic">
           "{entry.correctionNote}"
         </p>
       </div>
@@ -299,7 +296,7 @@ const weekOfMonthOptions = [
         <input type="hidden" name="action" value="approve" />
 
         <div class="flex flex-col gap-4">
-          <p class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+          <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
             Listing details
           </p>
           <FormSelect
@@ -308,7 +305,12 @@ const weekOfMonthOptions = [
             options={typeOptions}
             value={prefill?.type ?? "mic"}
           />
-          <FormField label="Title" name="title" value={prefill?.title ?? ""} required />
+          <FormField
+            label="Title"
+            name="title"
+            value={prefill?.title ?? ""}
+            required
+          />
           <FormField label="Host" name="host" value={prefill?.host ?? ""} />
           <FormTextarea
             label="Description"
@@ -352,8 +354,8 @@ const weekOfMonthOptions = [
           />
         </div>
 
-        <div class="flex flex-col gap-4 border-t border-rule pt-6">
-          <p class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
+        <div class="border-rule flex flex-col gap-4 border-t pt-6">
+          <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
             Recurrence
           </p>
           <FormSelect
@@ -396,7 +398,10 @@ const weekOfMonthOptions = [
 
   {
     entry.status === "pending" && (
-      <form method="post" class="mt-10 flex max-w-104 flex-col gap-3 border-t border-rule pt-6">
+      <form
+        method="post"
+        class="border-rule mt-10 flex max-w-104 flex-col gap-3 border-t pt-6"
+      >
         <input type="hidden" name="action" value="propose_reject" />
         <FormTextarea label="Reason for rejection" name="reason" required />
         <Button type="submit" variant="outline" class="self-start">
@@ -408,15 +413,14 @@ const weekOfMonthOptions = [
 
   {
     entry.status === "rejection_proposed" && (
-      <div class="mt-10 border-t border-rule pt-6">
+      <div class="border-rule mt-10 border-t pt-6">
         <p class="text-[0.94rem]">
           <span class="font-medium">Rejection proposed</span> —{" "}
           {entry.proposedReason}
         </p>
         {isOwnProposal ? (
-          <p class="mt-3 text-[0.86rem] text-ink-soft">
-            You proposed this rejection — a different moderator must confirm
-            it.
+          <p class="text-ink-soft mt-3 text-[0.86rem]">
+            You proposed this rejection — a different moderator must confirm it.
           </p>
         ) : (
           <div class="mt-4 flex flex-wrap gap-3">
