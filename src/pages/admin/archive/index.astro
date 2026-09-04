@@ -77,7 +77,8 @@ const rows = entries.map((entry) => ({
   entry,
   hidden: statusFilter !== "" && entry.status !== statusFilter,
 }));
-const hasVisibleRows = rows.some((row) => !row.hidden);
+const visibleCount = rows.filter((row) => !row.hidden).length;
+const hasVisibleRows = visibleCount > 0;
 const activeTabLabel =
   tabs.find((tab) => tab.value === statusFilter)?.label ?? "";
 ---
@@ -133,7 +134,21 @@ const activeTabLabel =
     ) : (
       <>
         <p
+          data-archive-count
+          aria-live="polite"
+          hidden={!hasVisibleRows}
+          class="text-ink-soft py-3 text-[0.82rem]"
+        >
+          <strong class="text-gold-ink font-semibold" data-count>
+            {visibleCount}
+          </strong>{" "}
+          <span data-count-label>
+            {visibleCount === 1 ? "entry" : "entries"}
+          </span>
+        </p>
+        <p
           data-archive-empty-filter
+          aria-live="polite"
           hidden={hasVisibleRows}
           class="text-ink-soft py-10 text-[0.95rem]"
         >
@@ -188,6 +203,12 @@ const activeTabLabel =
     const emptyFilterMessage = document.querySelector<HTMLElement>(
       "[data-archive-empty-filter]",
     );
+    const countMessage = document.querySelector<HTMLElement>(
+      "[data-archive-count]",
+    );
+    const countValue = countMessage?.querySelector("[data-count]") ?? null;
+    const countLabel =
+      countMessage?.querySelector("[data-count-label]") ?? null;
     let activeStatus =
       buttons.find((btn) => btn.getAttribute("aria-pressed") === "true")
         ?.value ?? "";
@@ -199,6 +220,13 @@ const activeTabLabel =
           activeStatus === "" || row.dataset.status === activeStatus;
         row.hidden = !matches;
         if (matches) visibleCount += 1;
+      }
+      if (countMessage) {
+        countMessage.hidden = visibleCount === 0;
+        if (countValue) countValue.textContent = String(visibleCount);
+        if (countLabel) {
+          countLabel.textContent = visibleCount === 1 ? "entry" : "entries";
+        }
       }
       if (emptyFilterMessage) {
         emptyFilterMessage.hidden = visibleCount > 0;
