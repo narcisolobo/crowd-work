@@ -1,0 +1,204 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  getArchiveEntries,
+  type QueueEntry,
+} from "../../../lib/data/moderation";
+import { getModeratorEmails } from "../../../lib/data/moderators";
+import {
+  CHANGE_TYPE_LABEL,
+  ORIGIN_LABEL,
+  STATUS_LABEL,
+  previewFor,
+} from "../../../lib/utils/moderation-labels";
+
+const supabase = Astro.locals.supabase!;
+const user = Astro.locals.user!;
+
+const statusFilter = Astro.url.searchParams.get("status") || "";
+
+const entries = await getArchiveEntries(supabase);
+
+const moderatorIds = entries.flatMap((entry) =>
+  [entry.approvedBy, entry.proposedBy, entry.confirmedBy].filter(
+    (id): id is string => Boolean(id),
+  ),
+);
+const moderatorEmails = await getModeratorEmails(supabase, moderatorIds);
+
+function whoFor(entry: QueueEntry): string {
+  if (entry.status === "approved") {
+    return entry.approvedBy
+      ? (moderatorEmails[entry.approvedBy] ?? "Unknown moderator")
+      : "Unknown moderator";
+  }
+  const proposer = entry.proposedBy
+    ? (moderatorEmails[entry.proposedBy] ?? "Unknown moderator")
+    : "Unknown moderator";
+  const confirmer = entry.confirmedBy
+    ? (moderatorEmails[entry.confirmedBy] ?? "Unknown moderator")
+    : "Unknown moderator";
+  return `Proposed by ${proposer}, confirmed by ${confirmer}`;
+}
+
+function whatFor(entry: QueueEntry): string {
+  return previewFor({
+    correctionNote: entry.correctionNote,
+    proposedData:
+      entry.status === "approved" ? entry.approvedData : entry.proposedData,
+    changeType: entry.changeType,
+  });
+}
+
+function whyFor(entry: QueueEntry): string {
+  if (entry.status === "approved") return entry.approvalNote ?? "—";
+  return entry.proposedReason ?? "—";
+}
+
+function whenFor(decidedAt: string | null): string {
+  if (!decidedAt) return "—";
+  return new Date(decidedAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+const tabs = [
+  { value: "", label: "All" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
+];
+
+const rows = entries.map((entry) => ({
+  entry,
+  hidden: statusFilter !== "" && entry.status !== statusFilter,
+}));
+---
+
+<AdminLayout
+  title="Moderation Archive — Crowd Work Admin"
+  userEmail={user.email}
+>
+  <div class="border-rule border-b pt-8 pb-5">
+    <h1 class="font-display text-[1.28rem] font-bold">Moderation Archive</h1>
+    <p class="text-ink-soft mt-2 text-[0.95rem]">
+      Every decided entry — who acted, what was written, and why.
+    </p>
+  </div>
+
+  <form
+    method="get"
+    id="archive-filter"
+    class="border-rule flex gap-1.5 border-b py-5"
+    role="group"
+    aria-label="Filter by status"
+  >
+    {
+      tabs.map((tab) => {
+        const pressed = statusFilter === tab.value;
+        return (
+          <button
+            type="submit"
+            name="status"
+            value={tab.value}
+            aria-pressed={pressed}
+            class:list={[
+              "font-display cursor-pointer rounded-sm border px-4 py-1.75 text-[0.95rem] font-bold tracking-wide uppercase",
+              pressed
+                ? "border-ink bg-ink text-paper"
+                : "border-rule text-ink-soft bg-transparent",
+            ]}
+          >
+            {tab.label}
+          </button>
+        );
+      })
+    }
+  </form>
+
+  {
+    entries.length === 0 ? (
+      <p class="text-ink-soft py-10 text-[0.95rem]">
+        Nothing has been decided yet.
+      </p>
+    ) : (
+      <ul class="m-0 list-none p-0">
+        {rows.map(({ entry, hidden }) => (
+          <li
+            data-archive-row
+            data-status={entry.status}
+            hidden={hidden}
+            class="border-rule flex flex-col gap-1.5 border-b py-5"
+          >
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="border-rule font-body text-ink-soft rounded-sm border px-1.5 py-px text-[0.65rem] font-semibold tracking-wider uppercase">
+                {CHANGE_TYPE_LABEL[entry.changeType]}
+              </span>
+              <span class="text-[0.95rem] font-medium">
+                {STATUS_LABEL[entry.status]}
+              </span>
+              <span class="text-ink-soft text-[0.82rem]">
+                {ORIGIN_LABEL[entry.origin] ?? entry.origin} ·{" "}
+                {whenFor(entry.decidedAt)}
+              </span>
+            </div>
+            <p class="text-[0.9rem]">{whatFor(entry)}</p>
+            <p class="text-ink-soft text-[0.82rem]">{whoFor(entry)}</p>
+            <p class="text-ink-soft text-[0.82rem] italic">{whyFor(entry)}</p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</AdminLayout>
+
+<script>
+  const form = document.getElementById(
+    "archive-filter",
+  ) as HTMLFormElement | null;
+  if (form) {
+    const buttons = Array.from(
+      form.querySelectorAll<HTMLButtonElement>('button[name="status"]'),
+    );
+    const rows = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-archive-row]"),
+    );
+    let activeStatus =
+      buttons.find((btn) => btn.getAttribute("aria-pressed") === "true")
+        ?.value ?? "";
+
+    function applyFilter() {
+      for (const row of rows) {
+        row.hidden = activeStatus !== "" && row.dataset.status !== activeStatus;
+      }
+    }
+
+    function setActive(value: string) {
+      activeStatus = value;
+      for (const btn of buttons) {
+        const pressed = btn.value === value;
+        btn.setAttribute("aria-pressed", String(pressed));
+        btn.classList.toggle("border-ink", pressed);
+        btn.classList.toggle("bg-ink", pressed);
+        btn.classList.toggle("text-paper", pressed);
+        btn.classList.toggle("border-rule", !pressed);
+        btn.classList.toggle("bg-transparent", !pressed);
+        btn.classList.toggle("text-ink-soft", !pressed);
+      }
+    }
+
+    for (const button of buttons) {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActive(button.value);
+        applyFilter();
+        const url = new URL(window.location.href);
+        if (activeStatus) url.searchParams.set("status", activeStatus);
+        else url.searchParams.delete("status");
+        window.history.pushState({}, "", url);
+      });
+    }
+
+    applyFilter();
+  }
+</script>

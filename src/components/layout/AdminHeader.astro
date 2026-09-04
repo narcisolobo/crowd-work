@@ -9,28 +9,33 @@ interface Props {
 const { userEmail = null } = Astro.props;
 ---
 
-<header class="admin-nav sticky top-0 z-20 bg-paper-shadow">
+<header class="admin-nav bg-paper-shadow sticky top-0 z-20">
   <div
-    class="mx-auto flex h-14 max-w-180 items-center gap-5.5 border-b border-b-[color-mix(in_srgb,var(--ink)_25%,var(--paper)_75%)] bg-paper px-5"
+    class="bg-paper mx-auto flex h-14 max-w-180 items-center gap-5.5 border-b border-b-[color-mix(in_srgb,var(--ink)_25%,var(--paper)_75%)] px-5"
   >
     <a
       href={userEmail ? "/admin" : "/"}
-      class="mr-auto flex items-center gap-2 text-ink no-underline"
+      class="text-ink mr-auto flex items-center gap-2 no-underline"
     >
-      <BrandMark class="h-5 w-5 flex-none text-ink" />
+      <BrandMark class="text-ink h-5 w-5 flex-none" />
       <span class="font-display text-[1rem] font-bold tracking-tight">
-        Crowd Work <span class="font-body font-normal text-ink-soft"
-          >admin</span
+        Crowd Work <span class="font-body text-ink-soft font-normal">admin</span
         >
       </span>
     </a>
     {
       userEmail && (
-        <div class="flex items-center gap-4.5 font-body text-[0.86rem] text-ink-soft">
+        <div class="font-body text-ink-soft flex items-center gap-4.5 text-[0.86rem]">
           <span class="max-[480px]:hidden">{userEmail}</span>
           <a
+            href="/admin/archive"
+            class="hover:text-ink underline-offset-2 hover:underline"
+          >
+            Archive
+          </a>
+          <a
             href="/admin/logout"
-            class="underline-offset-2 hover:text-ink hover:underline"
+            class="hover:text-ink underline-offset-2 hover:underline"
           >
             Log out
           </a>

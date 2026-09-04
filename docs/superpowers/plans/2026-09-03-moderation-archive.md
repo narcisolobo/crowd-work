@@ -1215,7 +1215,7 @@ EOF
 - Consumes: `getArchiveEntries` (Task 3), `getModeratorEmails` (Task 4), `CHANGE_TYPE_LABEL`/`ORIGIN_LABEL`/`STATUS_LABEL`/`previewFor` (Task 5)
 - Produces: the `/admin/archive` route; a nav link from every other `/admin/*` page
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 Create `src/pages/admin/archive/index.astro`:
 
@@ -1426,7 +1426,7 @@ const rows = entries.map((entry) => ({
 </script>
 ```
 
-- [ ] **Step 2: Add the nav link**
+- [x] **Step 2: Add the nav link**
 
 Modify `src/components/layout/AdminHeader.astro`. In the `userEmail &&` block, add an Archive link before the existing "Log out" link:
 
@@ -1452,7 +1452,7 @@ Modify `src/components/layout/AdminHeader.astro`. In the `userEmail &&` block, a
 }
 ```
 
-- [ ] **Step 3: Verify manually**
+- [x] **Step 3: Verify manually**
 
 ```bash
 astro dev --background
@@ -1469,7 +1469,7 @@ astro dev logs
 
 Expected: no errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/pages/admin/archive src/components/layout/AdminHeader.astro
