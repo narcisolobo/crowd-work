@@ -1,2 +1,0 @@
-[   11185ms] [ERROR] An invalid form control with name='newVenueName' is not focusable. @ http://localhost:4321/listings/new:0
-[   11185ms] [ERROR] An invalid form control with name='newVenueAddress' is not focusable. @ http://localhost:4321/listings/new:0

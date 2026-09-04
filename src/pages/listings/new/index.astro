@@ -6,6 +6,7 @@ import ListingFieldsFields from "../../../components/moderation/ListingFieldsFie
 import { supabase } from "../../../lib/supabase/supabase";
 import { getNeighborhoods, getVenues } from "../../../lib/data/listings";
 import {
+  MissingRequiredFieldsError,
   parseProposedListingFields,
   submitNewListingProposal,
   type ProposedListingFields,
@@ -19,6 +20,7 @@ const [venues, neighborhoods] = await Promise.all([
 let submitted = false;
 let errorMessage: string | null = null;
 let prefill: ProposedListingFields | null = null;
+let fieldErrors: Record<string, string> = {};
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
@@ -33,13 +35,22 @@ if (Astro.request.method === "POST") {
       await submitNewListingProposal(supabase, formData);
       submitted = true;
     } catch (error) {
-      errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Something went wrong submitting your listing. Please try again.";
+      if (error instanceof MissingRequiredFieldsError) {
+        errorMessage = "Please fix the highlighted fields below.";
+        fieldErrors = Object.fromEntries(
+          error.fields.map(({ field }) => [field, "Required."]),
+        );
+      } else {
+        errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Something went wrong submitting your listing. Please try again.";
+      }
     }
   }
 }
+
+const hasFieldErrors = Object.keys(fieldErrors).length > 0;
 
 const venueOptions = venues.map((venue) => ({
   value: venue.id,
@@ -72,7 +83,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
   <body
     class="font-body text-ink flex min-h-screen flex-col text-base antialiased"
   >
-    <div class="mx-auto flex w-full max-w-136 flex-1 flex-col px-5 py-10">
+    <div class="bg-paper mx-auto flex w-full max-w-136 flex-1 flex-col px-5 py-10">
       <a
         href="/"
         class="text-ink-soft inline-flex items-center gap-1.5 text-[0.86rem] underline-offset-2 hover:underline"
@@ -95,8 +106,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
               Thanks — a moderator will review this shortly.
             </h1>
             <p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
-              Crowd Work listings are reviewed by working comics, not one
-              person's spreadsheet — submissions like yours are how the list
+              It's in the queue now — submissions like yours are how the list
               grows.
             </p>
           </div>
@@ -106,19 +116,26 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
               Submit a listing
             </h1>
             <p class="text-ink-soft mt-1.5 text-[0.9rem]">
-              A moderator reviews every submission before it goes live.
+              Crowd Work listings are reviewed by working comics, not one
+              person's spreadsheet — every submission is checked before it
+              goes live.
             </p>
 
             {errorMessage && (
               <p
                 role="alert"
-                class="bg-paper text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
+                class:list={[
+                  "mt-5 rounded-sm bg-paper px-3.5 py-2.5 text-[0.86rem] font-medium",
+                  hasFieldErrors
+                    ? "border-l-red text-red border-l-[3px]"
+                    : "text-ink",
+                ]}
               >
                 <strong>Error:</strong> {errorMessage}
               </p>
             )}
 
-            <form method="post" class="mt-6 flex flex-col gap-6">
+            <form method="post" novalidate class="mt-6 flex flex-col gap-6">
               <div hidden>
                 <label>
                   Company
@@ -135,6 +152,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
                 prefill={prefill}
                 venueOptions={venueOptions}
                 neighborhoodOptions={neighborhoodOptions}
+                fieldErrors={fieldErrors}
               />
 
               <Button type="submit" variant="primary" class="self-start">

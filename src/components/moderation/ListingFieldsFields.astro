@@ -14,9 +14,15 @@ interface Props {
   prefill: ProposedListingFields | null;
   venueOptions: { value: string; label: string }[];
   neighborhoodOptions: { value: string; label: string }[];
+  fieldErrors?: Record<string, string>;
 }
 
-const { prefill, venueOptions, neighborhoodOptions } = Astro.props;
+const {
+  prefill,
+  venueOptions,
+  neighborhoodOptions,
+  fieldErrors = {},
+} = Astro.props;
 
 const venueSelectOptions = [
   ...venueOptions,
@@ -24,13 +30,19 @@ const venueSelectOptions = [
 ];
 const isNewVenue = Boolean(prefill?.newVenue);
 const initialType = prefill?.type ?? "mic";
+const isRecurring = Boolean(prefill?.recurrence?.frequency);
+const isMonthly = prefill?.recurrence?.frequency === "monthly";
 ---
+
+<p class="font-body text-ink-soft text-[0.82rem]">
+  Fields marked <span aria-hidden="true">*</span> are required.
+</p>
 
 <div class="flex flex-col gap-4">
   <p
     class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
   >
-    Listing details
+    What it is
   </p>
   <FormSelect
     label="Type"
@@ -38,7 +50,13 @@ const initialType = prefill?.type ?? "mic";
     options={TYPE_OPTIONS}
     value={initialType}
   />
-  <FormField label="Title" name="title" value={prefill?.title ?? ""} required />
+  <FormField
+    label="Title"
+    name="title"
+    value={prefill?.title ?? ""}
+    required
+    error={fieldErrors.title}
+  />
   <div data-field-for="mic" hidden={initialType === "show"}>
     <FormField label="Host" name="host" value={prefill?.host ?? ""} />
   </div>
@@ -47,12 +65,21 @@ const initialType = prefill?.type ?? "mic";
     name="description"
     value={prefill?.description ?? ""}
   />
+</div>
+
+<div class="border-rule flex flex-col gap-4 border-t pt-6">
+  <p
+    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+  >
+    Venue
+  </p>
   <FormSelect
     label="Venue"
     name="venueId"
     options={venueSelectOptions}
     value={isNewVenue ? "__new__" : (prefill?.venueId ?? "")}
     required
+    error={fieldErrors.venueId}
   />
   <div data-new-venue hidden={!isNewVenue} class="flex flex-col gap-4">
     <FormField
@@ -60,12 +87,14 @@ const initialType = prefill?.type ?? "mic";
       name="newVenueName"
       value={prefill?.newVenue?.name ?? ""}
       required
+      error={fieldErrors.newVenueName}
     />
     <FormField
       label="Venue address"
       name="newVenueAddress"
       value={prefill?.newVenue?.address ?? ""}
       required
+      error={fieldErrors.newVenueAddress}
     />
     <FormSelect
       label="Neighborhood"
@@ -73,6 +102,7 @@ const initialType = prefill?.type ?? "mic";
       options={neighborhoodOptions}
       value={prefill?.newVenue?.neighborhoodId ?? ""}
       required
+      error={fieldErrors.newVenueNeighborhoodId}
     />
     <FormField
       label="Google Maps URL"
@@ -81,12 +111,21 @@ const initialType = prefill?.type ?? "mic";
       value={prefill?.newVenue?.googleMapsUrl ?? ""}
     />
   </div>
+</div>
+
+<div class="border-rule flex flex-col gap-4 border-t pt-6">
+  <p
+    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+  >
+    Timing & cost
+  </p>
   <FormField
     label="Start time"
     name="startTime"
     type="time"
     value={prefill?.startTime ?? ""}
     required
+    error={fieldErrors.startTime}
   />
   <div data-field-for="mic" hidden={initialType === "show"}>
     <FormField
@@ -131,27 +170,44 @@ const initialType = prefill?.type ?? "mic";
     options={FREQUENCY_OPTIONS}
     value={prefill?.recurrence?.frequency ?? ""}
   />
-  <FormSelect
-    label="Day of week"
-    name="dayOfWeek"
-    options={DAY_OF_WEEK_OPTIONS}
-    value={prefill?.recurrence?.dayOfWeek ?? ""}
-  />
-  <FormSelect
-    label="Week of month"
-    name="weekOfMonth"
-    options={WEEK_OF_MONTH_OPTIONS}
-    value={prefill?.recurrence?.weekOfMonth ?? ""}
-  />
-  <FormField
-    label="One-off date (if not recurring)"
-    name="oneOffDate"
-    type="date"
-    value={prefill?.oneOffDate ?? ""}
-  />
+  <div data-recurrence-for="recurring" hidden={!isRecurring}>
+    <FormSelect
+      label="Day of week"
+      name="dayOfWeek"
+      options={DAY_OF_WEEK_OPTIONS}
+      value={prefill?.recurrence?.dayOfWeek ?? ""}
+    />
+  </div>
+  <div data-recurrence-for="monthly" hidden={!isMonthly}>
+    <FormSelect
+      label="Week of month"
+      name="weekOfMonth"
+      options={WEEK_OF_MONTH_OPTIONS}
+      value={prefill?.recurrence?.weekOfMonth ?? ""}
+    />
+  </div>
+  <div data-recurrence-for="one-time" hidden={isRecurring}>
+    <FormField
+      label="One-off date (if not recurring)"
+      name="oneOffDate"
+      type="date"
+      value={prefill?.oneOffDate ?? ""}
+    />
+  </div>
 </div>
 
 <script>
+  const setGroupState = (elements: HTMLElement[], hide: boolean) => {
+    for (const el of elements) {
+      el.hidden = hide;
+      for (const field of el.querySelectorAll<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >("input, select, textarea")) {
+        field.disabled = hide;
+      }
+    }
+  };
+
   const typeSelects = document.querySelectorAll<HTMLSelectElement>(
     'select[name="type"]',
   );
@@ -164,10 +220,38 @@ const initialType = prefill?.type ?? "mic";
     const showFields = form.querySelectorAll<HTMLElement>(
       '[data-field-for="show"]',
     );
+
     const sync = () => {
       const isShow = select.value === "show";
-      for (const el of micFields) el.hidden = isShow;
-      for (const el of showFields) el.hidden = !isShow;
+      setGroupState(Array.from(micFields), isShow);
+      setGroupState(Array.from(showFields), !isShow);
+    };
+    select.addEventListener("change", sync);
+    sync();
+  }
+
+  const frequencySelects = document.querySelectorAll<HTMLSelectElement>(
+    'select[name="frequency"]',
+  );
+  for (const select of frequencySelects) {
+    const form = select.closest("form");
+    if (!form) continue;
+    const recurringFields = form.querySelectorAll<HTMLElement>(
+      '[data-recurrence-for="recurring"]',
+    );
+    const monthlyFields = form.querySelectorAll<HTMLElement>(
+      '[data-recurrence-for="monthly"]',
+    );
+    const oneTimeFields = form.querySelectorAll<HTMLElement>(
+      '[data-recurrence-for="one-time"]',
+    );
+
+    const sync = () => {
+      const isRecurring = select.value !== "";
+      const isMonthly = select.value === "monthly";
+      setGroupState(Array.from(recurringFields), !isRecurring);
+      setGroupState(Array.from(monthlyFields), !isMonthly);
+      setGroupState(Array.from(oneTimeFields), isRecurring);
     };
     select.addEventListener("change", sync);
     sync();

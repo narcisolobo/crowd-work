@@ -38,6 +38,7 @@ pnpm-debug.log*
 # agents
 .impeccable
 .claude/settings.local.json
+.playwright-mcp
 
 competitors
 drama

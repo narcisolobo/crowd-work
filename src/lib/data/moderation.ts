@@ -196,11 +196,60 @@ export async function sendBackToPending(
   return mapQueueEntryRow(data);
 }
 
+export interface MissingField {
+  /** The form control's `name` attribute, for mapping back to a specific field. */
+  field: string;
+  /** Human-readable label, for the summary message. */
+  label: string;
+}
+
+export function findMissingRequiredFields(
+  fields: ProposedListingFields,
+): MissingField[] {
+  const missing: MissingField[] = [];
+  if (!fields.title.trim()) missing.push({ field: "title", label: "Title" });
+  if (!fields.startTime.trim()) {
+    missing.push({ field: "startTime", label: "Start time" });
+  }
+  if (fields.newVenue) {
+    if (!fields.newVenue.name.trim()) {
+      missing.push({ field: "newVenueName", label: "Venue name" });
+    }
+    if (!fields.newVenue.address.trim()) {
+      missing.push({ field: "newVenueAddress", label: "Venue address" });
+    }
+    if (!fields.newVenue.neighborhoodId.trim()) {
+      missing.push({ field: "newVenueNeighborhoodId", label: "Neighborhood" });
+    }
+  } else if (!fields.venueId) {
+    missing.push({ field: "venueId", label: "Venue" });
+  }
+  return missing;
+}
+
+export class MissingRequiredFieldsError extends Error {
+  readonly fields: MissingField[];
+
+  constructor(fields: MissingField[]) {
+    super(`Please fill in: ${fields.map((f) => f.label).join(", ")}.`);
+    this.name = "MissingRequiredFieldsError";
+    this.fields = fields;
+  }
+}
+
+function assertRequiredFields(fields: ProposedListingFields): void {
+  const missing = findMissingRequiredFields(fields);
+  if (missing.length > 0) {
+    throw new MissingRequiredFieldsError(missing);
+  }
+}
+
 export async function submitNewListingProposal(
   client: SupabaseClient<Database>,
   formData: FormData,
 ): Promise<void> {
   const fields = parseProposedListingFields(formData);
+  assertRequiredFields(fields);
 
   const { error } = await client.from("moderation_queue").insert({
     change_type: "new",
@@ -224,6 +273,7 @@ export async function directAddListing(
   if (!user) throw new Error("Not authenticated");
 
   const fields = parseProposedListingFields(formData);
+  assertRequiredFields(fields);
   const approvalNote = parseApprovalNote(formData);
   const { listingId, venueId } = await createListingFromFields(client, fields);
   const approvedData: ProposedListingFields = {
