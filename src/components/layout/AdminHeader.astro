@@ -11,7 +11,7 @@ const { userEmail = null } = Astro.props;
 
 <header class="admin-nav bg-paper-shadow sticky top-0 z-20">
   <div
-    class="bg-paper mx-auto flex h-14 max-w-180 items-center gap-5.5 border-b border-b-[color-mix(in_srgb,var(--ink)_25%,var(--paper)_75%)] px-5"
+    class="bg-paper mx-auto flex min-h-14 max-w-180 flex-wrap items-center gap-x-5.5 gap-y-2 border-b border-b-[color-mix(in_srgb,var(--ink)_25%,var(--paper)_75%)] px-5 py-2.5"
   >
     <a
       href={userEmail ? "/admin" : "/"}
@@ -25,23 +25,87 @@ const { userEmail = null } = Astro.props;
     </a>
     {
       userEmail && (
-        <div class="font-body text-ink-soft flex items-center gap-4.5 text-[0.86rem]">
-          <span class="max-[480px]:hidden">{userEmail}</span>
+        <nav
+          class="font-body text-ink-soft flex items-center gap-4.5 text-[0.86rem]"
+          aria-label="Admin"
+        >
           <a
             href="/admin/archive"
             class="hover:text-ink underline-offset-2 hover:underline"
           >
             Archive
           </a>
-          <a
-            href="/admin/logout"
-            class="hover:text-ink underline-offset-2 hover:underline"
-          >
-            Log out
-          </a>
-        </div>
+          <details class="admin-account relative">
+            <summary
+              class="text-ink-soft hover:text-ink flex list-none items-center gap-1.25 [&::-webkit-details-marker]:hidden"
+            >
+              {userEmail}
+              <svg
+                class="admin-account-chevron h-2.5 w-2.5 flex-none"
+                viewBox="0 0 12 12"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 4.5L6 7.5L9 4.5"
+                  stroke="currentColor"
+                  stroke-width="1.3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"></path>
+              </svg>
+            </summary>
+            <div
+              class="border-rule bg-paper-shadow absolute top-[calc(100%+8px)] right-0 z-10 min-w-32 rounded-sm border py-1.5"
+            >
+              <a
+                href="/admin/logout"
+                class="text-ink-soft hover:text-ink block px-3.5 py-2 no-underline underline-offset-2 hover:underline"
+              >
+                Log out
+              </a>
+            </div>
+          </details>
+        </nav>
       )
     }
     <ThemeToggle />
   </div>
 </header>
+
+<style>
+  .admin-account summary {
+    cursor: pointer;
+  }
+
+  .admin-account[open] .admin-account-chevron {
+    transform: rotate(180deg);
+  }
+</style>
+
+<script>
+  const accountMenus = document.querySelectorAll<HTMLDetailsElement>(
+    ".admin-account",
+  );
+
+  for (const details of accountMenus) {
+    details.addEventListener("toggle", () => {
+      if (!details.open) return;
+
+      document.addEventListener(
+        "click",
+        (event) => {
+          if (!details.contains(event.target as Node)) details.open = false;
+        },
+        { once: true, capture: true },
+      );
+
+      document.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.key === "Escape") details.open = false;
+        },
+        { once: true },
+      );
+    });
+  }
+</script>
