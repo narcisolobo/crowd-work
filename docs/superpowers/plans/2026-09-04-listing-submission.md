@@ -896,7 +896,7 @@ EOF
 - Consumes: `parseProposedListingFields` from Task 3; the anon INSERT policy from Task 1
 - Produces: `submitNewListingProposal(client, formData): Promise<void>` — consumed by Task 8's public page; `createAnonClient(): SupabaseClient<Database>` — consumed by this task's own RLS tests and Task 6's
 
-- [ ] **Step 1: Add `createAnonClient` to the test helpers**
+- [x] **Step 1: Add `createAnonClient` to the test helpers**
 
 In `src/lib/data/moderation-test-helpers.ts`, add after `createAdminClient`:
 
@@ -910,7 +910,7 @@ export function createAnonClient(): SupabaseClient<Database> {
 }
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `src/lib/data/moderation-submission.test.ts`:
 
@@ -1030,7 +1030,7 @@ describe("submission_form RLS", () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 ```bash
 pnpm test moderation-submission
@@ -1038,7 +1038,7 @@ pnpm test moderation-submission
 
 Expected: FAIL — `submitNewListingProposal` doesn't exist yet, and the RLS tests fail because Task 1's policy isn't exercised by any insert yet (they should currently fail because the _first_ two `it`s throw on the missing function, not because the policy is wrong — the RLS `it`s should already pass once Task 1 is applied, since they test the policy directly; run this step to confirm the two RLS tests already pass and only the two `submitNewListingProposal` tests fail).
 
-- [ ] **Step 4: Implement `submitNewListingProposal`**
+- [x] **Step 4: Implement `submitNewListingProposal`**
 
 In `src/lib/data/moderation.ts`, add after `sendBackToPending` (or any convenient spot above `handleQueueReviewAction`):
 
@@ -1062,7 +1062,7 @@ export async function submitNewListingProposal(
 }
 ```
 
-- [ ] **Step 5: Add the new origin label**
+- [x] **Step 5: Add the new origin label**
 
 In `src/lib/utils/moderation-labels.ts`, update `ORIGIN_LABEL`:
 
@@ -1077,7 +1077,7 @@ export const ORIGIN_LABEL: Record<string, string> = {
 
 (Adding `moderator_direct_add` here now, ahead of Task 6, avoids a second edit to this file later.)
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation-submission

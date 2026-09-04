@@ -13,6 +13,8 @@ export const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
 export const ORIGIN_LABEL: Record<string, string> = {
   seed: "Seed data",
   report_form: "Public report",
+  submission_form: "Public submission",
+  moderator_direct_add: "Direct add",
 };
 
 export const STATUS_LABEL: Record<string, string> = {

@@ -196,6 +196,24 @@ export async function sendBackToPending(
   return mapQueueEntryRow(data);
 }
 
+export async function submitNewListingProposal(
+  client: SupabaseClient<Database>,
+  formData: FormData,
+): Promise<void> {
+  const fields = parseProposedListingFields(formData);
+
+  const { error } = await client.from("moderation_queue").insert({
+    change_type: "new",
+    listing_id: null,
+    proposed_data: fields as unknown as Json,
+    correction_note: null,
+    origin: "submission_form",
+    status: "pending",
+  });
+
+  if (error) throw new Error(`Failed to submit listing: ${error.message}`);
+}
+
 async function resolveVenueId(
   client: SupabaseClient<Database>,
   fields: Pick<ProposedListingFields, "venueId" | "newVenue">,

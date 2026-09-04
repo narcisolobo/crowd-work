@@ -15,6 +15,14 @@ export function createAdminClient(): SupabaseClient<Database> {
   );
 }
 
+export function createAnonClient(): SupabaseClient<Database> {
+  return createClient<Database>(
+    requiredEnv("PUBLIC_SUPABASE_URL"),
+    requiredEnv("PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}
+
 export async function signInTestModerator(
   which: 1 | 2,
 ): Promise<SupabaseClient<Database>> {
