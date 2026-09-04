@@ -170,6 +170,21 @@ export type Database = {
           },
         ]
       }
+      moderators: {
+        Row: {
+          email: string
+          id: string
+        }
+        Insert: {
+          email: string
+          id: string
+        }
+        Update: {
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       neighborhoods: {
         Row: {
           area_id: string

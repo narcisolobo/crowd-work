@@ -153,13 +153,13 @@ EOF
 - Consumes: `auth.users` (Supabase Auth's own table, not exposed via PostgREST to `authenticated`)
 - Produces: table `moderators` (`id`, `email`), readable by any authenticated moderator, populated only by the service-role provisioning script; consumed by Task 4's `getModeratorEmails()`
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new moderators
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 ```sql
 -- A minimal id -> email lookup so the admin UI can show which moderator
@@ -181,7 +181,7 @@ create policy "moderators can read moderator emails"
   using (true);
 ```
 
-- [ ] **Step 3: Apply and verify**
+- [x] **Step 3: Apply and verify**
 
 ```bash
 supabase db reset
@@ -189,7 +189,7 @@ supabase db reset
 
 Expected: all migrations apply with no errors.
 
-- [ ] **Step 4: Regenerate TypeScript types**
+- [x] **Step 4: Regenerate TypeScript types**
 
 ```bash
 supabase gen types typescript --local > src/lib/supabase/database.types.ts
@@ -197,7 +197,7 @@ supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
 Expected: `database.types.ts` now includes a `moderators` table entry.
 
-- [ ] **Step 5: Populate `moderators` in the provisioning script**
+- [x] **Step 5: Populate `moderators` in the provisioning script**
 
 Modify `scripts/provision-moderators.mjs`. After both `auth.users` accounts are created (after line 40, `if (error2) throw error2;`) and before the existing `moderation_queue` seed insert, add:
 
@@ -230,7 +230,7 @@ const { error: queueError } = await admin.from("moderation_queue").insert({
 
 (the rest of the `moderation_queue` insert block is unchanged)
 
-- [ ] **Step 6: Re-run the provisioning script and verify**
+- [x] **Step 6: Re-run the provisioning script and verify**
 
 ```bash
 node scripts/provision-moderators.mjs mod1@crowdwork.test <password1> mod2@crowdwork.test <password2>
@@ -248,7 +248,7 @@ curl "http://127.0.0.1:54521/rest/v1/moderators?select=email" \
 
 Expected: a JSON array with both provisioned emails.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations scripts/provision-moderators.mjs

@@ -39,6 +39,12 @@ const { data: user2, error: error2 } = await admin.auth.admin.createUser({
 });
 if (error2) throw error2;
 
+const { error: moderatorsError } = await admin.from("moderators").insert([
+  { id: user1.user.id, email: email1 },
+  { id: user2.user.id, email: email2 },
+]);
+if (moderatorsError) throw moderatorsError;
+
 const { error: queueError } = await admin.from("moderation_queue").insert({
   id: "e0000000-0000-0000-0000-000000000004",
   listing_id: "d0000000-0000-0000-0000-000000000002",
