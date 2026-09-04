@@ -10,7 +10,7 @@ Ideas beyond the MVP directory, noted for context but not designed yet. See [cro
 
 ## Near-term follow-ups
 
-- **Moderator direct-add for listings** — let a moderator create or edit a listing directly, bypassing `moderation_queue` entirely. The queue exists to check untrusted/proposed input (agent, submission form, public reports); a trusted moderator acting on their own judgment doesn't obviously need to go through it. Raised while reviewing [2026-09-03-moderation-queue-admin-review-design.md](../docs/superpowers/specs/2026-09-03-moderation-queue-admin-review-design.md) — would reuse that phase's admin auth gate and listing-fields edit form. Open question to settle when this gets designed: does the two-moderator rule apply here at all, or is it specific to confirming rejections of *other* people's proposals?
+- **Expand areas and neighborhoods** — the current taxonomy is a fixed, moderator-managed set (no self-serve way to add one). Raised while designing [2026-09-04-listing-submission-design.md](../docs/superpowers/specs/2026-09-04-listing-submission-design.md), which deliberately scoped new-venue proposals to *existing* neighborhoods only. Worth revisiting once real submissions start naming areas/neighborhoods the current set doesn't cover.
 
 ## Later-stage product ideas
 
