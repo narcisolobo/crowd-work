@@ -2072,7 +2072,7 @@ EOF
 
 **Files:** none — this task exercises the running app in a real browser, not headless automation.
 
-- [ ] **Step 1: Reset and provision**
+- [x] **Step 1: Reset and provision**
 
 ```bash
 supabase db reset
@@ -2080,27 +2080,27 @@ node scripts/provision-moderators.mjs mod1@crowdwork.test <password1> mod2@crowd
 astro dev --background
 ```
 
-- [ ] **Step 2: Public submission with an existing venue, approved as-is**
+- [x] **Step 2: Public submission with an existing venue, approved as-is**
 
 At `/listings/new`, submit a mic at "The Virgil" (existing venue). Sign in as moderator 1, find the pending entry at `/admin`, open it, confirm the Listing details/Recurrence fields match what was submitted, select "Accurate as submitted", and approve. Confirm the listing now appears on `/`.
 
-- [ ] **Step 3: Public submission proposing a new venue**
+- [x] **Step 3: Public submission proposing a new venue**
 
 At `/listings/new`, submit a show choosing "Add a new venue…" with a made-up name/address/neighborhood. Sign in as moderator 1, open the pending entry, confirm the Venue select shows "Add a new venue…" selected with the proposed name/address/neighborhood pre-filled in the reveal block, and approve. Confirm both a new venue and the listing now exist (check `/` for the listing; the venue has no direct public page but its name should appear as the listing's venue).
 
-- [ ] **Step 4: Moderator direct-add with an existing venue**
+- [x] **Step 4: Moderator direct-add with an existing venue**
 
 At `/admin/listings/new`, add a mic at "Westside Comedy Theater" with a canned approval reason. Confirm it redirects to `/admin` and the listing is immediately live on `/`. Check `/admin/archive` and confirm it shows as approved, origin "Direct add", with your email and reason.
 
-- [ ] **Step 5: Moderator direct-add proposing a new venue**
+- [x] **Step 5: Moderator direct-add proposing a new venue**
 
 At `/admin/listings/new`, add a show choosing "Add a new venue…". Confirm the listing and venue are both created and the listing is immediately live.
 
-- [ ] **Step 6: Mic/show conditional fields, on all three forms**
+- [x] **Step 6: Mic/show conditional fields, on all three forms**
 
 On `/listings/new`, `/admin/listings/new`, and an open `/admin/queue/<id>` entry, toggle the Type select between "Mic" and "Show" and confirm Host/Sign-up method/Cost to perform show only for Mic, and Ticket price/Ticket URL show only for Show, with no page reload.
 
-- [ ] **Step 7: Full automated suite**
+- [x] **Step 7: Full automated suite**
 
 ```bash
 pnpm test
@@ -2109,7 +2109,7 @@ pnpm exec astro check
 
 Expected: everything passes, no type errors.
 
-- [ ] **Step 8: Check server logs**
+- [x] **Step 8: Check server logs**
 
 ```bash
 astro dev logs
