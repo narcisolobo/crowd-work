@@ -1487,7 +1487,7 @@ EOF
 
 **Files:** none — this task exercises the running app in a real browser, not headless automation.
 
-- [ ] **Step 1: Reset and provision**
+- [x] **Step 1: Reset and provision**
 
 ```bash
 supabase db reset
@@ -1495,15 +1495,15 @@ node scripts/provision-moderators.mjs mod1@crowdwork.test <password1> mod2@crowd
 astro dev --background
 ```
 
-- [ ] **Step 2: Walk one entry to Approved**
+- [x] **Step 2: Walk one entry to Approved**
 
 Sign in as moderator 1 at `/admin/login`. Open the seeded `new` entry from `/admin`, select the "Verified independently" reason, and approve it.
 
-- [ ] **Step 3: Walk one entry to Rejected**
+- [x] **Step 3: Walk one entry to Rejected**
 
 As moderator 1, propose rejection on a different pending entry with a reason. Log out, sign in as moderator 2, confirm the rejection from its detail page.
 
-- [ ] **Step 4: Check the archive**
+- [x] **Step 4: Check the archive**
 
 Open `/admin/archive`. Confirm:
 
@@ -1513,7 +1513,7 @@ Open `/admin/archive`. Confirm:
 - Clicking "Approved" hides the rejected row and vice versa; clicking "All" shows both.
 - Reload the page with `?status=approved` directly in the URL bar (no JS interaction) and confirm only the approved row renders — this is the no-JS fallback path.
 
-- [ ] **Step 5: Confirm the RLS forgery tests still hold outside Vitest**
+- [x] **Step 5: Confirm the RLS forgery tests still hold outside Vitest**
 
 This is already covered by Task 3's automated tests; no separate manual step needed here beyond re-running the suite once more for confidence:
 
