@@ -75,13 +75,13 @@ crowd-work/
 - Consumes: `venues`, `moderation_queue` tables as they exist today
 - Produces: an `authenticated` INSERT policy on `venues`; a widened `anon` INSERT policy on `moderation_queue` covering `change_type: 'new'`; a new `authenticated` INSERT policy on `moderation_queue` for self-approved direct-add — consumed by Task 2's `createListingFromFields`/`resolveVenueId` and Tasks 5–6's `submitNewListingProposal`/`directAddListing`
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new listing_submission_policies
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 Open the generated file and write:
 
@@ -143,7 +143,7 @@ create policy "moderators can directly insert a pre-approved new listing"
   );
 ```
 
-- [ ] **Step 3: Apply the migration locally and verify**
+- [x] **Step 3: Apply the migration locally and verify**
 
 ```bash
 supabase db reset
@@ -151,7 +151,7 @@ supabase db reset
 
 Expected: all prior migrations plus `listing_submission_policies` apply with no errors.
 
-- [ ] **Step 4: Regenerate TypeScript types**
+- [x] **Step 4: Regenerate TypeScript types**
 
 ```bash
 supabase gen types typescript --local > src/lib/supabase/database.types.ts
@@ -159,7 +159,7 @@ supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
 Expected: no `moderation_queue`/`venues` shape changes (this migration only touches policies, not columns), but regenerate anyway per project convention so the file stays a faithful mirror of the schema.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations src/lib/supabase/database.types.ts
@@ -185,7 +185,7 @@ EOF
 - Consumes: the `venues` INSERT policy from Task 1
 - Produces: `ProposedVenue` interface; `ProposedListingFields.venueId: string | null` and `.newVenue: ProposedVenue | null`; `createListingFromFields(client, fields): Promise<{ listingId: string; venueId: string }>` — consumed by Task 6's `directAddListing`; a private `resolveVenueId` shared by `createListingFromFields` and `approveListingUpdate`
 
-`ListingFieldsFields.astro` (Task 7) lets a moderator pick "Add a new venue…" when reviewing *any* `new`/`update` entry, not just when reviewing a public submission that proposed one — so `approveListingUpdate` needs the same venue-creation capability as `approveNewListing`, not just the new-listing path, otherwise selecting "Add a new venue…" while reviewing an *update* would silently write a null `venue_id`.
+`ListingFieldsFields.astro` (Task 7) lets a moderator pick "Add a new venue…" when reviewing _any_ `new`/`update` entry, not just when reviewing a public submission that proposed one — so `approveListingUpdate` needs the same venue-creation capability as `approveNewListing`, not just the new-listing path, otherwise selecting "Add a new venue…" while reviewing an _update_ would silently write a null `venue_id`.
 
 - [ ] **Step 1: Extend the failing tests first**
 
@@ -413,21 +413,21 @@ export interface ProposedListingFields {
 In `getPrefillForEntry`'s `update` fallback branch (the object built from `current` when there's no `proposedData`), add `newVenue: null,` after `venueId: current.venue.id,`:
 
 ```ts
-  return {
-    type: current.type,
-    title: current.title,
-    host: current.host,
-    description: current.description,
-    venueId: current.venue.id,
-    newVenue: null,
-    startTime: current.startTime,
-    signUpMethod: current.signUpMethod,
-    costToPerform: current.costToPerform,
-    ticketPrice: current.ticketPrice,
-    ticketUrl: current.ticketUrl,
-    recurrence: current.recurrenceRule,
-    oneOffDate: current.oneOffDate,
-  };
+return {
+  type: current.type,
+  title: current.title,
+  host: current.host,
+  description: current.description,
+  venueId: current.venue.id,
+  newVenue: null,
+  startTime: current.startTime,
+  signUpMethod: current.signUpMethod,
+  costToPerform: current.costToPerform,
+  ticketPrice: current.ticketPrice,
+  ticketUrl: current.ticketUrl,
+  recurrence: current.recurrenceRule,
+  oneOffDate: current.oneOffDate,
+};
 ```
 
 (The `new`-entry branch above it, `return entry.proposedData as ProposedListingFields;`, needs no change — `newVenue` is already part of the type it's cast to.)
@@ -717,10 +717,8 @@ function parseVenueSelection(formData: FormData): {
     newVenue: {
       name: formData.get("newVenueName")?.toString() ?? "",
       address: formData.get("newVenueAddress")?.toString() ?? "",
-      neighborhoodId:
-        formData.get("newVenueNeighborhoodId")?.toString() ?? "",
-      googleMapsUrl:
-        formData.get("newVenueGoogleMapsUrl")?.toString() || null,
+      neighborhoodId: formData.get("newVenueNeighborhoodId")?.toString() ?? "",
+      googleMapsUrl: formData.get("newVenueGoogleMapsUrl")?.toString() || null,
     },
   };
 }
@@ -853,8 +851,7 @@ export async function getNeighborhoods(): Promise<Neighborhood[]> {
     .from("neighborhoods")
     .select("id, name, area_id")
     .order("name");
-  if (error)
-    throw new Error(`Failed to load neighborhoods: ${error.message}`);
+  if (error) throw new Error(`Failed to load neighborhoods: ${error.message}`);
   return (data ?? []).map((row) => ({
     id: row.id,
     name: row.name,
@@ -1039,7 +1036,7 @@ describe("submission_form RLS", () => {
 pnpm test moderation-submission
 ```
 
-Expected: FAIL — `submitNewListingProposal` doesn't exist yet, and the RLS tests fail because Task 1's policy isn't exercised by any insert yet (they should currently fail because the *first* two `it`s throw on the missing function, not because the policy is wrong — the RLS `it`s should already pass once Task 1 is applied, since they test the policy directly; run this step to confirm the two RLS tests already pass and only the two `submitNewListingProposal` tests fail).
+Expected: FAIL — `submitNewListingProposal` doesn't exist yet, and the RLS tests fail because Task 1's policy isn't exercised by any insert yet (they should currently fail because the _first_ two `it`s throw on the missing function, not because the policy is wrong — the RLS `it`s should already pass once Task 1 is applied, since they test the policy directly; run this step to confirm the two RLS tests already pass and only the two `submitNewListingProposal` tests fail).
 
 - [ ] **Step 4: Implement `submitNewListingProposal`**
 
@@ -1355,10 +1352,17 @@ const initialType = prefill?.type ?? "mic";
 ---
 
 <div class="flex flex-col gap-4">
-  <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+  <p
+    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+  >
     Listing details
   </p>
-  <FormSelect label="Type" name="type" options={TYPE_OPTIONS} value={initialType} />
+  <FormSelect
+    label="Type"
+    name="type"
+    options={TYPE_OPTIONS}
+    value={initialType}
+  />
   <FormField label="Title" name="title" value={prefill?.title ?? ""} required />
   <div data-field-for="mic" hidden={initialType === "show"}>
     <FormField label="Host" name="host" value={prefill?.host ?? ""} />
@@ -1441,7 +1445,9 @@ const initialType = prefill?.type ?? "mic";
 </div>
 
 <div class="border-rule flex flex-col gap-4 border-t pt-6">
-  <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+  <p
+    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+  >
     Recurrence
   </p>
   <FormSelect
@@ -1519,7 +1525,10 @@ import Button from "../forms/Button.astro";
 import FormSelect from "../forms/FormSelect.astro";
 import FormTextarea from "../forms/FormTextarea.astro";
 import ListingFieldsFields from "./ListingFieldsFields.astro";
-import type { ProposedListingFields, QueueEntry } from "../../lib/data/moderation";
+import type {
+  ProposedListingFields,
+  QueueEntry,
+} from "../../lib/data/moderation";
 import { APPROVAL_REASON_OPTIONS } from "../../lib/utils/moderation-labels";
 
 interface Props {
@@ -1542,7 +1551,9 @@ const { entry, prefill, venueOptions, neighborhoodOptions } = Astro.props;
   />
 
   <div class="border-rule flex flex-col gap-4 border-t pt-6">
-    <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+    <p
+      class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+    >
       Approval
     </p>
     <FormSelect
@@ -1736,11 +1747,13 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
     <Font cssVariable="--font-ibm-plex-sans" preload />
     <Font cssVariable="--font-ibm-plex-mono" />
   </head>
-  <body class="flex min-h-screen flex-col font-body text-base text-ink antialiased">
+  <body
+    class="font-body text-ink flex min-h-screen flex-col text-base antialiased"
+  >
     <div class="mx-auto flex w-full max-w-136 flex-1 flex-col px-5 py-10">
       <a
         href="/"
-        class="inline-flex items-center gap-1.5 text-[0.86rem] text-ink-soft underline-offset-2 hover:underline"
+        class="text-ink-soft inline-flex items-center gap-1.5 text-[0.86rem] underline-offset-2 hover:underline"
       >
         <svg class="h-2.5 w-2.5 rotate-90" viewBox="0 0 12 12" fill="none">
           <path
@@ -1748,8 +1761,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             stroke="currentColor"
             stroke-width="1.3"
             stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+            stroke-linejoin="round"></path>
         </svg>
         Back to Crowd Work
       </a>
@@ -1760,25 +1772,25 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             <h1 class="font-display text-[1.28rem] font-bold">
               Thanks — a moderator will review this shortly.
             </h1>
-            <p class="mt-2.5 max-w-[45ch] text-[0.95rem] text-ink-soft">
+            <p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
               Crowd Work listings are reviewed by working comics, not one
               person's spreadsheet — submissions like yours are how the list
               grows.
             </p>
           </div>
         ) : (
-          <div class="mt-8 rounded-sm border-l-[3px] border-l-rule bg-paper-shadow px-5 py-6 sm:px-7 sm:py-7">
+          <div class="border-l-rule bg-paper-shadow mt-8 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
             <h1 class="font-display text-[1.28rem] font-bold">
               Submit a listing
             </h1>
-            <p class="mt-1.5 text-[0.9rem] text-ink-soft">
+            <p class="text-ink-soft mt-1.5 text-[0.9rem]">
               A moderator reviews every submission before it goes live.
             </p>
 
             {errorMessage && (
               <p
                 role="alert"
-                class="mt-5 rounded-sm bg-paper px-3.5 py-2.5 text-[0.86rem] font-medium text-ink"
+                class="bg-paper text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
               >
                 <strong>Error:</strong> {errorMessage}
               </p>
@@ -1820,19 +1832,19 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 In `src/components/layout/SiteHeader.astro`, replace the placeholder:
 
 ```astro
-      <a
-        href="#"
-        class="font-body text-[0.9rem] text-ink-soft underline-offset-2 hover:text-ink hover:underline"
-      >
+<a
+  href="#"
+  class="font-body text-ink-soft hover:text-ink text-[0.9rem] underline-offset-2 hover:underline"
+></a>
 ```
 
 with:
 
 ```astro
-      <a
-        href="/listings/new"
-        class="font-body text-[0.9rem] text-ink-soft underline-offset-2 hover:text-ink hover:underline"
-      >
+<a
+  href="/listings/new"
+  class="font-body text-ink-soft hover:text-ink text-[0.9rem] underline-offset-2 hover:underline"
+></a>
 ```
 
 - [ ] **Step 3: Type-check**
@@ -1961,7 +1973,9 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
     />
 
     <div class="border-rule flex flex-col gap-4 border-t pt-6">
-      <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+      <p
+        class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+      >
         Approval
       </p>
       <FormSelect
@@ -2004,18 +2018,18 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 In `src/components/layout/AdminHeader.astro`, add a "New listing" link before the existing "Archive" link (inside the same `userEmail &&` `<nav>` block):
 
 ```astro
-          <a
-            href="/admin/listings/new"
-            class="hover:text-ink underline-offset-2 hover:underline"
-          >
-            New listing
-          </a>
-          <a
-            href="/admin/archive"
-            class="hover:text-ink underline-offset-2 hover:underline"
-          >
-            Archive
-          </a>
+<a
+  href="/admin/listings/new"
+  class="hover:text-ink underline-offset-2 hover:underline"
+>
+  New listing
+</a>
+<a
+  href="/admin/archive"
+  class="hover:text-ink underline-offset-2 hover:underline"
+>
+  Archive
+</a>
 ```
 
 - [ ] **Step 3: Type-check**
