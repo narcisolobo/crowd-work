@@ -40,6 +40,8 @@ if (Astro.request.method === "POST") {
   }
 }
 
+const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+
 const venueOptions = venues.map((venue) => ({
   value: venue.id,
   label: venue.name,
@@ -79,7 +81,12 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         {errorMessage && (
           <p
             role="alert"
-            class="bg-paper text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
+            class:list={[
+              "bg-paper mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium",
+              hasFieldErrors
+                ? "border-l-error text-error border-l-[3px]"
+                : "text-ink",
+            ]}
           >
             <strong>Error:</strong> {errorMessage}
           </p>
