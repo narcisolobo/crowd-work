@@ -25,8 +25,13 @@ const {
 } = Astro.props;
 
 const venueSelectOptions = [
+  { value: "", label: "Choose a venue" },
   ...venueOptions,
   { value: "__new__", label: "Add a new venue…" },
+];
+const neighborhoodSelectOptions = [
+  { value: "", label: "Choose a neighborhood" },
+  ...neighborhoodOptions,
 ];
 const isNewVenue = Boolean(prefill?.newVenue);
 const initialType = prefill?.type ?? "mic";
@@ -99,7 +104,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     <FormSelect
       label="Neighborhood"
       name="newVenueNeighborhoodId"
-      options={neighborhoodOptions}
+      options={neighborhoodSelectOptions}
       value={prefill?.newVenue?.neighborhoodId ?? ""}
       required
       error={fieldErrors.newVenueNeighborhoodId}
