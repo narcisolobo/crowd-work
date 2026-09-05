@@ -244,6 +244,20 @@ function assertRequiredFields(fields: ProposedListingFields): void {
   }
 }
 
+/** A moderator-facing reason is required for every approval — the queue's
+ * "propose rejection" action already enforces this; direct-add and the
+ * queue's own approve actions did not, which let approvals go out with no
+ * recorded justification. Returns the missing-field entries, if any. */
+function findMissingReason(formData: FormData): MissingField[] {
+  const reason = formData.get("reason")?.toString() ?? "";
+  if (!reason) return [{ field: "reason", label: "Reason" }];
+  if (reason === "other") {
+    const otherReason = formData.get("otherReason")?.toString().trim() ?? "";
+    if (!otherReason) return [{ field: "otherReason", label: "Other reason" }];
+  }
+  return [];
+}
+
 export async function submitNewListingProposal(
   client: SupabaseClient<Database>,
   formData: FormData,
@@ -273,7 +287,11 @@ export async function directAddListing(
   if (!user) throw new Error("Not authenticated");
 
   const fields = parseProposedListingFields(formData);
-  assertRequiredFields(fields);
+  const missing = [
+    ...findMissingRequiredFields(fields),
+    ...findMissingReason(formData),
+  ];
+  if (missing.length > 0) throw new MissingRequiredFieldsError(missing);
   const approvalNote = parseApprovalNote(formData);
   const { listingId, venueId } = await createListingFromFields(client, fields);
   const approvedData: ProposedListingFields = {
@@ -572,6 +590,13 @@ export async function handleQueueReviewAction(
 
   if (action === "approve") {
     const fields = parseProposedListingFields(formData);
+    const missingReason = findMissingReason(formData);
+    if (missingReason.length > 0) {
+      return {
+        type: "validation_error",
+        message: "Choose a reason for this approval.",
+      };
+    }
     const approvalNote = parseApprovalNote(formData);
 
     if (entry.changeType === "new") {
@@ -591,6 +616,13 @@ export async function handleQueueReviewAction(
   if (action === "approve_cancellation") {
     const originalDate = formData.get("originalDate")?.toString() ?? "";
     const note = formData.get("note")?.toString() || null;
+    const missingReason = findMissingReason(formData);
+    if (missingReason.length > 0) {
+      return {
+        type: "validation_error",
+        message: "Choose a reason for this approval.",
+      };
+    }
     const approvalNote = parseApprovalNote(formData);
     await approveCancellation(
       client,

@@ -40,6 +40,7 @@ const {
       name="reason"
       options={APPROVAL_REASON_OPTIONS}
       value={reason}
+      required
     />
     <div data-other-reason hidden={reason !== "other"}>
       <FormTextarea label="Other reason" name="otherReason" value={otherReason} />

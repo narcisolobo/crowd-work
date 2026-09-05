@@ -56,7 +56,7 @@ export const WEEK_OF_MONTH_OPTIONS = [
 ];
 
 export const APPROVAL_REASON_OPTIONS = [
-  { value: "", label: "No reason provided" },
+  { value: "", label: "Choose a reason" },
   { value: "Accurate as submitted", label: "Accurate as submitted" },
   { value: "Accurate after minor edits", label: "Accurate after minor edits" },
   { value: "Verified independently", label: "Verified independently" },

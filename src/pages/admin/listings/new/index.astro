@@ -21,17 +21,24 @@ const [venues, neighborhoods] = await Promise.all([
 ]);
 
 let errorMessage: string | null = null;
-let added: { listingId: string; title: string } | null = null;
 let fieldErrors: Record<string, string> = {};
 let submittedReason = "";
 let submittedOtherReason = "";
+
+const addedId = Astro.url.searchParams.get("added");
+const addedTitle = Astro.url.searchParams.get("title");
+let added: { listingId: string; title: string } | null =
+  addedId && addedTitle ? { listingId: addedId, title: addedTitle } : null;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   submittedReason = formData.get("reason")?.toString() ?? "";
   submittedOtherReason = formData.get("otherReason")?.toString() ?? "";
   try {
-    added = await directAddListing(supabase, formData);
+    const result = await directAddListing(supabase, formData);
+    return Astro.redirect(
+      `/admin/listings/new?added=${encodeURIComponent(result.listingId)}&title=${encodeURIComponent(result.title)}`,
+    );
   } catch (error) {
     if (error instanceof MissingRequiredFieldsError) {
       errorMessage = "Please fix the highlighted fields below.";
@@ -104,7 +111,9 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
           />
 
           <div class="border-rule flex flex-col gap-4 border-t pt-6">
-            <p class="font-body text-ink-soft text-[0.82rem] font-semibold">
+            <p
+              class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+            >
               Approval
             </p>
             <FormSelect
@@ -112,6 +121,8 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
               name="reason"
               options={APPROVAL_REASON_OPTIONS}
               value={submittedReason}
+              required
+              error={fieldErrors.reason}
             />
             <div data-other-reason hidden={submittedReason !== "other"}>
               <FormTextarea
@@ -122,14 +133,21 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             </div>
           </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            busyLabel="Adding…"
-            class="self-start"
+          <div
+            class="bg-paper-shadow border-rule sticky bottom-0 z-10 -mx-5 -mb-6 flex flex-col gap-2 rounded-b-sm border-t px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7"
           >
-            Add listing
-          </Button>
+            <p class="text-ink-soft text-[0.78rem]">
+              Publishes immediately, under your account — no second review.
+            </p>
+            <Button
+              type="submit"
+              variant="primary"
+              busyLabel="Adding…"
+              class="self-start"
+            >
+              Add listing
+            </Button>
+          </div>
         </form>
       </div>
     )
