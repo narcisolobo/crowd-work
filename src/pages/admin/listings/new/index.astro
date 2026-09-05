@@ -77,13 +77,14 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         <p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
           Recorded in the archive as already approved, under your account.
         </p>
-        <Button
-          href={`/listings/${added.listingId}`}
-          variant="outline"
-          class="mt-5"
-        >
-          View listing
-        </Button>
+        <div class="mt-5 flex gap-3">
+          <Button href="/admin/listings/new" variant="outline">
+            Add another
+          </Button>
+          <Button href={`/listings/${added.listingId}`} variant="outline">
+            View listing
+          </Button>
+        </div>
       </div>
     ) : (
       <div class="border-l-rule bg-paper-shadow mt-5 max-w-form rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
@@ -168,5 +169,63 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
     };
     select.addEventListener("change", sync);
     sync();
+  }
+
+  // A moderator adding several listings in one sitting shouldn't have to
+  // re-pick the same type/venue every time — remember the last submission
+  // for this browser tab only (not persisted server-side or across users).
+  const LAST_LISTING_KEY = "crowdwork:admin:lastListing";
+  const form = document.querySelector<HTMLFormElement>("form");
+
+  if (form) {
+    form.querySelector<HTMLInputElement>('input[name="title"]')?.focus();
+
+    try {
+      const stored = sessionStorage.getItem(LAST_LISTING_KEY);
+      if (stored) {
+        const { type, venueId } = JSON.parse(stored) as {
+          type?: string;
+          venueId?: string;
+        };
+        const typeSelect =
+          form.querySelector<HTMLSelectElement>('select[name="type"]');
+        const venueSelect =
+          form.querySelector<HTMLSelectElement>('select[name="venueId"]');
+
+        if (type && typeSelect) {
+          typeSelect.value = type;
+          typeSelect.dispatchEvent(new Event("change"));
+        }
+        if (
+          venueId &&
+          venueSelect &&
+          Array.from(venueSelect.options).some((o) => o.value === venueId)
+        ) {
+          venueSelect.value = venueId;
+          venueSelect.dispatchEvent(new Event("change"));
+        }
+      }
+    } catch {
+      // sessionStorage unavailable (private browsing, etc.) — skip prefill
+    }
+
+    form.addEventListener("submit", () => {
+      const typeSelect =
+        form.querySelector<HTMLSelectElement>('select[name="type"]');
+      const venueSelect =
+        form.querySelector<HTMLSelectElement>('select[name="venueId"]');
+      const venueId = venueSelect?.value;
+      try {
+        sessionStorage.setItem(
+          LAST_LISTING_KEY,
+          JSON.stringify({
+            type: typeSelect?.value,
+            venueId: venueId && venueId !== "__new__" ? venueId : undefined,
+          }),
+        );
+      } catch {
+        // sessionStorage unavailable — nothing to persist
+      }
+    });
   }
 </script>
