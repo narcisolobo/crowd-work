@@ -18,6 +18,10 @@
   --gold-ink: oklch(0.525 0.104 76);
   --red: oklch(0.474 0.162 18);
   --error: oklch(0.4 0.16 18);
+  /* Tells the browser which palette to draw native controls in (date/time
+   * picker icons, checkboxes, scrollbars) — without this they default to a
+   * fixed palette and the picker icons go invisible against a dark page. */
+  color-scheme: light;
 }
 
 /* System dark preference, unless an explicit light override is set. */
@@ -32,6 +36,7 @@
     --gold-ink: oklch(0.796 0.131 81);
     --red: oklch(0.631 0.18 18);
     --error: oklch(0.65 0.18 18);
+    color-scheme: dark;
   }
 }
 
@@ -46,6 +51,7 @@
   --gold-ink: oklch(0.796 0.131 81);
   --red: oklch(0.631 0.18 18);
   --error: oklch(0.65 0.18 18);
+  color-scheme: dark;
 }
 
 @theme inline {
