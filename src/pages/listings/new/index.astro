@@ -83,7 +83,9 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
   <body
     class="font-body text-ink flex min-h-screen flex-col text-base antialiased"
   >
-    <div class="bg-paper mx-auto flex w-full max-w-136 flex-1 flex-col px-5 py-10">
+    <div
+      class="bg-paper mx-auto flex w-full max-w-136 flex-1 flex-col px-5 py-10"
+    >
       <a
         href="/"
         class="text-ink-soft inline-flex items-center gap-1.5 text-[0.86rem] underline-offset-2 hover:underline"
@@ -117,17 +119,17 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             </h1>
             <p class="text-ink-soft mt-1.5 text-[0.9rem]">
               Crowd Work listings are reviewed by working comics, not one
-              person's spreadsheet — every submission is checked before it
-              goes live.
+              person's spreadsheet — every submission is checked before it goes
+              live.
             </p>
 
             {errorMessage && (
               <p
                 role="alert"
                 class:list={[
-                  "mt-5 rounded-sm bg-paper px-3.5 py-2.5 text-[0.86rem] font-medium",
+                  "bg-paper mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium",
                   hasFieldErrors
-                    ? "border-l-red text-red border-l-[3px]"
+                    ? "border-l-error text-error border-l-[3px]"
                     : "text-ink",
                 ]}
               >

@@ -17,6 +17,7 @@
   --gold: oklch(0.643 0.126 76);
   --gold-ink: oklch(0.525 0.104 76);
   --red: oklch(0.474 0.162 18);
+  --error: oklch(0.4 0.16 18);
 }
 
 /* System dark preference, unless an explicit light override is set. */
@@ -25,11 +26,12 @@
     --paper: oklch(0.184 0.011 80);
     --paper-shadow: oklch(0.234 0.017 79);
     --ink: oklch(0.929 0.017 83);
-    --ink-soft: oklch(0.750 0.031 85);
+    --ink-soft: oklch(0.75 0.031 85);
     --rule: oklch(0.325 0.023 81);
     --gold: oklch(0.788 0.141 81);
     --gold-ink: oklch(0.796 0.131 81);
     --red: oklch(0.631 0.18 18);
+    --error: oklch(0.65 0.18 18);
   }
 }
 
@@ -38,11 +40,12 @@
   --paper: oklch(0.184 0.011 80);
   --paper-shadow: oklch(0.234 0.017 79);
   --ink: oklch(0.929 0.017 83);
-  --ink-soft: oklch(0.750 0.031 85);
+  --ink-soft: oklch(0.75 0.031 85);
   --rule: oklch(0.325 0.023 81);
   --gold: oklch(0.788 0.141 81);
   --gold-ink: oklch(0.796 0.131 81);
   --red: oklch(0.631 0.18 18);
+  --error: oklch(0.65 0.18 18);
 }
 
 @theme inline {
@@ -54,6 +57,7 @@
   --color-gold: var(--gold);
   --color-gold-ink: var(--gold-ink);
   --color-red: var(--red);
+  --color-error: var(--error);
 
   --font-display: var(--font-big-shoulders);
   --font-body: var(--font-ibm-plex-sans);

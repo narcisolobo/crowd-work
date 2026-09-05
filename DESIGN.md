@@ -10,6 +10,7 @@ colors:
   marquee-gold: "oklch(0.643 0.126 76)"
   marquee-gold-ink: "oklch(0.525 0.104 76)"
   cancellation-red: "oklch(0.474 0.162 18)"
+  error-red: "oklch(0.40 0.16 18)"
 typography:
   display:
     fontFamily: "Big Shoulders Display, Arial Narrow, sans-serif"
@@ -97,6 +98,7 @@ Crowd Work is a printed classifieds page lit by one marquee bulb. In daylight it
 The voice throughout is deliberate, unhurried, and matter-of-fact. Nothing on this page is trying to create urgency or manufacture excitement — it presents real listing data (day, time, venue, cost) at real density and trusts the reader to scan it, the way a person actually reads a classifieds page. This is a conscious rejection of default SaaS visual language: no cards, no drop shadows, no neon gradients, no rounded-corner tiles floating on colored backgrounds. Rows and rules instead of cards and shadows.
 
 **Key Characteristics:**
+
 - Warm paper-and-ink palette in light mode; true near-black with the same warm undertone in dark mode — not an inverted palette
 - Exactly one saturated accent color (marquee gold) doing all non-error signaling work
 - Condensed poster/marquee display type paired with a legible small-size body face
@@ -108,10 +110,12 @@ The voice throughout is deliberate, unhurried, and matter-of-fact. Nothing on th
 Warm, low-saturation neutrals carry almost the entire page; a single gold accent is the only color allowed to mean something when it appears.
 
 ### Primary
+
 - **Marquee Gold** (`oklch(0.643 0.126 76)` light / `oklch(0.788 0.141 81)` dark — CSS var `--gold`): the on-air bulb. Used for accent fills — the ticket stub's "this week" edge, the "This week" flag dot, active-state signaling — and nowhere decoratively.
 - **Marquee Gold Ink** (`oklch(0.525 0.104 76)` light / `oklch(0.796 0.131 81)` dark — CSS var `--gold-ink`): the same gold family tuned for text-on-paper contrast. Used for links, the listing-count number, and the "This week" label text.
 
 ### Neutral
+
 - **Paper** (`oklch(0.937 0.013 95)` light / `oklch(0.184 0.011 80)` dark — CSS var `--paper`): page background in both themes.
 - **Paper Shadow** (`oklch(0.898 0.018 88)` light / `oklch(0.234 0.017 79)` dark — CSS var `--paper-shadow`): the ticket stub's fill and the system's only elevation device — a tonal shift, never a box-shadow.
 - **Ink** (`oklch(0.224 0.011 80)` light / `oklch(0.929 0.017 83)` dark — CSS var `--ink`): primary text, and the fill color for an active filter tab.
@@ -119,12 +123,17 @@ Warm, low-saturation neutrals carry almost the entire page; a single gold accent
 - **Rule** (`oklch(0.807 0.024 85)` light / `oklch(0.325 0.023 81)` dark — CSS var `--rule`): every hairline divider and default border. The only border color in the system outside active/focus states.
 
 ### Reserved (status-only, never decorative)
-- **Cancellation Red** (`oklch(0.474 0.162 18)` light / `oklch(0.631 0.180 18)` dark — CSS var `--red`): reserved exclusively for cancellation and urgent-change flags. Not yet consumed anywhere in the shipped UI — no cancellation feature exists yet — but the token exists precisely so that when one is built, it doesn't reach for gold or invent a new color.
+
+- **Cancellation Red** (`oklch(0.474 0.162 18)` light / `oklch(0.631 0.180 18)` dark — CSS var `--red`): reserved exclusively for cancellation and urgent-change flags. Not yet consumed anywhere in the shipped UI — no cancellation feature exists yet — but the token exists precisely so that when one is built, it doesn't reach for gold or invent a new color. When that feature ships, the flag must pair this color with an authored icon (see The Icon Assist Rule below) — never color alone — so it stays visually distinct from Error Red at a glance, not just in code.
+- **Error Red** (`oklch(0.40 0.16 18)` light / `oklch(0.65 0.180 18)` dark — CSS var `--error`): reserved exclusively for form-validation error state — inline field errors and error banners. A sibling of Cancellation Red, not the same token: the two are deliberately kept in the same hue family (see The Red Line Rule) but tuned and named separately so routine validation noise never dilutes the rarity of an actual cancellation flag. Each theme is tuned independently against `--paper-shadow`, and deliberately not tuned to match: light clears WCAG AAA (`0.40 0.16 18` measures 7.39:1, darkened from Cancellation Red's `0.474 0.162 18` at negligible chroma cost) while dark only clears AA (`0.65 0.180 18` measures 4.74:1, vs. 4.39:1 for the shared `--red` value it replaces) — pushing dark further to AAA would require cutting chroma by roughly a third to stay in the sRGB gamut at that lightness, landing on a pale coral rather than a saturated red, which undercuts the color's job more than the extra contrast is worth. Wired into code via `--error` in `global.css`, consumed by `FormField.astro`, `FormSelect.astro`, and `form-field-validation.ts`'s client-side check.
 
 ### Named Rules
+
 **The One Voice Rule.** Marquee Gold is the only saturated color permitted to do signaling work — the "this week" flag, active filters, links. If a second accent starts creeping in, that's a violation, not a design choice.
 
-**The Red Line Rule.** Cancellation Red never appears for anything except a cancellation or urgent time-sensitive change. It is never used as a second decorative accent, a hover state, or an error-adjacent convenience color.
+**The Red Line Rule.** Cancellation Red never appears for anything except a cancellation or urgent time-sensitive change. It is never used as a second decorative accent, a hover state, or an error-adjacent convenience color — that job belongs to Error Red, a separate token in the same hue family, precisely so this rule never needs an "except for errors" exception carved into it.
+
+**The Icon Assist Rule.** Cancellation Red never signals alone. Every cancellation or urgent-change flag pairs the color with an authored SVG icon (same stroke weight as the existing chevron/back-arrow icons, `1.3px`) drawn from this system's own object vocabulary (the ticket stub, the marquee) — never a generic warning-triangle glyph, and never emoji. This is what keeps a rare, high-stakes flag from reading as "just another red thing" next to routine Error Red validation noise, and it's a genuine accessibility requirement on its own (WCAG 1.4.1, Use of Color) independent of the token split.
 
 **Soft accents mix, they don't add tokens.** Where gold needs to read as present but not shout (the ticket stub's "this week" edge), blend it toward the current background instead of inventing a token: `color-mix(in srgb, var(--gold) 60%, var(--paper) 40%)`. This stays correctly toned down in both themes automatically because it always mixes against whichever `--paper` is currently active.
 
@@ -137,14 +146,16 @@ Warm, low-saturation neutrals carry almost the entire page; a single gold accent
 **Character:** A condensed, poster/marquee-letterboard display face set against a plain, highly legible body face — the pairing of a hand-set marquee sign and the newsprint column underneath it.
 
 ### Hierarchy
+
 - **Display** (900, `clamp(2.4rem, 8vw, 3.6rem)`, line-height 0.9): the wordmark only — the homepage masthead's "Crowd Work."
 - **Title** (700, 1.28rem, line-height 1.2): listing titles, and the sticky header's brand name at a smaller size.
 - **Body** (400–600, ~0.86–1.02rem, line-height 1.5): descriptions, venue lines, metadata, nav links, form labels. Weight steps up to 600 for emphasis (the listing count, footer's "See something wrong?").
 - **Label** (Body face, 600, 0.65rem, letter-spacing 0.05em, uppercase): the type-tag chip and the ticket-stub day/month.
-- **Label (Display variant)** (Display face, 700, 0.95rem, letter-spacing 0.025em, uppercase): the filter tabs — the same small-caps *treatment* as Label, but set in the heavier Display face rather than Body, matching their role as the page's most prominent control.
+- **Label (Display variant)** (Display face, 700, 0.95rem, letter-spacing 0.025em, uppercase): the filter tabs — the same small-caps _treatment_ as Label, but set in the heavier Display face rather than Body, matching their role as the page's most prominent control.
 - **Mono** (500–600, ~0.85–1.15rem, tabular-nums): the time column and the ticket-stub date number only.
 
 ### Named Rules
+
 **The Mono Discipline Rule.** IBM Plex Mono is used for exactly one job: keeping times and stub dates aligned down a scannable column. It never appears decoratively anywhere else in the system.
 
 **The Marquee Caps Rule.** Small caps are deliberately rare and specific: the ticket stub's day/month, the mic/show type tag, and the type-filter tabs — all styled after physical marquee-letterboard and ticket-stub conventions, which are themselves capitals. Everything else (titles, venue names, body copy, nav links) stays sentence case. A new component reaching for uppercase text needs to justify it against this list, not just "it looks bold."
@@ -162,6 +173,7 @@ Everything is built from relative units (`rem`, `clamp()`) with no fixed-width c
 Flat throughout. There is no `box-shadow` anywhere in the system — depth and grouping are conveyed entirely through a tonal background shift (`--paper-shadow`, the ticket stub's fill) and hairline `1px` rules, plus one deliberately heavier `3px` ink border under the homepage masthead to anchor it as the page's one structural anchor point.
 
 ### Named Rules
+
 **The No Card, No Gimmick Rule.** Rows and hairline rules do the work that cards and drop shadows would do elsewhere. If a new component reaches for a shadow or a rounded card container to show grouping or elevation, that's the wrong tool in this system — reach for a tonal background or a rule instead.
 
 ## Shapes
@@ -173,16 +185,19 @@ Two shape languages coexist deliberately. Structural controls (filter tabs, the 
 Controls throughout are tactile and confident: small in footprint, but state changes are deliberate and legible rather than subtle. An active filter tab doesn't just get a tint — it fully inverts to an ink-filled block, reading as a firm, weighted choice rather than a hover-adjacent hint.
 
 ### Buttons / Filter Tabs
+
 - **Shape:** `4px` radius, `1px` border
 - **Inactive:** transparent background, `--rule` border, `--ink-soft` text, uppercase Display-face label at 0.95rem
 - **Active:** fully inverts — `--ink` background, `--ink` border, `--paper` text. In dark mode this inversion reads as a literal spotlight hitting the selected tab, a side effect of building from tokens rather than hardcoded colors.
 - **Progressive enhancement:** tabs are real `<button type="submit">` elements inside a `<form method="get">`, so filtering works via full page reload with no JavaScript; a client script intercepts the click, filters instantly, and syncs the URL via `history.pushState` when JS is available.
 
 ### Chips (Type Tag)
+
 - **Style:** transparent background, `--rule` 1px border, `--ink-soft` text, `4px` radius, uppercase label type at 0.65rem
 - **State:** static — reads "Mic" or "Show," no interactive states
 
 ### Listing Row (this system's container — deliberately not a card)
+
 - **Corner Style:** none; sharp-edged
 - **Background:** none — sits directly on `--paper`
 - **Shadow Strategy:** none — see Elevation & Depth
@@ -190,37 +205,46 @@ Controls throughout are tactile and confident: small in footprint, but state cha
 - **Internal Padding:** `22px` vertical, `18px` column gaps
 
 ### Inputs / Fields (Area Select)
+
 - **Style:** `--rule` 1px border, `--paper` background, `4px` radius, native browser `appearance` disabled in favor of a custom `--ink-soft` SVG chevron (the native OS-drawn caret doesn't track this system's theme tokens and can go invisible against an explicit dark override)
 - **Focus:** `2px` solid `--gold-ink` outline with `2px` offset, applied consistently to every focusable control via `:focus-visible`
 
 ### Navigation
+
 - **Sticky header:** persistent across all pages, `position: sticky; top: 0`, `1px --ink` bottom border. Holds the brand mark + wordmark, primary nav ("Browse," "Submit a listing"), and the theme switcher.
 - **Nav links:** Body-face, `--ink-soft`, underline on hover
 - **Mobile treatment:** below 480px, "Browse" hides and "Submit a listing" shortens to "Submit"
 - **Admin variant:** the admin header separates two jobs instead of listing everything flat — feature links (Archive, and future admin surfaces) stay as plain visible nav links, while session identity collapses into the Account Menu below. The row is `flex-wrap` with `min-height` rather than a fixed height, so it reflows to a second line as feature links accumulate or at high browser zoom, instead of clipping or scrolling horizontally.
 
 ### Account Menu
+
 The moderator's email, styled as a plain nav link with a trailing chevron, discloses "Log out" on click rather than sitting inline as its own nav item — the fix for an admin nav that grows a feature link at a time while session actions stay constant. Built as a native `<details>`/`<summary>` disclosure: it opens and closes with no JavaScript required, and a small script only adds outside-click and Escape dismissal on top of that native behavior. The opened panel is `--paper-shadow` fill with a `1px --rule` border and `4px` radius — the same tonal-elevation vocabulary as everywhere else in the system, never a `box-shadow` (The No Card, No Gimmick Rule applies here too). The chevron rotates 180° when open as the only state cue beyond the panel itself.
 
 ### Ticket Stub (signature component)
+
 The date block at the left of every listing row — day/date/month stacked, `--paper-shadow` fill, `4px` radius. Gets a gold-mixed left edge (`color-mix(in srgb, var(--gold) 60%, var(--paper) 40%)`) only when the listing's occurrence falls within the next 7 days, computed against the page's actual date range rather than a second, separately-invented threshold. This is the system's most distinctive device — a physical ticket-stub silhouette doing double duty as both a date display and a "how soon" signal.
 
 ### Theme Toggle (signature component)
+
 Styled as a bulb pill ("Lights on" / "Lights off") rather than a generic sun/moon icon — a small gold dot that goes `--ink-soft` when dark mode is active, keeping the metaphor inside the marquee vocabulary instead of a borrowed one. Persists an explicit choice to `localStorage`; absent an explicit choice, the page follows system `prefers-color-scheme`.
 
 ## Do's and Don'ts
 
 ### Do:
+
 - **Do** treat Marquee Gold as the only saturated signaling color (The One Voice Rule).
 - **Do** build every new color usage from the `--paper` / `--ink` / `--rule` / `--gold` token set — never a hardcoded hex — so both themes and the "this week" soft-accent mix stay correct automatically.
 - **Do** use relative units (`rem`, `clamp()`) with no fixed-width containers on every layout, public or admin — a working moderator navigates at 400%+ zoom.
 - **Do** keep every interactive control's `:focus-visible` state a visible `--gold-ink` outline.
 - **Do** gate any new transition or animation behind `(prefers-reduced-motion: no-preference)`, matching the one existing row-fade transition.
 - **Do** build any new disclosure or menu (account actions, overflow nav, etc.) on native `<details>`/`<summary>` so it works with no JavaScript, adding script only for the polish a browser doesn't provide for free (outside-click, Escape) — see Account Menu.
+- **Do** pair every Cancellation Red flag with an authored icon, never color alone (The Icon Assist Rule).
+- **Do** use Error Red (`--error`), not Cancellation Red (`--red`), for form-validation states — they're separate tokens on purpose.
 
 ### Don't:
+
 - **Don't** introduce a card, a rounded tile, or a `box-shadow` for grouping or elevation — use a tonal background (`--paper-shadow`) or a hairline rule instead (The No Card, No Gimmick Rule).
-- **Don't** use Cancellation Red for anything other than an actual cancellation or urgent time-sensitive change (The Red Line Rule).
+- **Don't** use Cancellation Red for anything other than an actual cancellation or urgent time-sensitive change — reach for Error Red instead (The Red Line Rule).
 - **Don't** reach for uppercase/small-caps styling outside the confirmed list (ticket-stub day/month, type tag, filter tabs) — see The Marquee Caps Rule.
 - **Don't** rely on a native browser control's default appearance (a `<select>` caret, a checkbox) for anything visible in dark mode without checking it actually themes — it may be drawn by the OS/browser chrome, not by this system's tokens.
 - **Don't** use IBM Plex Mono anywhere except the time column and ticket-stub date (The Mono Discipline Rule).
