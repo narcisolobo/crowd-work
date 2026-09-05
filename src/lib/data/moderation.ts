@@ -266,7 +266,7 @@ export async function submitNewListingProposal(
 export async function directAddListing(
   client: SupabaseClient<Database>,
   formData: FormData,
-): Promise<void> {
+): Promise<{ listingId: string; title: string }> {
   const {
     data: { user },
   } = await client.auth.getUser();
@@ -297,6 +297,8 @@ export async function directAddListing(
 
   if (error)
     throw new Error(`Failed to record direct-added listing: ${error.message}`);
+
+  return { listingId, title: fields.title };
 }
 
 async function resolveVenueId(
