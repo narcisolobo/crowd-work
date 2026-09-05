@@ -5,7 +5,10 @@ import FormTextarea from "../../../../components/forms/FormTextarea.astro";
 import ListingFieldsFields from "../../../../components/moderation/ListingFieldsFields.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getNeighborhoods, getVenues } from "../../../../lib/data/listings";
-import { directAddListing } from "../../../../lib/data/moderation";
+import {
+  directAddListing,
+  MissingRequiredFieldsError,
+} from "../../../../lib/data/moderation";
 import { APPROVAL_REASON_OPTIONS } from "../../../../lib/utils/moderation-labels";
 
 const supabase = Astro.locals.supabase!;
@@ -18,14 +21,22 @@ const [venues, neighborhoods] = await Promise.all([
 
 let errorMessage: string | null = null;
 let added: { listingId: string; title: string } | null = null;
+let fieldErrors: Record<string, string> = {};
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   try {
     added = await directAddListing(supabase, formData);
   } catch (error) {
-    errorMessage =
-      error instanceof Error ? error.message : "Something went wrong.";
+    if (error instanceof MissingRequiredFieldsError) {
+      errorMessage = "Please fix the highlighted fields below.";
+      fieldErrors = Object.fromEntries(
+        error.fields.map(({ field }) => [field, "Required."]),
+      );
+    } else {
+      errorMessage =
+        error instanceof Error ? error.message : "Something went wrong.";
+    }
   }
 }
 
@@ -42,7 +53,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 <AdminLayout title="Add a listing — Crowd Work admin" userEmail={user.email}>
   {
     added ? (
-      <div class="border-l-rule bg-paper-shadow mt-8 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
+      <div class="border-l-rule bg-paper-shadow mt-5 max-w-136 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
         <h1 class="font-display text-[1.28rem] font-bold">
           Added — {added.title} is live.
         </h1>
@@ -58,33 +69,28 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         </Button>
       </div>
     ) : (
-      <>
-        <div class="mt-5">
-          <h1 class="font-display text-[1.28rem] font-bold">Add a listing</h1>
-          <p class="text-ink-soft mt-1.5 text-[0.86rem]">
-            Creates the listing directly — recorded in the archive as already
-            approved, under your account.
-          </p>
-        </div>
+      <div class="border-l-rule bg-paper-shadow mt-5 max-w-136 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
+        <h1 class="font-display text-[1.28rem] font-bold">Add a listing</h1>
+        <p class="text-ink-soft mt-1.5 text-[0.86rem]">
+          Creates the listing directly — recorded in the archive as already
+          approved, under your account.
+        </p>
 
         {errorMessage && (
           <p
             role="alert"
-            class="bg-paper-shadow text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
+            class="bg-paper text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
           >
             <strong>Error:</strong> {errorMessage}
           </p>
         )}
 
-        <form
-          method="post"
-          novalidate
-          class="mt-8 flex max-w-104 flex-col gap-6"
-        >
+        <form method="post" novalidate class="mt-6 flex flex-col gap-6">
           <ListingFieldsFields
             prefill={null}
             venueOptions={venueOptions}
             neighborhoodOptions={neighborhoodOptions}
+            fieldErrors={fieldErrors}
           />
 
           <div class="border-rule flex flex-col gap-4 border-t pt-6">
@@ -106,7 +112,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             Add listing
           </Button>
         </form>
-      </>
+      </div>
     )
   }
 </AdminLayout>
