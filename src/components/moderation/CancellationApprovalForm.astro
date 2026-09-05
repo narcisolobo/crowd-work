@@ -9,9 +9,16 @@ import { APPROVAL_REASON_OPTIONS } from "../../lib/utils/moderation-labels";
 interface Props {
   entry: QueueEntry;
   proposedCancellation: ProposedCancellation | null;
+  reason?: string;
+  otherReason?: string;
 }
 
-const { entry, proposedCancellation } = Astro.props;
+const {
+  entry,
+  proposedCancellation,
+  reason = "",
+  otherReason = "",
+} = Astro.props;
 ---
 
 <form method="post" class="mt-8 flex max-w-104 flex-col gap-4">
@@ -32,10 +39,10 @@ const { entry, proposedCancellation } = Astro.props;
       label="Reason"
       name="reason"
       options={APPROVAL_REASON_OPTIONS}
-      value=""
+      value={reason}
     />
-    <div data-other-reason hidden>
-      <FormTextarea label="Other reason" name="otherReason" />
+    <div data-other-reason hidden={reason !== "other"}>
+      <FormTextarea label="Other reason" name="otherReason" value={otherReason} />
     </div>
   </div>
   <Button

@@ -37,9 +37,16 @@ const [venues, neighborhoods] = await Promise.all([
   getNeighborhoods(),
 ]);
 let errorMessage: string | null = null;
+let submittedReason = "";
+let submittedOtherReason = "";
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
+  const action = formData.get("action")?.toString();
+  if (action === "approve" || action === "approve_cancellation") {
+    submittedReason = formData.get("reason")?.toString() ?? "";
+    submittedOtherReason = formData.get("otherReason")?.toString() ?? "";
+  }
 
   try {
     const result = await handleQueueReviewAction(supabase, entry, formData);
@@ -129,6 +136,8 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
       <CancellationApprovalForm
         entry={entry}
         proposedCancellation={proposedCancellation}
+        reason={submittedReason}
+        otherReason={submittedOtherReason}
       />
     ) : (
       <ListingApprovalForm
@@ -136,6 +145,8 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         prefill={prefill}
         venueOptions={venueOptions}
         neighborhoodOptions={neighborhoodOptions}
+        reason={submittedReason}
+        otherReason={submittedOtherReason}
       />
     )
   }

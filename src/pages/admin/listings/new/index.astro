@@ -2,6 +2,7 @@
 import Button from "../../../../components/forms/Button.astro";
 import FormSelect from "../../../../components/forms/FormSelect.astro";
 import FormTextarea from "../../../../components/forms/FormTextarea.astro";
+import AdminUtilityBar from "../../../../components/layout/AdminUtilityBar.astro";
 import ListingFieldsFields from "../../../../components/moderation/ListingFieldsFields.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getNeighborhoods, getVenues } from "../../../../lib/data/listings";
@@ -22,9 +23,13 @@ const [venues, neighborhoods] = await Promise.all([
 let errorMessage: string | null = null;
 let added: { listingId: string; title: string } | null = null;
 let fieldErrors: Record<string, string> = {};
+let submittedReason = "";
+let submittedOtherReason = "";
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
+  submittedReason = formData.get("reason")?.toString() ?? "";
+  submittedOtherReason = formData.get("otherReason")?.toString() ?? "";
   try {
     added = await directAddListing(supabase, formData);
   } catch (error) {
@@ -40,8 +45,6 @@ if (Astro.request.method === "POST") {
   }
 }
 
-const hasFieldErrors = Object.keys(fieldErrors).length > 0;
-
 const venueOptions = venues.map((venue) => ({
   value: venue.id,
   label: venue.name,
@@ -53,10 +56,15 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 ---
 
 <AdminLayout title="Add a listing — Crowd Work admin" userEmail={user.email}>
+  <AdminUtilityBar backHref="/admin" backLabel="Back to queue" />
   {
     added ? (
-      <div class="border-l-rule bg-paper-shadow mt-5 max-w-136 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
-        <h1 class="font-display text-[1.28rem] font-bold">
+      <div class="bg-paper-shadow mt-5 max-w-136 rounded-sm border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] px-5 py-6 sm:px-7 sm:py-7">
+        <h1 class="font-display flex items-center gap-2.5 text-[1.28rem] font-bold">
+          <span
+            class="bg-gold h-2.5 w-2.5 flex-none rounded-full"
+            aria-hidden="true"
+          />
           Added — {added.title} is live.
         </h1>
         <p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
@@ -81,12 +89,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         {errorMessage && (
           <p
             role="alert"
-            class:list={[
-              "bg-paper mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium",
-              hasFieldErrors
-                ? "border-l-error text-error border-l-[3px]"
-                : "text-ink",
-            ]}
+            class="border-l-error text-error bg-paper mt-5 rounded-sm border-l-[3px] px-3.5 py-2.5 text-[0.86rem] font-medium"
           >
             <strong>Error:</strong> {errorMessage}
           </p>
@@ -108,10 +111,14 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
               label="Reason"
               name="reason"
               options={APPROVAL_REASON_OPTIONS}
-              value=""
+              value={submittedReason}
             />
-            <div data-other-reason hidden>
-              <FormTextarea label="Other reason" name="otherReason" />
+            <div data-other-reason hidden={submittedReason !== "other"}>
+              <FormTextarea
+                label="Other reason"
+                name="otherReason"
+                value={submittedOtherReason}
+              />
             </div>
           </div>
 
