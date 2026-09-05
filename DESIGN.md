@@ -45,6 +45,9 @@ typography:
 rounded:
   sm: "4px"
   full: "9999px"
+spacing:
+  form: "34rem"
+  form-compact: "26rem"
 components:
   filter-tab:
     backgroundColor: "transparent"
@@ -163,6 +166,8 @@ Warm, low-saturation neutrals carry almost the entire page; a single gold accent
 ## Layout
 
 Single content column, `max-width: 720px`, centered, left-aligned throughout — a classifieds-page convention that also happens to be the best default for one-handed scanning on a phone. A persistent sticky header (`position: sticky; top: 0`) sits outside that column at full width; everything else lives inside it.
+
+Nested inside that column, forms use one of two widths, chosen by content shape rather than by page: `max-w-form` (`34rem`/`544px`) for any form rendering the full listing field set — title, venue, timing, recurrence — used identically by the public submission form, the report-a-problem form, the admin add-listing page, and the queue's listing-approval form; `max-w-form-compact` (`26rem`/`416px`) for a form with only a handful of controls, like login, the propose-rejection textarea, or the queue's cancellation-approval form (date, note, reason — no listing fields). Both are theme tokens (`--container-form`, `--container-form-compact` in `global.css`), not arbitrary values — pick between them by what the form actually contains, never by which page it's on.
 
 Listing rows are a 4-column grid (`stub | time | title | price`, track widths `60px 78px 1fr auto`) divided by hairline rules — no cards, no shadows, no rounded corners on the rows themselves. At `≤600px` the grid reflows to `stub | title | price` on top with `stub | time` (time spanning full width) below; price stays pinned level with the title at every width, only time relocates. At `≤480px` the header's "Browse" link hides, "Submit a listing" shortens to "Submit," and the theme switcher's text label hides to just the bulb icon.
 

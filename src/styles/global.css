@@ -65,6 +65,21 @@
 }
 
 /*
+ * Form container widths (max-w-form / max-w-form-compact), separate
+ * from the page-level max-w-180 column: pick by content shape, not by
+ * page. max-w-form is for any form rendering the full listing field
+ * set (title, venue, timing, recurrence, etc.) — public submission,
+ * report-a-problem, admin add-listing, and the queue's approval forms.
+ * max-w-form-compact is for a form with only a handful of controls
+ * (login, propose-rejection). These are static, not theme-swapped, so
+ * they live in a plain @theme block rather than @theme inline.
+ */
+@theme {
+  --container-form: 34rem;
+  --container-form-compact: 26rem;
+}
+
+/*
  * Soft accents (e.g. the ticket stub's "this week" edge) blend gold
  * toward the active background instead of a dedicated token, so they
  * stay correctly toned down in both themes automatically:
