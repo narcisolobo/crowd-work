@@ -8,6 +8,7 @@ interface Props {
   min?: string | number;
   max?: string | number;
   autocomplete?: string;
+  placeholder?: string;
   error?: string | null;
 }
 
@@ -20,6 +21,7 @@ const {
   min,
   max,
   autocomplete,
+  placeholder,
   error = null,
 } = Astro.props;
 const errorId = error ? `${name}-error` : undefined;
@@ -38,10 +40,11 @@ const errorId = error ? `${name}-error` : undefined;
     min={min}
     max={max}
     autocomplete={autocomplete}
+    placeholder={placeholder}
     aria-invalid={error ? "true" : undefined}
     aria-describedby={errorId}
     style={error ? "border-color: var(--error)" : undefined}
-    class="border-rule bg-paper font-body text-ink rounded-sm border px-3 py-2 text-[0.95rem]"
+    class="border-rule bg-paper font-body text-ink placeholder:text-ink-soft rounded-sm border px-3 py-2 text-[0.95rem]"
   />
   {
     error && (

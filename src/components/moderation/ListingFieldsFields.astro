@@ -113,6 +113,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
       label="Google Maps URL"
       name="newVenueGoogleMapsUrl"
       type="url"
+      placeholder="https://maps.google.com/?q=The+Virgil+LA"
       value={prefill?.newVenue?.googleMapsUrl ?? ""}
     />
   </div>
@@ -136,6 +137,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     <FormField
       label="Sign-up method"
       name="signUpMethod"
+      placeholder="Sign-up list at the door, 7:30pm"
       value={prefill?.signUpMethod ?? ""}
     />
   </div>
@@ -143,6 +145,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     <FormField
       label="Cost to perform"
       name="costToPerform"
+      placeholder="Free, or $5"
       value={prefill?.costToPerform ?? ""}
     />
   </div>
@@ -150,6 +153,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     <FormField
       label="Ticket price"
       name="ticketPrice"
+      placeholder="$15"
       value={prefill?.ticketPrice ?? ""}
     />
   </div>
@@ -158,6 +162,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
       label="Ticket URL"
       name="ticketUrl"
       type="url"
+      placeholder="https://example.com/tickets"
       value={prefill?.ticketUrl ?? ""}
     />
   </div>
