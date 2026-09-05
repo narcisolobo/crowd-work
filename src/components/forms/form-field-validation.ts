@@ -73,7 +73,7 @@ function clearInvalid(field: Field): void {
 function showInvalid(field: Field): void {
   const label = getLabel(field);
   if (!label) return;
-  field.style.borderColor = "var(--red)";
+  field.style.borderColor = "var(--error)";
   const errorId = `${field.name || "field"}-error`;
   let message = label.querySelector<HTMLElement>(":scope > [data-field-error]");
   if (!message) {
@@ -81,7 +81,7 @@ function showInvalid(field: Field): void {
     message.id = errorId;
     message.dataset.fieldError = "";
     message.setAttribute("role", "alert");
-    message.style.color = "var(--red)";
+    message.style.color = "var(--error)";
     message.style.fontSize = "0.78rem";
     message.style.fontWeight = "500";
     message.style.marginTop = "0.375rem";
