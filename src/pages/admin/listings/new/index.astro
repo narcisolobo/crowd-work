@@ -76,7 +76,11 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
           </p>
         )}
 
-        <form method="post" class="mt-8 flex max-w-104 flex-col gap-6">
+        <form
+          method="post"
+          novalidate
+          class="mt-8 flex max-w-104 flex-col gap-6"
+        >
           <ListingFieldsFields
             prefill={null}
             venueOptions={venueOptions}
