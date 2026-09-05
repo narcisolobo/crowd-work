@@ -124,7 +124,7 @@ Warm, low-saturation neutrals carry almost the entire page; a single gold accent
 
 ### Reserved (status-only, never decorative)
 
-- **Cancellation Red** (`oklch(0.474 0.162 18)` light / `oklch(0.631 0.180 18)` dark — CSS var `--red`): reserved exclusively for cancellation and urgent-change flags. Not yet consumed anywhere in the shipped UI — no cancellation feature exists yet — but the token exists precisely so that when one is built, it doesn't reach for gold or invent a new color. When that feature ships, the flag must pair this color with an authored icon (see The Icon Assist Rule below) — never color alone — so it stays visually distinct from Error Red at a glance, not just in code.
+- **Cancellation Red** (`oklch(0.474 0.162 18)` light / `oklch(0.631 0.180 18)` dark — CSS var `--red`): reserved exclusively for cancellation and urgent-change flags. Consumed on the listing detail page (`[id].astro`): the "Not Scheduled" ticket-stub replacement and the "Changed: …" note, both paired with the Dark Bulb icon (see The Icon Assist Rule below). The "Not currently scheduled" message just below the stub stays text-only — it's read together with the already-iconed stub right above it in the same hero block, not a standalone flag.
 - **Error Red** (`oklch(0.40 0.16 18)` light / `oklch(0.65 0.180 18)` dark — CSS var `--error`): reserved exclusively for form-validation error state — inline field errors and error banners. A sibling of Cancellation Red, not the same token: the two are deliberately kept in the same hue family (see The Red Line Rule) but tuned and named separately so routine validation noise never dilutes the rarity of an actual cancellation flag. Each theme is tuned independently against `--paper-shadow`, and deliberately not tuned to match: light clears WCAG AAA (`0.40 0.16 18` measures 7.39:1, darkened from Cancellation Red's `0.474 0.162 18` at negligible chroma cost) while dark only clears AA (`0.65 0.180 18` measures 4.74:1, vs. 4.39:1 for the shared `--red` value it replaces) — pushing dark further to AAA would require cutting chroma by roughly a third to stay in the sRGB gamut at that lightness, landing on a pale coral rather than a saturated red, which undercuts the color's job more than the extra contrast is worth. Wired into code via `--error` in `global.css`, consumed by `FormField.astro`, `FormSelect.astro`, and `form-field-validation.ts`'s client-side check.
 
 ### Named Rules
@@ -133,7 +133,7 @@ Warm, low-saturation neutrals carry almost the entire page; a single gold accent
 
 **The Red Line Rule.** Cancellation Red never appears for anything except a cancellation or urgent time-sensitive change. It is never used as a second decorative accent, a hover state, or an error-adjacent convenience color — that job belongs to Error Red, a separate token in the same hue family, precisely so this rule never needs an "except for errors" exception carved into it.
 
-**The Icon Assist Rule.** Cancellation Red never signals alone. Every cancellation or urgent-change flag pairs the color with an authored SVG icon (same stroke weight as the existing chevron/back-arrow icons, `1.3px`) drawn from this system's own object vocabulary (the ticket stub, the marquee) — never a generic warning-triangle glyph, and never emoji. This is what keeps a rare, high-stakes flag from reading as "just another red thing" next to routine Error Red validation noise, and it's a genuine accessibility requirement on its own (WCAG 1.4.1, Use of Color) independent of the token split.
+**The Icon Assist Rule.** Cancellation Red never signals alone. Every cancellation or urgent-change flag pairs the color with an authored SVG icon (same stroke weight as the existing chevron/back-arrow icons, `1.3px`) drawn from this system's own object vocabulary (the ticket stub, the marquee) — never a generic warning-triangle glyph, and never emoji. This is what keeps a rare, high-stakes flag from reading as "just another red thing" next to routine Error Red validation noise, and it's a genuine accessibility requirement on its own (WCAG 1.4.1, Use of Color) independent of the token split. Fulfilled by the Dark Bulb icon — see Components below.
 
 **Soft accents mix, they don't add tokens.** Where gold needs to read as present but not shout (the ticket stub's "this week" edge), blend it toward the current background instead of inventing a token: `color-mix(in srgb, var(--gold) 60%, var(--paper) 40%)`. This stays correctly toned down in both themes automatically because it always mixes against whichever `--paper` is currently active.
 
@@ -227,6 +227,10 @@ The date block at the left of every listing row — day/date/month stacked, `--p
 ### Theme Toggle (signature component)
 
 Styled as a bulb pill ("Lights on" / "Lights off") rather than a generic sun/moon icon — a small gold dot that goes `--ink-soft` when dark mode is active, keeping the metaphor inside the marquee vocabulary instead of a borrowed one. Persists an explicit choice to `localStorage`; absent an explicit choice, the page follows system `prefers-color-scheme`.
+
+### Dark Bulb (signature component)
+
+The Icon Assist Rule's icon: the same marquee bulb as the Theme Toggle's on-air dot, but unlit — a `--red` outline circle with its filament snapped (`viewBox="0 0 12 12"`, `1.3px` stroke, round caps/joins, matching the existing chevron/back-arrow icons exactly). Reuses a shape the reader already knows from the Theme Toggle rather than introducing a new one; the lit gold dot and the broken red bulb read as one state pair, not two unrelated devices. Currently used on the listing detail page (`[id].astro`) next to the "Not Scheduled" ticket-stub replacement and inline in the "Changed: …" note.
 
 ## Do's and Don'ts
 
