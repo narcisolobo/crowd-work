@@ -94,7 +94,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
           />
 
           <div class="border-rule flex flex-col gap-4 border-t pt-6">
-            <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+            <p class="font-body text-ink-soft text-[0.82rem] font-semibold">
               Approval
             </p>
             <FormSelect
@@ -108,7 +108,12 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             </div>
           </div>
 
-          <Button type="submit" variant="primary" class="self-start">
+          <Button
+            type="submit"
+            variant="primary"
+            busyLabel="Adding…"
+            class="self-start"
+          >
             Add listing
           </Button>
         </form>
