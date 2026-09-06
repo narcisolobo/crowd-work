@@ -33,6 +33,14 @@ export interface ProposedListingFields {
   oneOffDate: string | null;
 }
 
+export interface SourceCheckFinding {
+  sourceId: string;
+  changeType: "new" | "update";
+  listingId: string | null;
+  fields: ProposedListingFields;
+  note: string;
+}
+
 export interface ProposedCancellation {
   originalDate: string;
   note?: string | null;
@@ -317,6 +325,23 @@ export async function directAddListing(
     throw new Error(`Failed to record direct-added listing: ${error.message}`);
 
   return { listingId, title: fields.title };
+}
+
+export async function submitSourceCheckFinding(
+  client: SupabaseClient<Database>,
+  finding: SourceCheckFinding,
+): Promise<void> {
+  const { error } = await client.from("moderation_queue").insert({
+    listing_id: finding.listingId,
+    change_type: finding.changeType,
+    proposed_data: finding.fields as unknown as Json,
+    correction_note: finding.note,
+    origin: "source_check",
+    status: "pending",
+  });
+
+  if (error)
+    throw new Error(`Failed to file source-check finding: ${error.message}`);
 }
 
 async function resolveVenueId(

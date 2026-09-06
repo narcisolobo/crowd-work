@@ -43,3 +43,22 @@ export async function signInTestModerator(
 
   return client;
 }
+
+export async function signInSourceCheckAgent(): Promise<
+  SupabaseClient<Database>
+> {
+  const client = createClient<Database>(
+    requiredEnv("PUBLIC_SUPABASE_URL"),
+    requiredEnv("PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+
+  const { error } = await client.auth.signInWithPassword({
+    email: requiredEnv("SOURCE_CHECK_AGENT_EMAIL"),
+    password: requiredEnv("SOURCE_CHECK_AGENT_PASSWORD"),
+  });
+  if (error)
+    throw new Error(`Failed to sign in source-check agent: ${error.message}`);
+
+  return client;
+}

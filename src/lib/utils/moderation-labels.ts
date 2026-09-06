@@ -15,6 +15,7 @@ export const ORIGIN_LABEL: Record<string, string> = {
   report_form: "Public report",
   submission_form: "Public submission",
   moderator_direct_add: "Direct add",
+  source_check: "Automated source check",
 };
 
 export const STATUS_LABEL: Record<string, string> = {
