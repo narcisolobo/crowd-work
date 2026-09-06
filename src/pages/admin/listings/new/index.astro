@@ -77,32 +77,30 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
   <AdminUtilityBar backHref="/admin" backLabel="Back to queue" />
   {
     added ? (
-      <div class="flex flex-1 flex-col justify-center">
-        <div class="bg-paper-shadow max-w-form rounded-sm border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] px-5 py-6 sm:px-7 sm:py-7">
-          <h1 class="font-display relative pl-5 text-[1.28rem] font-bold">
-            <span
-              class="bg-gold absolute top-1.75 left-0 h-2.5 w-2.5 rounded-full"
-              aria-hidden="true"
-            />
-            Added — {added.title} is live.
-          </h1>
-          <p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
-            Recorded in the archive as already approved, under your account.
-          </p>
-          <div class="mt-5 flex gap-3">
-            <Button href="/admin/listings/new" variant="outline">
-              Add another
-            </Button>
-            <Button href={`/listings/${added.listingId}`} variant="outline">
-              View listing
-            </Button>
-            <Button
-              href={`/listings/${added.listingId}/report?context=moderator`}
-              variant="outline"
-            >
-              Edit this listing
-            </Button>
-          </div>
+      <div class="bg-paper-shadow mt-5 max-w-form rounded-sm border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] px-5 py-6 sm:px-7 sm:py-7">
+        <h1 class="font-display relative pl-5 text-[1.28rem] font-bold">
+          <span
+            class="bg-gold absolute top-1.75 left-0 h-2.5 w-2.5 rounded-full"
+            aria-hidden="true"
+          />
+          Added — {added.title} is live.
+        </h1>
+        <p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
+          Recorded in the archive as already approved, under your account.
+        </p>
+        <div class="mt-5 flex gap-3">
+          <Button href="/admin/listings/new" variant="outline">
+            Add another
+          </Button>
+          <Button href={`/listings/${added.listingId}`} variant="outline">
+            View listing
+          </Button>
+          <Button
+            href={`/listings/${added.listingId}/report?context=moderator`}
+            variant="outline"
+          >
+            Edit this listing
+          </Button>
         </div>
       </div>
     ) : (
@@ -156,18 +154,14 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             </div>
           </div>
 
+          <p class="text-ink-soft text-[0.78rem]">
+            Publishes immediately, under your account — no second review.
+          </p>
+
           <div
-            class="bg-paper-shadow border-rule sticky bottom-0 z-10 -mx-5 -mb-6 flex flex-col gap-2 rounded-b-sm border-t px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7"
+            class="bg-paper-shadow border-rule sticky bottom-0 z-10 -mx-5 -mb-6 rounded-b-sm border-t px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7"
           >
-            <p class="text-ink-soft text-[0.78rem]">
-              Publishes immediately, under your account — no second review.
-            </p>
-            <Button
-              type="submit"
-              variant="primary"
-              busyLabel="Adding…"
-              class="self-start"
-            >
+            <Button type="submit" variant="primary" busyLabel="Adding…">
               Add listing
             </Button>
           </div>
