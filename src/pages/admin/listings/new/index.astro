@@ -93,6 +93,12 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             <Button href={`/listings/${added.listingId}`} variant="outline">
               View listing
             </Button>
+            <Button
+              href={`/listings/${added.listingId}/report?context=moderator`}
+              variant="outline"
+            >
+              Edit this listing
+            </Button>
           </div>
         </div>
       </div>

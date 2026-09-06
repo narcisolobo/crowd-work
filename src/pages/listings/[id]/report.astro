@@ -18,6 +18,12 @@ if (!listing) {
   return Astro.redirect("/404");
 }
 
+// A moderator arrives here from the direct-add success card's "Edit this
+// listing" link, not as an anonymous visitor — same form and same queue
+// path (still reviewed like any other update), but the copy shouldn't
+// address them as a stranger reporting someone else's mistake.
+const isModeratorContext = Astro.url.searchParams.get("context") === "moderator";
+
 let submitted = false;
 let errorMessage: string | null = null;
 let selectedReason: string | null = null;
@@ -66,7 +72,11 @@ const reasonOptions = [
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report a problem — {listing.title} — Crowd Work</title>
+    <title>
+      {isModeratorContext
+        ? `Edit listing — ${listing.title} — Crowd Work admin`
+        : `Report a problem — ${listing.title} — Crowd Work`}
+    </title>
     <script is:inline>
       (function () {
         const stored = localStorage.getItem("theme");
@@ -101,21 +111,23 @@ const reasonOptions = [
         submitted ? (
           <div class="mt-8 rounded-sm border-l-[3px] border-l-rule bg-paper-shadow px-5 py-6 sm:px-7 sm:py-7">
             <h1 class="font-display text-[1.28rem] font-bold">
-              Thanks — a moderator will review this shortly.
+              {isModeratorContext
+                ? "Submitted for review."
+                : "Thanks — a moderator will review this shortly."}
             </h1>
             <p class="mt-2.5 max-w-[45ch] text-[0.95rem] text-ink-soft">
-              Crowd Work listings are reviewed by working comics, not one
-              person's spreadsheet — reports like yours are how the list
-              stays accurate.
+              {isModeratorContext
+                ? "It's in the queue as a pending update, same as any other correction. Approve it from there whenever you're ready."
+                : "Crowd Work listings are reviewed by working comics, not one person's spreadsheet — reports like yours are how the list stays accurate."}
             </p>
           </div>
         ) : (
           <div class="mt-8 rounded-sm border-l-[3px] border-l-rule bg-paper-shadow px-5 py-6 sm:px-7 sm:py-7">
             <h1 class="font-display text-[1.28rem] font-bold">
-              Report a problem
+              {isModeratorContext ? "Edit this listing" : "Report a problem"}
             </h1>
             <p class="mt-1.5 text-[0.9rem] text-ink-soft">
-              with {listing.title}
+              {isModeratorContext ? listing.title : `with ${listing.title}`}
             </p>
 
             {errorMessage && (
@@ -142,7 +154,7 @@ const reasonOptions = [
 
               <fieldset class="flex flex-col gap-2.5">
                 <legend class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
-                  What's wrong?
+                  {isModeratorContext ? "What needs to change?" : "What's wrong?"}
                 </legend>
                 {reasonOptions.map((option) => (
                   <label class="flex cursor-pointer items-start gap-3 rounded-sm border border-rule bg-paper px-4 py-3 has-checked:border-ink">
@@ -162,7 +174,7 @@ const reasonOptions = [
               <FormTextarea label="Details" name="note" required rows={4} />
 
               <Button type="submit" variant="primary" class="self-start">
-                Submit report
+                {isModeratorContext ? "Submit correction" : "Submit report"}
               </Button>
             </form>
           </div>
