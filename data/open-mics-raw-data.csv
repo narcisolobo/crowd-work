@@ -1,0 +1,71 @@
+venue_name,scraped_city,resolved_address,likely_neighborhood_hint,maps_link,status,seen_on,notes
+The Comedy Store,West Hollywood,"8433 Sunset Blvd, West Hollywood, CA 90069",West Hollywood,https://maps.app.goo.gl/aYpQysUaK6xiwsph6,ok,Sun 4:00pm (Original Room); Mon 4:00pm (Original Room); Wed 10:00pm (Belly Room),"Same link used for Original Room and Belly Room mics, one venue with multiple rooms."
+The Glendale Room,Glendale,"127 N Artsakh Ave, Glendale, CA 91206",Glendale,https://maps.app.goo.gl/L8py5889CbMDiSt59,ok,Sun 4:00pm; Mon 4:00pm (storytelling); Wed 7:30pm; Fri 4:00pm,
+The Glendale Room,Glendale,,Glendale,https://g.co/kgs/BCskLBt,duplicate_review,Mon 2:00pm,"Second maps link under the same venue name, confirm same address as the row above before merging."
+Tao Comedy Studio,Los Angeles,,,https://goo.gl/maps/vmwTmVaoB9Xzvqjy5,needs_address,Sun 4:30pm; Mon 7:30pm; Tue 7:30pm; Wed 7:30pm; Fri 7:30pm,"Consistent link across all five listings, resolve once and reuse everywhere."
+Park La Brea Theatre,Los Angeles,,,https://maps.app.goo.gl/bjaTQHjLcgEJBEnZ7?g_st=ic,needs_address,Sun 6:30pm,"""Park La Brea"" is not itself in the neighborhoods taxonomy, likely Miracle Mile or Fairfax area, needs a real address to confirm."
+The Comedy Chateau,North Hollywood,,North Hollywood,https://goo.gl/maps/tZwYsBcrYSHEASSr6,ok,Sun 7:00pm,
+Brews Brothers (Burbank),Burbank,,Burbank,https://www.google.com/maps/dir//Brews+Brothers+Brewpub,ok,Sun 8:00pm,"Distinct from the North Hollywood Brews Brothers below, likely two different locations sharing a name, not a scraper error. Don't merge."
+Brews Brothers (North Hollywood),North Hollywood,,North Hollywood,https://goo.gl/maps/bHVsekHoqX4BbTr87,needs_address,Thu 7:00pm,"Originally omitted from this file by mistake despite being referenced in the Burbank row's note above. Contact @drewjfahey; sign-up via http://slotted.co/bearknux."
+Sal's Pub & Grill,Canoga Park,,Canoga Park,https://maps.app.goo.gl/TTGWg53K6xoZiZ9N9,ok,Sun 8:15pm,
+Liquid Zoo,Van Nuys,,Van Nuys,https://goo.gl/maps/jc3wjxgAnhqFAWch6,ok,Sun 8:30pm (last Sunday of month),
+Pack Theater,Los Angeles,,,https://maps.app.goo.gl/y5RWtZXciDQTCZC4A?g_st=ic,needs_address,Sun 10:30pm,
+Nico's Wines,Los Angeles,,,https://goo.gl/maps/rPF8mRLdc3tNzSu88,needs_address,Mon 5:00pm; Mon 9:00pm (billed as Nico's),"Same link both times, one venue, two different mic names."
+Petty Cash Studios,West Hollywood,8949 Sunset Blvd Suite 203,West Hollywood,https://google.com/maps?daddr=8949+Sunset+Blvd+Suite+203,ok_resolved,Mon 6:45pm,Street address embedded in the maps link itself.
+The Blue Door Theater,Culver City,,Culver City,https://maps.app.goo.gl/RfajcxK8fj6hTaYz6,ok,Mon 7:00pm (first Monday),
+Roxanne's,Long Beach,,,https://maps.app.goo.gl/fHyNinAog1zAesT96?g_st=ic,out_of_scope,Mon 7:00pm (first Monday),Long Beach is not in the current neighborhoods taxonomy.
+The Elysian Theater,Los Angeles,,,https://www.google.com/maps/dir//the+elysian+theater,needs_address,Mon 7:00pm,
+Social Eats UCSB,Goleta,,,https://goo.gl/maps/vpzasLMchqkQi5PG8,out_of_scope,Mon 7:00pm (biweekly),"Goleta is in Santa Barbara County, outside the LA taxonomy entirely."
+Boomtown Brewery,Los Angeles,,,https://goo.gl/maps/ZC4HxvGNfjbH6Mgs7,needs_address,Mon 7:00pm,
+The CanTiki,North Hollywood,11100 Magnolia Blvd,North Hollywood,https://www.google.com/maps?daddr=11100+Magnolia+Blvd,ok_resolved,Mon 7:30pm,
+The Nitecap,Burbank,,Burbank,https://goo.gl/maps/fTtWXB1KU4CWjt8X9,ok,Mon 7:30pm,
+Universal Bar & Grill,North Hollywood,,North Hollywood,"(garbled Google search-results URL, no stable link)",needs_address,Mon 7:30pm,"Maps link is a Google search-results URL, not a place link. Same garbled URL also used for Sunset Rooftop below. Check whether these are actually the same venue under two mic names."
+The Escondite,Los Angeles,,,https://maps.app.goo.gl/6egpLdEhTPaYzYUU6,needs_address,Mon 8:30pm,
+Rocco's,West Hollywood,,West Hollywood,https://maps.app.goo.gl/cHaomZt8896bznD57?g_st=ic,ok,Mon 9:00pm,
+Lyric Hyperion,Los Angeles,,,https://goo.gl/maps/k12nM81bkLJfBsz7A,duplicate_review,Sun 3:30pm; Mon 9:00pm,"Same venue name appears under 3 different maps links total (this one, LbCq8YefERHcD9TGA, cfo2TAvdCmNQpsVM7). Confirm all resolve to the same address before treating as one venues row."
+Lyric Hyperion,Los Angeles,,,https://goo.gl/maps/LbCq8YefERHcD9TGA,duplicate_review,Thu 10:00am; Fri 1:00pm,See note on the other Lyric Hyperion rows.
+Lyric Hyperion,Los Angeles,,,https://goo.gl/maps/cfo2TAvdCmNQpsVM7,duplicate_review,Sat 1:00pm (storytelling),See note on the other Lyric Hyperion rows.
+Proof Bar,Santa Ana,,,https://goo.gl/maps/k5yvNrZHBCsuH6eMA,out_of_scope,Mon 9:00pm,"Santa Ana is in Orange County, outside the LA taxonomy entirely."
+Laugh Factory,Los Angeles,,,https://goo.gl/maps/a8L3RcNVwvbp4fX18,needs_address,Tue 4:30pm,"Well-known Sunset Strip venue but not verifying the address from memory, resolve from the maps link."
+The Hollywood Improv,Los Angeles,,,https://goo.gl/maps/SiPNPxYXtfCCBCet5,needs_address,Tue 4:30pm (Main Room); Wed 5:30pm (Lab),"Same link for both rooms, one venue."
+Canter's Deli (Kibitz Room),Los Angeles,,,https://g.co/kgs/9xdAFcD,needs_address,Tue 5:30pm; Sat 7:30pm (last Saturday),
+Cahuenga General Store,North Hollywood,,North Hollywood,https://goo.gl/maps/ayroUZ9vjHWMgNqT8,ok,Tue 5:30pm,
+Relentless Spirits & Brewing,Los Angeles,,,https://maps.app.goo.gl/976SBfLy9DAbMYnx5?g_st=ic,needs_address,Tue 6:00pm (2nd Tuesday),
+Kavahana Bar,Santa Monica,,Santa Monica,https://maps.app.goo.gl/tqwWNNrh5o4C2ioBA,ok,Tue 6:30pm,"Possibly the same venue as the Kavahana row below, confirm."
+Stand-Up Comedy Club,Bellflower,,Bellflower,https://goo.gl/maps/cuhBD433pqqDYGi67,ok,Tue 7:00pm,
+Three Weavers Brewing Company,Inglewood,,,https://maps.app.goo.gl/MpZcJcusyGvkxK4TA,taxonomy_gap,Tue 7:00pm,"Inglewood is a real LA County city but is missing from the neighborhoods taxonomy entirely (separate issue from this seed, may be worth a taxonomy fix)."
+The Upright Citizens Brigade Theater (Bronson),Los Angeles,,,https://maps.app.goo.gl/7ZHUYub6uJ9f14LM7?g_st=ic,needs_address,Tue 7:00pm,
+The Ontario Improv,Ontario,,,https://goo.gl/maps/2nbk953nhervQN6e8,out_of_scope,Tue 7:00pm (1st Tuesday),"Ontario is in San Bernardino County, outside the LA taxonomy entirely."
+Mexican Village,Los Angeles,,,https://goo.gl/maps/gpyiTmWZb4qYLZut8,needs_address,Tue 7:15pm,
+Vibz,North Hollywood,,North Hollywood,https://maps.app.goo.gl/NwTrPybL6sMcBPW49?g_st=ipc,ok,Tue 7:30pm,
+Sunset Rooftop,Los Angeles,,,"(garbled Google search-results URL, no stable link)",needs_address,Tue 7:30pm,"Same garbled URL and same contact handle (@Sushi498TheFam) as Universal Bar & Grill above, likely the same physical venue under two mic names."
+Rythem & Bleu,Los Angeles,,,https://maps.app.goo.gl/w2agQn8wgprcfaeH8?g_st=ipc,needs_address,Tue 7:30pm,
+The Golden Gopher,Los Angeles,,,https://maps.app.goo.gl/3YKv39vyAwCwj3ME9,needs_address,Tue 8:00pm,
+The Woods,Los Angeles,,,"(garbled Google search-results URL, no stable link)",needs_address,Tue 8:00pm (last Tuesday),
+Chatterbox,Covina,,Covina,https://goo.gl/maps/SCtGRE5JBcK3y8cp6,ok,Tue 8:00pm; Thu 8:00pm,
+Kavahana,Santa Monica,,Santa Monica,"(garbled Google search-results URL, no stable link)",duplicate_review,Tue 8:00pm,"Possibly the same venue as Kavahana Bar above, confirm before creating two venues rows."
+Maui Sugar Mill Saloon,Tarzana,,Tarzana,https://goo.gl/maps/MAstXCaxpKGJEE7F7,ok,Tue 8:00pm,
+Westside Comedy Theater,Santa Monica,,Santa Monica,https://goo.gl/maps/pGM8cRNWf88pFhEm6,ok,Tue 9:45pm,
+Activist Kitchen,Los Angeles,669 Heliotrope Dr,East Hollywood,https://www.google.com/maps/dir//669+Heliotrope+Dr,ok_resolved,Wed 4:30pm; Wed 7:45pm; Thu 8:30pm,"Street address embedded in the maps link. Heliotrope Dr falls in/near East Hollywood, worth confirming exact neighborhood boundary."
+HaHa Comedy Club,North Hollywood,,North Hollywood,https://goo.gl/maps/6QSwMx9CdGWXCz9A6,ok,Wed 5:30pm; Thu 5:30pm,
+Mar Vista Branch Library,Los Angeles,,Mar Vista,https://maps.app.goo.gl/aGwY1e2MQYb8dht47?g_st=ic,needs_address,Wed 5:45pm,"Scraped city is generic Los Angeles but the venue name itself strongly suggests the Mar Vista neighborhood, which IS in the taxonomy. Likely just needs confirmation, not full resolution."
+Chevalier's Books,Los Angeles,,Larchmont,https://www.google.com/maps?gs_lcrp=... (garbled search-results URL),needs_address,Wed 6:00pm (every other week),"Chevalier's Books is a known Larchmont Village bookstore. Larchmont is in the taxonomy, but resolve the real address rather than assuming."
+Bad Ladder,Los Angeles,,,https://maps.app.goo.gl/KtqvpcmnEoaXccNQA,needs_address,Wed 7:45pm,
+The Barkley,South Pasadena,,South Pasadena,https://goo.gl/maps/CniVkVUm1duRpQgt9,ok,Wed 7:00pm,
+The First Amendment,Claremont,"34.175296,-118.427993",Claremont,"https://www.google.com/maps/dir/34.175296,-118.427993/The+First+Amendment",ok_resolved,Wed 7:30pm,Coordinates embedded in the maps link.
+Close Up Cuts,Inglewood,,,https://goo.gl/maps/WUVmgmtp7JjbjBak6,taxonomy_gap,Wed 8:30pm,Same Inglewood taxonomy gap as Three Weavers Brewing Company above.
+SiLA Clubhouse,Los Angeles,,,https://maps.app.goo.gl/dEBGw7rqWFDc57sU7,needs_address,Wed 9:30pm; Thu 12:30am (starts 1am),
+The Ice House,Pasadena,,Pasadena,https://maps.app.goo.gl/bLD9H5z7dMsrTJGv7?g_st=ipc,ok,Thu 5:30pm (every other week),
+Figueroa Mountain Brewing Co,Santa Barbara,,,https://maps.app.goo.gl/EsgTuv2cgncZuyHk9?g_st=ic,out_of_scope,Thu 5:30pm (2nd Thursdays),"Santa Barbara is well outside LA County, outside the taxonomy entirely."
+Fanatic Salon,Los Angeles,,,https://goo.gl/maps/9CWnHtFBuCXHCLc8A,needs_address,Thu 6:30pm; Fri 10:00pm,
+Emmanuel Presbyterian Church,Los Angeles,,,https://maps.app.goo.gl/tBQbVx6iMmPQyGwT8,needs_address,Thu 6:30pm,
+Corbin Bowl,Tarzana,,Tarzana,https://goo.gl/maps/CoGdaKBAPjveStPx8,ok,Thu 7:00pm,
+UCLA Dorm,Los Angeles,,Westwood,https://maps.app.goo.gl/mnocQuAkEcUoPMAo9,needs_address,Thu 7:30pm (usually 3rd Thursday),"Name suggests Westwood, which is in the taxonomy, but confirm with the real address."
+Cafe Tropical,Los Angeles,,Silver Lake,https://maps.app.goo.gl/qDHtCFHe7gXhPwyq9,needs_address,Thu 8:00pm,"Well known as a Silver Lake spot. Silver Lake is in the taxonomy, but resolve the real address rather than assuming."
+The Good Bar,Long Beach,,,https://goo.gl/maps/t8zG75uFtXGChm3E9,out_of_scope,Thu 8:30pm (last Thursday),Same Long Beach taxonomy gap as Roxanne's above.
+Clubhouse,Los Angeles,,,https://goo.gl/maps/BUdUunC2HEisWA8h9,needs_address,Fri 5:30pm,"Generic venue name, double check this isn't a duplicate of another venue on this list once addressed."
+Digital Debris,Los Angeles,2646 N Figueroa St,Cypress Park,https://www.google.com/maps/dir//2646+N+Figueroa+St,ok_resolved,Fri 7:45pm (1st Friday),"Street address embedded in the maps link. That block of Figueroa St is Cypress Park/Mount Washington area, both in the taxonomy."
+Mofongos,North Hollywood,,North Hollywood,https://maps.app.goo.gl/PCaVpFsHMrrFCtj26,ok,Fri 10:00pm (1st Friday),
+NoHo Diner,North Hollywood,,North Hollywood,https://goo.gl/maps/Lkk8jMWKyBK61drx5,ok,Fri 10:00pm; Sat 10:00pm,
+The Broadwater Theater (Second Stage),Los Angeles,6320 Santa Monica Blvd,East Hollywood,https://www.google.com/maps/dir//6320+Santa+Monica+Blvd,ok_resolved,Fri 11:00pm,"Street address embedded in the maps link. That block of Santa Monica Blvd is East Hollywood, in the taxonomy."
+Melody Bar & Grill,Los Angeles,,,https://goo.gl/maps/asxp12MDmBBK5tGH8,needs_address,Sat 1:45pm,
