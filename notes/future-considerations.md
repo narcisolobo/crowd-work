@@ -4,6 +4,8 @@ Ideas beyond the MVP directory, noted for context but not designed yet. See [cro
 
 ## High priority
 
+- **Fully autonomous source-checking agent** — a hosted, continuously-scheduled job (no human trigger) that checks seed sources for changes and files findings into the moderation queue, as originally envisioned in [crowd-work-vision.md](./crowd-work-vision.md). For the MVP, this is done manually instead via the `/check-sources` Claude Code skill — see [2026-09-05-source-check-agent-design.md](../docs/superpowers/specs/2026-09-05-source-check-agent-design.md), which deliberately designed the source registry, write-through function, and RLS model to be reusable by this future version without a redesign. The main remaining work is the discovery layer itself: a hosted script calling the Claude API directly, with no live session or WebFetch tool available.
+
 - **Map view** — a "view as map" toggle on the directory, showing listings as pins (as an alternative to the filterable list view). Deferred from MVP because it adds real scope (geocoding every venue, a mapping library/API, pin clustering, a second layout), but the data model doesn't foreclose it — venues already carry addresses. Flagged as high priority for the first post-MVP phase.
 
 - **Ratings/reviews on listings** — attendees leaving reviews on a mic or show (seen on a competitor's detail pages). A real trust signal, but a new moderation surface — public reviews are exactly the kind of feature that could reopen the personal-dispute-as-public-drama risk this project's governance model is designed to avoid. Requires site-wide user auth (accounts for regular visitors, not just moderators), which the MVP doesn't have. Deferred post-MVP.
