@@ -3,7 +3,10 @@ import type {
   ProposedListingFields,
   QueueEntry,
 } from "../../lib/data/moderation";
-import { APPROVAL_REASON_OPTIONS } from "../../lib/utils/moderation-labels";
+import {
+  APPROVAL_REASON_HINT,
+  APPROVAL_REASON_OPTIONS,
+} from "../../lib/utils/moderation-labels";
 import Button from "../forms/Button.astro";
 import FormSelect from "../forms/FormSelect.astro";
 import FormTextarea from "../forms/FormTextarea.astro";
@@ -49,6 +52,7 @@ const {
       options={APPROVAL_REASON_OPTIONS}
       value={reason}
       required
+      hint={APPROVAL_REASON_HINT}
     />
     <div data-other-reason hidden={reason !== "other"}>
       <FormTextarea label="Other reason" name="otherReason" value={otherReason} />

@@ -63,6 +63,9 @@ export const APPROVAL_REASON_OPTIONS = [
   { value: "other", label: "Other…" },
 ];
 
+export const APPROVAL_REASON_HINT =
+  '"Minor edits" covers small fixes to what was submitted. "Verified independently" means you confirmed it yourself against another source, like the venue\'s own site.';
+
 const PREVIEW_LENGTH = 90;
 
 export function truncate(text: string, length = PREVIEW_LENGTH): string {
