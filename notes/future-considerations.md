@@ -12,6 +12,8 @@ Ideas beyond the MVP directory, noted for context but not designed yet. See [cro
 
 - **Expand areas and neighborhoods** — the current taxonomy is a fixed, moderator-managed set (no self-serve way to add one). Raised while designing [2026-09-04-listing-submission-design.md](../docs/superpowers/specs/2026-09-04-listing-submission-design.md), which deliberately scoped new-venue proposals to *existing* neighborhoods only. Worth revisiting once real submissions start naming areas/neighborhoods the current set doesn't cover.
 
+- **Google Places Autocomplete on address fields** — smart, debounced address suggestions (e.g. on listing/venue submission forms) instead of freeform text entry. Straightforward to add and would improve data quality (consistent, geocoded addresses), but needs a Cloud Billing account and session-token handling to stay within the free tier (10,000 free autocomplete sessions/month as of 2026, provided each session is properly closed with a Place Details call). Deferred post-MVP as a nice-to-have rather than a blocker.
+
 ## Later-stage product ideas
 
 - **Crowd Work Pass** — a subscription or digital ticket badge for frequent comedy-goers, giving discounted or priority entry at local clubs. Needs venue buy-in and enough traffic to be worth a club's while — a phase-2-or-later idea once the directory has real usage.
