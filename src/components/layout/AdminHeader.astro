@@ -7,6 +7,12 @@ interface Props {
 }
 
 const { userEmail = null } = Astro.props;
+
+const currentPath = Astro.url.pathname;
+const navLinkClass = (href: string) =>
+  currentPath === href
+    ? "text-ink font-medium underline-offset-2 hover:underline"
+    : "hover:text-ink underline-offset-2 hover:underline";
 ---
 
 <header class="admin-nav bg-paper-shadow sticky top-0 z-20">
@@ -31,13 +37,15 @@ const { userEmail = null } = Astro.props;
         >
           <a
             href="/admin/listings/new"
-            class="hover:text-ink underline-offset-2 hover:underline"
+            aria-current={currentPath === "/admin/listings/new" ? "page" : undefined}
+            class={navLinkClass("/admin/listings/new")}
           >
             New listing
           </a>
           <a
             href="/admin/archive"
-            class="hover:text-ink underline-offset-2 hover:underline"
+            aria-current={currentPath === "/admin/archive" ? "page" : undefined}
+            class={navLinkClass("/admin/archive")}
           >
             Archive
           </a>

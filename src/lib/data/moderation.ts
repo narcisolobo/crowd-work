@@ -322,7 +322,7 @@ export async function directAddListing(
 async function resolveVenueId(
   client: SupabaseClient<Database>,
   fields: Pick<ProposedListingFields, "venueId" | "newVenue">,
-): Promise<string> {
+): Promise<{ venueId: string; isNewVenue: boolean }> {
   if (fields.newVenue) {
     const { data: venue, error } = await client
       .from("venues")
@@ -335,18 +335,27 @@ async function resolveVenueId(
       .select("id")
       .single();
     if (error) throw new Error(`Failed to create venue: ${error.message}`);
-    return venue.id;
+    return { venueId: venue.id, isNewVenue: true };
   }
   if (!fields.venueId)
     throw new Error("A venue is required to create or update a listing.");
-  return fields.venueId;
+  return { venueId: fields.venueId, isNewVenue: false };
 }
 
+// Postgrest has no cross-table transaction, so a listing built from several
+// sequential inserts (venue -> listing -> recurrence) can fail partway
+// through. There's no delete policy (and no archive concept) on `venues`,
+// so a venue orphaned by a failed listing insert can only be reported, not
+// cleaned up automatically — the error message below says so explicitly. A
+// listing that already went live before its recurrence insert fails is
+// different: this app already has an "archived" status for unpublishing a
+// listing, and moderators already hold update permission on it, so that
+// failure case is archived rather than left live with a missing schedule.
 export async function createListingFromFields(
   client: SupabaseClient<Database>,
   fields: ProposedListingFields,
 ): Promise<{ listingId: string; venueId: string }> {
-  const venueId = await resolveVenueId(client, fields);
+  const { venueId, isNewVenue } = await resolveVenueId(client, fields);
 
   const { data: listing, error: listingError } = await client
     .from("listings")
@@ -367,8 +376,13 @@ export async function createListingFromFields(
     .select("id")
     .single();
 
-  if (listingError)
-    throw new Error(`Failed to create listing: ${listingError.message}`);
+  if (listingError) {
+    throw new Error(
+      isNewVenue
+        ? `Failed to create listing: ${listingError.message} (a new venue was already created and could not be automatically removed — check the venue list for an orphaned entry)`
+        : `Failed to create listing: ${listingError.message}`,
+    );
+  }
 
   if (fields.recurrence) {
     const { error: recurrenceError } = await client
@@ -379,10 +393,17 @@ export async function createListingFromFields(
         day_of_week: fields.recurrence.dayOfWeek,
         week_of_month: fields.recurrence.weekOfMonth,
       });
-    if (recurrenceError)
+    if (recurrenceError) {
+      const { error: archiveError } = await client
+        .from("listings")
+        .update({ status: "archived" })
+        .eq("id", listing.id);
       throw new Error(
-        `Failed to create recurrence rule: ${recurrenceError.message}`,
+        archiveError
+          ? `Failed to save the recurrence schedule: ${recurrenceError.message} (the listing could not be archived either: ${archiveError.message} — it may be live with no recurrence data; check it manually)`
+          : `Failed to save the recurrence schedule, so the listing was archived rather than left live with an incomplete schedule: ${recurrenceError.message}`,
       );
+    }
   }
 
   return { listingId: listing.id, venueId };
@@ -410,7 +431,7 @@ export async function approveListingUpdate(
   fields: ProposedListingFields,
   approvalNote: string | null = null,
 ): Promise<void> {
-  const venueId = await resolveVenueId(client, fields);
+  const { venueId } = await resolveVenueId(client, fields);
 
   const { error: listingError } = await client
     .from("listings")
