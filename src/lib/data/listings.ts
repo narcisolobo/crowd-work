@@ -26,7 +26,7 @@ export interface ListingWithVenue {
     address: string;
     googleMapsUrl: string | null;
     neighborhoodId: string;
-    areaId: string;
+    areaIds: string[];
   };
   recurrenceRule: {
     frequency: "weekly" | "monthly";
@@ -38,19 +38,21 @@ export interface ListingWithVenue {
 export interface Neighborhood {
   id: string;
   name: string;
-  areaId: string;
+  areaIds: string[];
 }
 
 export async function getNeighborhoods(): Promise<Neighborhood[]> {
   const { data, error } = await supabase
     .from("neighborhoods")
-    .select("id, name, area_id")
+    .select("id, name, neighborhood_areas ( area_id )")
     .order("name");
   if (error) throw new Error(`Failed to load neighborhoods: ${error.message}`);
-  return (data ?? []).map((row) => ({
+  return (data ?? []).map((row: any) => ({
     id: row.id,
     name: row.name,
-    areaId: row.area_id,
+    areaIds: (row.neighborhood_areas ?? []).map(
+      (na: { area_id: string }) => na.area_id,
+    ),
   }));
 }
 
@@ -68,7 +70,7 @@ const LISTING_WITH_VENUE_SELECT = `
   sign_up_method, cost_to_perform, ticket_price, ticket_url,
   venue:venues (
     id, name, address, google_maps_url,
-    neighborhood:neighborhoods ( id, area_id )
+    neighborhood:neighborhoods ( id, neighborhood_areas ( area_id ) )
   ),
   recurrence_rules ( frequency, day_of_week, week_of_month )
 `;
@@ -91,7 +93,9 @@ function mapListingRow(row: any): ListingWithVenue {
       address: row.venue.address,
       googleMapsUrl: row.venue.google_maps_url,
       neighborhoodId: row.venue.neighborhood.id,
-      areaId: row.venue.neighborhood.area_id,
+      areaIds: (row.venue.neighborhood.neighborhood_areas ?? []).map(
+        (na: { area_id: string }) => na.area_id,
+      ),
     },
     recurrenceRule: row.recurrence_rules
       ? {

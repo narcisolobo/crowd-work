@@ -185,31 +185,50 @@ export type Database = {
         }
         Relationships: []
       }
-      neighborhoods: {
+      neighborhood_areas: {
         Row: {
           area_id: string
-          id: string
-          name: string
+          neighborhood_id: string
         }
         Insert: {
           area_id: string
-          id?: string
-          name: string
+          neighborhood_id: string
         }
         Update: {
           area_id?: string
-          id?: string
-          name?: string
+          neighborhood_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "neighborhoods_area_id_fkey"
+            foreignKeyName: "neighborhood_areas_area_id_fkey"
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "areas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "neighborhood_areas_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      neighborhoods: {
+        Row: {
+          id: string
+          name: string
+        }
+        Insert: {
+          id?: string
+          name: string
+        }
+        Update: {
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       occurrence_exceptions: {
         Row: {
