@@ -55,6 +55,12 @@ const listings = (await getPublishedListings()).sort((a, b) =>
   a.title.localeCompare(b.title),
 );
 const justArchived = Astro.url.searchParams.get("archived") === "1";
+
+// Edit and Archive read as one matched pair of plain body-text controls,
+// not a bordered button next to a text link. `py-1` pads the tap target to
+// the WCAG 2.2 SC 2.5.8 24px minimum without changing the visible text size.
+const rowActionLinkClass =
+  "text-ink-soft hover:text-ink py-1 text-[0.86rem] font-medium no-underline underline-offset-2 hover:underline";
 ---
 
 <AdminLayout title="Listings — Crowd Work admin" userEmail={user.email}>
@@ -102,21 +108,23 @@ const justArchived = Astro.url.searchParams.get("archived") === "1";
                     {typeLabel} · {listing.venue.name}
                   </p>
                 </div>
-                <div class="flex items-center gap-3">
-                  <Button
+                <div class="flex items-center gap-4">
+                  <a
                     href={`/admin/listings/edit/${listing.id}`}
-                    variant="outline"
+                    class={rowActionLinkClass}
                   >
                     Edit
-                  </Button>
-                  <details open={rowHasError}>
-                    <summary class="font-display text-ink-soft hover:text-ink inline-block cursor-pointer text-[0.82rem] font-bold tracking-wide uppercase [&::-webkit-details-marker]:hidden">
+                  </a>
+                  <details open={rowHasError} class="relative">
+                    <summary
+                      class={`${rowActionLinkClass} list-none cursor-pointer [&::-webkit-details-marker]:hidden`}
+                    >
                       Archive
                     </summary>
                     <form
                       method="post"
                       novalidate
-                      class="max-w-form-compact mt-3 flex flex-col gap-4"
+                      class="border-rule bg-paper-shadow absolute top-[calc(100%+8px)] right-0 z-10 flex w-[min(26rem,calc(100vw-2.5rem))] flex-col gap-4 rounded-sm border p-4"
                     >
                       <input type="hidden" name="listingId" value={listing.id} />
 
@@ -188,6 +196,41 @@ const justArchived = Astro.url.searchParams.get("archived") === "1";
     };
     select.addEventListener("change", sync);
     sync();
+  }
+
+  // The Archive form now drops down as a floating panel (like the header's
+  // Account Menu / Admin Section Menu) rather than pushing the row taller,
+  // so it needs the same mutual-exclusion and outside-click/Escape
+  // dismissal those menus already have — otherwise two rows' panels could
+  // stack open on top of each other with no way to close but re-clicking
+  // the exact trigger.
+  const archiveDisclosures = document.querySelectorAll<HTMLDetailsElement>(
+    "li details",
+  );
+  for (const details of archiveDisclosures) {
+    details.addEventListener("toggle", () => {
+      if (!details.open) return;
+
+      for (const other of archiveDisclosures) {
+        if (other !== details) other.open = false;
+      }
+
+      document.addEventListener(
+        "click",
+        (event) => {
+          if (!details.contains(event.target as Node)) details.open = false;
+        },
+        { once: true, capture: true },
+      );
+
+      document.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.key === "Escape") details.open = false;
+        },
+        { once: true },
+      );
+    });
   }
 
   // A server-side archive failure (e.g. a database error) reloads the page
