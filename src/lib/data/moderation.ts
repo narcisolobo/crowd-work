@@ -514,13 +514,15 @@ export async function approveNewListing(
   await markApproved(client, entryId, listingId, approvedData, approvalNote);
 }
 
-export async function approveListingUpdate(
+// Shared by approveListingUpdate (queue-review path) and directUpdateListing
+// (moderator direct-edit path) — the only difference between the two is how
+// the resulting moderation_queue row is recorded, not how a listing's fields
+// get written.
+async function applyListingFields(
   client: SupabaseClient<Database>,
-  entryId: string,
   listingId: string,
   fields: ProposedListingFields,
-  approvalNote: string | null = null,
-): Promise<void> {
+): Promise<{ venueId: string }> {
   const { venueId } = await resolveVenueId(client, fields);
 
   const { error: listingError } = await client
@@ -561,6 +563,17 @@ export async function approveListingUpdate(
       );
   }
 
+  return { venueId };
+}
+
+export async function approveListingUpdate(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  listingId: string,
+  fields: ProposedListingFields,
+  approvalNote: string | null = null,
+): Promise<void> {
+  const { venueId } = await applyListingFields(client, listingId, fields);
   const approvedData: ProposedListingFields = {
     ...fields,
     venueId,
