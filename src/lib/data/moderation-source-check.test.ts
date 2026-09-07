@@ -186,6 +186,25 @@ describe("source-check agent lockdown", () => {
     expect(listing!.title).toBe("Tuesday Night Mic");
   });
 
+  it("cannot archive a listing", async () => {
+    // Same reasoning as "cannot update an existing listing" above: a
+    // restrictive policy silently excludes the row from the update rather
+    // than throwing, so the assertion is that status is unchanged.
+    const agent = await signInSourceCheckAgent();
+    await agent
+      .from("listings")
+      .update({ status: "archived" })
+      .eq("id", EXISTING_LISTING_ID);
+
+    const admin = createAdminClient();
+    const { data: listing } = await admin
+      .from("listings")
+      .select("status")
+      .eq("id", EXISTING_LISTING_ID)
+      .single();
+    expect(listing!.status).toBe("published");
+  });
+
   it("cannot insert a recurrence rule", async () => {
     const agent = await signInSourceCheckAgent();
     const { error } = await agent.from("recurrence_rules").insert({

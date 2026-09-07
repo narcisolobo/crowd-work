@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { getNeighborhoods, getAreas, getPublishedListings } from "./listings";
+import {
+  getNeighborhoods,
+  getAreas,
+  getPublishedListings,
+  getListingTitles,
+} from "./listings";
+import { signInTestModerator } from "./moderation-test-helpers";
 
 describe("getNeighborhoods", () => {
   it("returns neighborhoods ordered by name, each with its area ids", async () => {
@@ -54,5 +60,23 @@ describe("getPublishedListings", () => {
       ]),
     );
     expect(tuesdayMic!.venue.areaIds).toHaveLength(2);
+  });
+});
+
+describe("getListingTitles", () => {
+  it("resolves listing ids to their titles", async () => {
+    const moderator1 = await signInTestModerator(1);
+    // "Tuesday Night Mic", seeded in supabase/seed.sql.
+    const EXISTING_LISTING_ID = "d0000000-0000-0000-0000-000000000001";
+
+    const titles = await getListingTitles(moderator1, [EXISTING_LISTING_ID]);
+
+    expect(titles[EXISTING_LISTING_ID]).toBe("Tuesday Night Mic");
+  });
+
+  it("returns an empty object for an empty id list", async () => {
+    const moderator1 = await signInTestModerator(1);
+    const titles = await getListingTitles(moderator1, []);
+    expect(titles).toEqual({});
   });
 });

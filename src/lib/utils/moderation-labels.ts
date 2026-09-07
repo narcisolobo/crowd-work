@@ -8,6 +8,7 @@ export const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   new: "New",
   update: "Update",
   cancellation: "Cancellation",
+  archive: "Archive",
 };
 
 export const ORIGIN_LABEL: Record<string, string> = {
@@ -16,6 +17,8 @@ export const ORIGIN_LABEL: Record<string, string> = {
   submission_form: "Public submission",
   moderator_direct_add: "Direct add",
   source_check: "Automated source check",
+  moderator_archive: "Archived by moderator",
+  system_recovery: "Automatic (recovery)",
 };
 
 export const STATUS_LABEL: Record<string, string> = {
@@ -75,7 +78,11 @@ export function truncate(text: string, length = PREVIEW_LENGTH): string {
 
 export function previewFor(
   entry: Pick<QueueEntry, "correctionNote" | "proposedData" | "changeType">,
+  listingTitle?: string | null,
 ): string {
+  if (entry.changeType === "archive") {
+    return listingTitle ? `Archived: ${listingTitle}` : "Archived listing";
+  }
   if (entry.correctionNote) {
     return truncate(entry.correctionNote);
   }

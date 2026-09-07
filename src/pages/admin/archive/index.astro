@@ -6,6 +6,7 @@ import {
   type QueueEntry,
 } from "../../../lib/data/moderation";
 import { getModeratorEmails } from "../../../lib/data/moderators";
+import { getListingTitles } from "../../../lib/data/listings";
 import {
   CHANGE_TYPE_LABEL,
   ORIGIN_LABEL,
@@ -28,6 +29,14 @@ const moderatorIds = entries.flatMap((entry) =>
 );
 const moderatorEmails = await getModeratorEmails(supabase, moderatorIds);
 
+const archiveListingIds = entries
+  .filter(
+    (entry): entry is typeof entry & { listingId: string } =>
+      entry.changeType === "archive" && entry.listingId !== null,
+  )
+  .map((entry) => entry.listingId);
+const listingTitles = await getListingTitles(supabase, archiveListingIds);
+
 function whoFor(entry: QueueEntry): string {
   if (entry.status === "approved") {
     const approver = entry.approvedBy
@@ -45,12 +54,15 @@ function whoFor(entry: QueueEntry): string {
 }
 
 function whatFor(entry: QueueEntry): string {
-  return previewFor({
-    correctionNote: entry.correctionNote,
-    proposedData:
-      entry.status === "approved" ? entry.approvedData : entry.proposedData,
-    changeType: entry.changeType,
-  });
+  return previewFor(
+    {
+      correctionNote: entry.correctionNote,
+      proposedData:
+        entry.status === "approved" ? entry.approvedData : entry.proposedData,
+      changeType: entry.changeType,
+    },
+    entry.listingId ? listingTitles[entry.listingId] : null,
+  );
 }
 
 function whyFor(entry: QueueEntry): string {

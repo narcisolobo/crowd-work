@@ -1,4 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "../supabase/supabase";
+import type { Database } from "../supabase/database.types";
 import {
   type Listing as RecurrenceListing,
   type OccurrenceException,
@@ -139,6 +141,24 @@ export async function getListingById(
   if (!data) return null;
 
   return mapListingRow(data);
+}
+
+export async function getListingTitles(
+  client: SupabaseClient<Database>,
+  ids: string[],
+): Promise<Record<string, string>> {
+  const uniqueIds = [...new Set(ids)];
+  if (uniqueIds.length === 0) return {};
+
+  const { data, error } = await client
+    .from("listings")
+    .select("id, title")
+    .in("id", uniqueIds);
+
+  if (error)
+    throw new Error(`Failed to load listing titles: ${error.message}`);
+
+  return Object.fromEntries((data ?? []).map((row) => [row.id, row.title]));
 }
 
 export async function getExceptionsForListings(

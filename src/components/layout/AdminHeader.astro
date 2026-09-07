@@ -43,6 +43,13 @@ const navLinkClass = (href: string) =>
             New listing
           </a>
           <a
+            href="/admin/listings"
+            aria-current={currentPath === "/admin/listings" ? "page" : undefined}
+            class={navLinkClass("/admin/listings")}
+          >
+            Listings
+          </a>
+          <a
             href="/admin/archive"
             aria-current={currentPath === "/admin/archive" ? "page" : undefined}
             class={navLinkClass("/admin/archive")}

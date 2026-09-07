@@ -4,7 +4,7 @@ import type { Database, Json } from "../supabase/database.types";
 
 export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
-export type QueueChangeType = "new" | "update" | "cancellation";
+export type QueueChangeType = "new" | "update" | "cancellation" | "archive";
 
 export interface ProposedVenue {
   name: string;
@@ -256,7 +256,7 @@ function assertRequiredFields(fields: ProposedListingFields): void {
  * "propose rejection" action already enforces this; direct-add and the
  * queue's own approve actions did not, which let approvals go out with no
  * recorded justification. Returns the missing-field entries, if any. */
-function findMissingReason(formData: FormData): MissingField[] {
+export function findMissingReason(formData: FormData): MissingField[] {
   const reason = formData.get("reason")?.toString() ?? "";
   if (!reason) return [{ field: "reason", label: "Reason" }];
   if (reason === "other") {
@@ -419,19 +419,84 @@ export async function createListingFromFields(
         week_of_month: fields.recurrence.weekOfMonth,
       });
     if (recurrenceError) {
-      const { error: archiveError } = await client
-        .from("listings")
-        .update({ status: "archived" })
-        .eq("id", listing.id);
+      try {
+        await archiveListing(
+          client,
+          listing.id,
+          "Recurrence schedule failed to save during creation",
+          "system_recovery",
+        );
+      } catch (archiveError) {
+        const archiveMessage =
+          archiveError instanceof Error
+            ? archiveError.message
+            : String(archiveError);
+        // Distinguishes "the listing itself failed to archive" (still live,
+        // matches the original fallback's worst case) from "it archived
+        // fine but the audit-trail insert failed" (safely unpublished, just
+        // unaudited) — archiveListing()'s two failure points throw with
+        // distinguishable message prefixes, checked here rather than
+        // collapsing both into one misleading "it may be live" message.
+        if (archiveMessage.startsWith("Failed to archive listing:")) {
+          throw new Error(
+            `Failed to save the recurrence schedule: ${recurrenceError.message} (the listing could not be archived either: ${archiveMessage} — it may be live with no recurrence data; check it manually)`,
+          );
+        }
+        throw new Error(
+          `Failed to save the recurrence schedule, so the listing was archived rather than left live with an incomplete schedule: ${recurrenceError.message} (note: the archive audit record failed to save — ${archiveMessage})`,
+        );
+      }
       throw new Error(
-        archiveError
-          ? `Failed to save the recurrence schedule: ${recurrenceError.message} (the listing could not be archived either: ${archiveError.message} — it may be live with no recurrence data; check it manually)`
-          : `Failed to save the recurrence schedule, so the listing was archived rather than left live with an incomplete schedule: ${recurrenceError.message}`,
+        `Failed to save the recurrence schedule, so the listing was archived rather than left live with an incomplete schedule: ${recurrenceError.message}`,
       );
     }
   }
 
   return { listingId: listing.id, venueId };
+}
+
+// The single write-through path that flips a listing to `archived`. Used
+// both by a moderator's direct action (origin: "moderator_archive") and by
+// createListingFromFields()'s recovery fallback (origin: "system_recovery")
+// when a listing goes live but its recurrence schedule fails to save right
+// after — see that function for why archiving is the safer outcome there.
+// Modeled on directAddListing: single-moderator, immediate, no propose/
+// confirm step, since archiving is reversible and moderator-initiated
+// rather than a silent, unilateral rejection of someone's contribution.
+export async function archiveListing(
+  client: SupabaseClient<Database>,
+  listingId: string,
+  reason: string,
+  origin: "moderator_archive" | "system_recovery" = "moderator_archive",
+): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error: listingError } = await client
+    .from("listings")
+    .update({ status: "archived" })
+    .eq("id", listingId);
+  if (listingError)
+    throw new Error(`Failed to archive listing: ${listingError.message}`);
+
+  const { error: queueError } = await client.from("moderation_queue").insert({
+    change_type: "archive",
+    listing_id: listingId,
+    proposed_data: null,
+    correction_note: null,
+    origin,
+    status: "approved",
+    approved_by: user.id,
+    approved_data: null,
+    approval_note: reason,
+    decided_at: new Date().toISOString(),
+  });
+  if (queueError)
+    throw new Error(
+      `Listing was archived, but the audit record failed to save: ${queueError.message}`,
+    );
 }
 
 export async function approveNewListing(
@@ -616,7 +681,7 @@ export function parseProposedListingFields(
   };
 }
 
-function parseApprovalNote(formData: FormData): string | null {
+export function parseApprovalNote(formData: FormData): string | null {
   const reason = formData.get("reason")?.toString() ?? "";
   const otherReason = formData.get("otherReason")?.toString().trim() || null;
   return reason === "other" ? otherReason : reason || null;
