@@ -19,6 +19,7 @@ export const ORIGIN_LABEL: Record<string, string> = {
   source_check: "Automated source check",
   moderator_archive: "Archived by moderator",
   system_recovery: "Automatic (recovery)",
+  moderator_direct_edit: "Direct edit",
 };
 
 export const STATUS_LABEL: Record<string, string> = {

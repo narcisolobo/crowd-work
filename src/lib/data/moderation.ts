@@ -327,6 +327,55 @@ export async function directAddListing(
   return { listingId, title: fields.title };
 }
 
+// The direct-edit counterpart to directAddListing/archiveListing: a single
+// moderator edits a published listing's fields immediately, self-approved,
+// with no propose/confirm ceremony. Shares applyListingFields() with the
+// queue-approval path (approveListingUpdate) so there's one implementation
+// of "how to write a listing's fields."
+export async function directUpdateListing(
+  client: SupabaseClient<Database>,
+  listingId: string,
+  formData: FormData,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const fields = parseProposedListingFields(formData);
+  const missing = [
+    ...findMissingRequiredFields(fields),
+    ...findMissingReason(formData),
+  ];
+  if (missing.length > 0) throw new MissingRequiredFieldsError(missing);
+  const approvalNote = parseApprovalNote(formData);
+
+  const { venueId } = await applyListingFields(client, listingId, fields);
+  const approvedData: ProposedListingFields = {
+    ...fields,
+    venueId,
+    newVenue: null,
+  };
+
+  const { error } = await client.from("moderation_queue").insert({
+    change_type: "update",
+    listing_id: listingId,
+    proposed_data: null,
+    correction_note: null,
+    origin: "moderator_direct_edit",
+    status: "approved",
+    approved_by: user.id,
+    approved_data: approvedData as unknown as Json,
+    approval_note: approvalNote,
+    decided_at: new Date().toISOString(),
+  });
+
+  if (error)
+    throw new Error(
+      `Listing was updated, but the audit record failed to save: ${error.message}`,
+    );
+}
+
 export async function submitSourceCheckFinding(
   client: SupabaseClient<Database>,
   finding: SourceCheckFinding,
