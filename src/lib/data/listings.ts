@@ -161,6 +161,24 @@ export async function getListingTitles(
   return Object.fromEntries((data ?? []).map((row) => [row.id, row.title]));
 }
 
+export async function getListingStatuses(
+  client: SupabaseClient<Database>,
+  ids: string[],
+): Promise<Record<string, "published" | "archived">> {
+  const uniqueIds = [...new Set(ids)];
+  if (uniqueIds.length === 0) return {};
+
+  const { data, error } = await client
+    .from("listings")
+    .select("id, status")
+    .in("id", uniqueIds);
+
+  if (error)
+    throw new Error(`Failed to load listing statuses: ${error.message}`);
+
+  return Object.fromEntries((data ?? []).map((row) => [row.id, row.status]));
+}
+
 export async function getExceptionsForListings(
   listingIds: string[],
 ): Promise<Map<string, OccurrenceException[]>> {

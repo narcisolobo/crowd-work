@@ -9,6 +9,7 @@ export const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   update: "Update",
   cancellation: "Cancellation",
   archive: "Archive",
+  restore: "Restore",
 };
 
 export const ORIGIN_LABEL: Record<string, string> = {
@@ -20,6 +21,7 @@ export const ORIGIN_LABEL: Record<string, string> = {
   moderator_archive: "Archived by moderator",
   system_recovery: "Automatic (recovery)",
   moderator_direct_edit: "Direct edit",
+  moderator_restore: "Restored by moderator",
 };
 
 export const STATUS_LABEL: Record<string, string> = {
@@ -102,6 +104,20 @@ export const ARCHIVE_REASON_OPTIONS = [
 export const ARCHIVE_REASON_HINT =
   '"Permanently closed" covers a mic or show that no longer runs. "Should not have been published" covers a listing that was wrong from the start — bad data, not something that\'s simply gone out of date.';
 
+// For restoring an archived listing back to the public site: the mirror of
+// ARCHIVE_REASON_OPTIONS, phrased around why the earlier archive no longer
+// holds rather than why the listing was accurate — restoring isn't a fresh
+// approval of the listing's content.
+export const RESTORE_REASON_OPTIONS = [
+  { value: "", label: "Choose a reason" },
+  { value: "Archived in error", label: "Archived in error" },
+  { value: "Venue or host resumed", label: "Venue or host resumed" },
+  { value: "other", label: "Other…" },
+];
+
+export const RESTORE_REASON_HINT =
+  '"Archived in error" covers a listing that should never have been removed. "Venue or host resumed" covers a mic or show that stopped and has since started running again.';
+
 const PREVIEW_LENGTH = 90;
 
 export function truncate(text: string, length = PREVIEW_LENGTH): string {
@@ -114,6 +130,9 @@ export function previewFor(
 ): string {
   if (entry.changeType === "archive") {
     return listingTitle ? `Archived: ${listingTitle}` : "Archived listing";
+  }
+  if (entry.changeType === "restore") {
+    return listingTitle ? `Restored: ${listingTitle}` : "Restored listing";
   }
   if (entry.correctionNote) {
     return truncate(entry.correctionNote);

@@ -4,7 +4,8 @@ import type { Database, Json } from "../supabase/database.types";
 
 export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
-export type QueueChangeType = "new" | "update" | "cancellation" | "archive";
+export type QueueChangeType =
+  "new" | "update" | "cancellation" | "archive" | "restore";
 
 export interface ProposedVenue {
   name: string;
@@ -545,6 +546,47 @@ export async function archiveListing(
   if (queueError)
     throw new Error(
       `Listing was archived, but the audit record failed to save: ${queueError.message}`,
+    );
+}
+
+// The restore counterpart to archiveListing() — flips a listing back to
+// `published` and logs it through the same moderation_queue machinery,
+// closing the reversibility gap archiveListing()'s own comment relies on.
+// Single-moderator and immediate, matching archiveListing()'s own
+// single-moderator/immediate model rather than introducing a second
+// governance tier for undoing a single-moderator action.
+export async function restoreListing(
+  client: SupabaseClient<Database>,
+  listingId: string,
+  reason: string,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error: listingError } = await client
+    .from("listings")
+    .update({ status: "published" })
+    .eq("id", listingId);
+  if (listingError)
+    throw new Error(`Failed to restore listing: ${listingError.message}`);
+
+  const { error: queueError } = await client.from("moderation_queue").insert({
+    change_type: "restore",
+    listing_id: listingId,
+    proposed_data: null,
+    correction_note: null,
+    origin: "moderator_restore",
+    status: "approved",
+    approved_by: user.id,
+    approved_data: null,
+    approval_note: reason,
+    decided_at: new Date().toISOString(),
+  });
+  if (queueError)
+    throw new Error(
+      `Listing was restored, but the audit record failed to save: ${queueError.message}`,
     );
 }
 
