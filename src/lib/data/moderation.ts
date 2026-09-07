@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getListingById } from "./listings";
+import { getListingById, type ListingWithVenue } from "./listings";
 import type { Database, Json } from "../supabase/database.types";
 
 export type QueueStatus =
@@ -789,6 +789,26 @@ export async function handleQueueReviewAction(
 // proposal). A report-form 'update' has no proposed_data — pre-fill from
 // the listing's current values instead, since the moderator is translating
 // free text into field edits, not reviewing a structured diff.
+export function listingToProposedFields(
+  listing: ListingWithVenue,
+): ProposedListingFields {
+  return {
+    type: listing.type,
+    title: listing.title,
+    host: listing.host,
+    description: listing.description,
+    venueId: listing.venue.id,
+    newVenue: null,
+    startTime: listing.startTime,
+    signUpMethod: listing.signUpMethod,
+    costToPerform: listing.costToPerform,
+    ticketPrice: listing.ticketPrice,
+    ticketUrl: listing.ticketUrl,
+    recurrence: listing.recurrenceRule,
+    oneOffDate: listing.oneOffDate,
+  };
+}
+
 export async function getPrefillForEntry(
   entry: QueueEntry,
 ): Promise<ProposedListingFields | null> {
@@ -805,21 +825,7 @@ export async function getPrefillForEntry(
   const current = await getListingById(entry.listingId!);
   if (!current) return null;
 
-  return {
-    type: current.type,
-    title: current.title,
-    host: current.host,
-    description: current.description,
-    venueId: current.venue.id,
-    newVenue: null,
-    startTime: current.startTime,
-    signUpMethod: current.signUpMethod,
-    costToPerform: current.costToPerform,
-    ticketPrice: current.ticketPrice,
-    ticketUrl: current.ticketUrl,
-    recurrence: current.recurrenceRule,
-    oneOffDate: current.oneOffDate,
-  };
+  return listingToProposedFields(current);
 }
 
 export async function getArchiveEntries(
