@@ -3,6 +3,8 @@
 **Status:** Approved for implementation planning
 **Related:** [notes/crowd-work-vision.md](../../../notes/crowd-work-vision.md), [notes/future-considerations.md](../../../notes/future-considerations.md)
 
+> **Update (2026-09-06):** The "daily AI-assisted agent" described throughout this doc (Path 1, the scheduled Supabase Edge Function, the `sourcing agent` LLM budget line) has been scoped down for the MVP to a manually-triggered Claude Code skill (`/check-sources`), with the fully autonomous, continuously-scheduled version moved to post-MVP. See [2026-09-05-source-check-agent-design.md](2026-09-05-source-check-agent-design.md) and [future-considerations.md](../../../notes/future-considerations.md) for the current design.
+
 ## Summary
 
 Crowd Work's MVP is a directory of Los Angeles open mics and comedy shows, serving two audiences (comics looking for stage time, general audiences looking for shows) from one shared dataset. Listings are sourced two ways — a daily AI-assisted agent that checks a curated list of sources for changes, and a public submission form — both converging on a single, accountable moderation queue before anything publishes. The design is deliberately built around a specific failure mode: a prior community-maintained LA open mic list collapsed when its sole maintainer left and its successor became a point of community conflict. Nothing here should depend on one person's unilateral judgment or availability.

@@ -1541,7 +1541,7 @@ interface Props {
 const { entry, prefill, venueOptions, neighborhoodOptions } = Astro.props;
 ---
 
-<form method="post" class="mt-8 flex max-w-104 flex-col gap-6">
+<form method="post" class="mt-8 flex max-w-form-compact flex-col gap-6">
   <input type="hidden" name="action" value="approve" />
 
   <ListingFieldsFields
@@ -1750,7 +1750,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
   <body
     class="font-body text-ink flex min-h-screen flex-col text-base antialiased"
   >
-    <div class="mx-auto flex w-full max-w-136 flex-1 flex-col px-5 py-10">
+    <div class="mx-auto flex w-full max-w-form flex-1 flex-col px-5 py-10">
       <a
         href="/"
         class="text-ink-soft inline-flex items-center gap-1.5 text-[0.86rem] underline-offset-2 hover:underline"
@@ -1965,7 +1965,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
     )
   }
 
-  <form method="post" class="mt-8 flex max-w-104 flex-col gap-6">
+  <form method="post" class="mt-8 flex max-w-form-compact flex-col gap-6">
     <ListingFieldsFields
       prefill={null}
       venueOptions={venueOptions}

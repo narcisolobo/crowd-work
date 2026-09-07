@@ -3,6 +3,7 @@ interface Props {
   type?: "submit" | "button";
   variant?: "primary" | "outline";
   disabled?: boolean;
+  busyLabel?: string;
   href?: string;
   target?: string;
   rel?: string;
@@ -13,6 +14,7 @@ const {
   type = "submit",
   variant = "primary",
   disabled = false,
+  busyLabel,
   href,
   target,
   rel,
@@ -37,8 +39,17 @@ const classes = [
       <slot />
     </a>
   ) : (
-    <button type={type} disabled={disabled} class:list={classes}>
+    <button
+      type={type}
+      disabled={disabled}
+      data-busy-label={type === "submit" ? busyLabel : undefined}
+      class:list={classes}
+    >
       <slot />
     </button>
   )
 }
+
+<script>
+  import "./submit-busy";
+</script>

@@ -56,7 +56,8 @@ const rows = listings
     const dayOfWeek = new Date(`${occurrence.date}T00:00:00Z`).getUTCDay();
     const matchesType = !typeFilter || listing.type === typeFilter;
     const matchesDay = !dayFilter || String(dayOfWeek) === dayFilter;
-    const matchesArea = !areaFilter || listing.venue.areaId === areaFilter;
+    const matchesArea =
+      !areaFilter || listing.venue.areaIds.includes(areaFilter);
     const isSoon =
       occurrence.date >= rangeStart && occurrence.date <= soonRangeEnd;
     return {
@@ -64,7 +65,7 @@ const rows = listings
       title: listing.title,
       type: listing.type,
       dayOfWeek,
-      areaId: listing.venue.areaId,
+      areaIds: listing.venue.areaIds,
       venueName: listing.venue.name,
       host: listing.host,
       signUpMethod: listing.signUpMethod,

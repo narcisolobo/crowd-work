@@ -10,7 +10,7 @@ LA comics and comedy audiences have no reliable, current source for "what mics a
 
 ## Solution / Value Proposition
 
-Crowd Work aggregates listings from a curated set of sources (venue sites, Instagram, etc.) checked daily by an automated agent, supplemented by public submissions from anyone. Both feed a single, shared moderation queue — requiring a second, different reviewer to confirm any rejection, with a full archive of what was rejected and why — so accuracy doesn't depend on one person's judgment or availability, and the list can survive a maintainer stepping away.
+Crowd Work aggregates listings from a curated set of sources (venue sites, Instagram, etc.), supplemented by public submissions from anyone. Both feed a single, shared moderation queue — requiring a second, different reviewer to confirm any rejection, with a full archive of what was rejected and why — so accuracy doesn't depend on one person's judgment or availability, and the list can survive a maintainer stepping away. For the MVP, source checks are triggered manually via a Claude Code skill rather than running as a fully autonomous, continuously-scheduled agent — see Key Features below.
 
 ## Target Audience
 
@@ -20,7 +20,7 @@ Two audiences, one dataset: general LA comedy audiences looking for shows to att
 
 - Directory of mics and shows, filterable by type, day, and neighborhood or broader LA area (e.g., "Eastside")
 - Recurrence-aware listings — weekly or monthly (e.g., "last Thursday") patterns, with one-off exceptions for cancellations or date/venue changes
-- Daily agent that checks seed sources for changes; sources graduate from moderated to auto-published once they've proven reliable
+- Manually-triggered source checking (the `/check-sources` skill) that checks seed sources for changes and files findings into moderation; sources graduate from moderated to auto-published once they've proven reliable. A fully autonomous, continuously-scheduled version of this agent is a post-MVP goal — see [future-considerations.md](./future-considerations.md).
 - Public submission form for new listings and corrections, open to anyone, always human-reviewed
 - Accountable moderation: shared queue, two-reviewer rejection, permanent archive of rejected entries
 

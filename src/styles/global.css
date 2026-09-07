@@ -18,6 +18,10 @@
   --gold-ink: oklch(0.525 0.104 76);
   --red: oklch(0.474 0.162 18);
   --error: oklch(0.4 0.16 18);
+  /* Tells the browser which palette to draw native controls in (date/time
+   * picker icons, checkboxes, scrollbars) — without this they default to a
+   * fixed palette and the picker icons go invisible against a dark page. */
+  color-scheme: light;
 }
 
 /* System dark preference, unless an explicit light override is set. */
@@ -32,6 +36,7 @@
     --gold-ink: oklch(0.796 0.131 81);
     --red: oklch(0.631 0.18 18);
     --error: oklch(0.65 0.18 18);
+    color-scheme: dark;
   }
 }
 
@@ -46,6 +51,7 @@
   --gold-ink: oklch(0.796 0.131 81);
   --red: oklch(0.631 0.18 18);
   --error: oklch(0.65 0.18 18);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -62,6 +68,21 @@
   --font-display: var(--font-big-shoulders);
   --font-body: var(--font-ibm-plex-sans);
   --font-mono: var(--font-ibm-plex-mono);
+}
+
+/*
+ * Form container widths (max-w-form / max-w-form-compact), separate
+ * from the page-level max-w-180 column: pick by content shape, not by
+ * page. max-w-form is for any form rendering the full listing field
+ * set (title, venue, timing, recurrence, etc.) — public submission,
+ * report-a-problem, admin add-listing, and the queue's approval forms.
+ * max-w-form-compact is for a form with only a handful of controls
+ * (login, propose-rejection). These are static, not theme-swapped, so
+ * they live in a plain @theme block rather than @theme inline.
+ */
+@theme {
+  --container-form: 34rem;
+  --container-form-compact: 26rem;
 }
 
 /*

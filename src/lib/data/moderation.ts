@@ -4,7 +4,7 @@ import type { Database, Json } from "../supabase/database.types";
 
 export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
-export type QueueChangeType = "new" | "update" | "cancellation";
+export type QueueChangeType = "new" | "update" | "cancellation" | "archive";
 
 export interface ProposedVenue {
   name: string;
@@ -31,6 +31,14 @@ export interface ProposedListingFields {
     weekOfMonth: number | null;
   } | null;
   oneOffDate: string | null;
+}
+
+export interface SourceCheckFinding {
+  sourceId: string;
+  changeType: "new" | "update";
+  listingId: string | null;
+  fields: ProposedListingFields;
+  note: string;
 }
 
 export interface ProposedCancellation {
@@ -244,6 +252,20 @@ function assertRequiredFields(fields: ProposedListingFields): void {
   }
 }
 
+/** A moderator-facing reason is required for every approval — the queue's
+ * "propose rejection" action already enforces this; direct-add and the
+ * queue's own approve actions did not, which let approvals go out with no
+ * recorded justification. Returns the missing-field entries, if any. */
+export function findMissingReason(formData: FormData): MissingField[] {
+  const reason = formData.get("reason")?.toString() ?? "";
+  if (!reason) return [{ field: "reason", label: "Reason" }];
+  if (reason === "other") {
+    const otherReason = formData.get("otherReason")?.toString().trim() ?? "";
+    if (!otherReason) return [{ field: "otherReason", label: "Other reason" }];
+  }
+  return [];
+}
+
 export async function submitNewListingProposal(
   client: SupabaseClient<Database>,
   formData: FormData,
@@ -273,7 +295,11 @@ export async function directAddListing(
   if (!user) throw new Error("Not authenticated");
 
   const fields = parseProposedListingFields(formData);
-  assertRequiredFields(fields);
+  const missing = [
+    ...findMissingRequiredFields(fields),
+    ...findMissingReason(formData),
+  ];
+  if (missing.length > 0) throw new MissingRequiredFieldsError(missing);
   const approvalNote = parseApprovalNote(formData);
   const { listingId, venueId } = await createListingFromFields(client, fields);
   const approvedData: ProposedListingFields = {
@@ -301,10 +327,27 @@ export async function directAddListing(
   return { listingId, title: fields.title };
 }
 
+export async function submitSourceCheckFinding(
+  client: SupabaseClient<Database>,
+  finding: SourceCheckFinding,
+): Promise<void> {
+  const { error } = await client.from("moderation_queue").insert({
+    listing_id: finding.listingId,
+    change_type: finding.changeType,
+    proposed_data: finding.fields as unknown as Json,
+    correction_note: finding.note,
+    origin: "source_check",
+    status: "pending",
+  });
+
+  if (error)
+    throw new Error(`Failed to file source-check finding: ${error.message}`);
+}
+
 async function resolveVenueId(
   client: SupabaseClient<Database>,
   fields: Pick<ProposedListingFields, "venueId" | "newVenue">,
-): Promise<string> {
+): Promise<{ venueId: string; isNewVenue: boolean }> {
   if (fields.newVenue) {
     const { data: venue, error } = await client
       .from("venues")
@@ -317,18 +360,27 @@ async function resolveVenueId(
       .select("id")
       .single();
     if (error) throw new Error(`Failed to create venue: ${error.message}`);
-    return venue.id;
+    return { venueId: venue.id, isNewVenue: true };
   }
   if (!fields.venueId)
     throw new Error("A venue is required to create or update a listing.");
-  return fields.venueId;
+  return { venueId: fields.venueId, isNewVenue: false };
 }
 
+// Postgrest has no cross-table transaction, so a listing built from several
+// sequential inserts (venue -> listing -> recurrence) can fail partway
+// through. There's no delete policy (and no archive concept) on `venues`,
+// so a venue orphaned by a failed listing insert can only be reported, not
+// cleaned up automatically — the error message below says so explicitly. A
+// listing that already went live before its recurrence insert fails is
+// different: this app already has an "archived" status for unpublishing a
+// listing, and moderators already hold update permission on it, so that
+// failure case is archived rather than left live with a missing schedule.
 export async function createListingFromFields(
   client: SupabaseClient<Database>,
   fields: ProposedListingFields,
 ): Promise<{ listingId: string; venueId: string }> {
-  const venueId = await resolveVenueId(client, fields);
+  const { venueId, isNewVenue } = await resolveVenueId(client, fields);
 
   const { data: listing, error: listingError } = await client
     .from("listings")
@@ -349,8 +401,13 @@ export async function createListingFromFields(
     .select("id")
     .single();
 
-  if (listingError)
-    throw new Error(`Failed to create listing: ${listingError.message}`);
+  if (listingError) {
+    throw new Error(
+      isNewVenue
+        ? `Failed to create listing: ${listingError.message} (a new venue was already created and could not be automatically removed — check the venue list for an orphaned entry)`
+        : `Failed to create listing: ${listingError.message}`,
+    );
+  }
 
   if (fields.recurrence) {
     const { error: recurrenceError } = await client
@@ -361,13 +418,85 @@ export async function createListingFromFields(
         day_of_week: fields.recurrence.dayOfWeek,
         week_of_month: fields.recurrence.weekOfMonth,
       });
-    if (recurrenceError)
+    if (recurrenceError) {
+      try {
+        await archiveListing(
+          client,
+          listing.id,
+          "Recurrence schedule failed to save during creation",
+          "system_recovery",
+        );
+      } catch (archiveError) {
+        const archiveMessage =
+          archiveError instanceof Error
+            ? archiveError.message
+            : String(archiveError);
+        // Distinguishes "the listing itself failed to archive" (still live,
+        // matches the original fallback's worst case) from "it archived
+        // fine but the audit-trail insert failed" (safely unpublished, just
+        // unaudited) — archiveListing()'s two failure points throw with
+        // distinguishable message prefixes, checked here rather than
+        // collapsing both into one misleading "it may be live" message.
+        if (archiveMessage.startsWith("Failed to archive listing:")) {
+          throw new Error(
+            `Failed to save the recurrence schedule: ${recurrenceError.message} (the listing could not be archived either: ${archiveMessage} — it may be live with no recurrence data; check it manually)`,
+          );
+        }
+        throw new Error(
+          `Failed to save the recurrence schedule, so the listing was archived rather than left live with an incomplete schedule: ${recurrenceError.message} (note: the archive audit record failed to save — ${archiveMessage})`,
+        );
+      }
       throw new Error(
-        `Failed to create recurrence rule: ${recurrenceError.message}`,
+        `Failed to save the recurrence schedule, so the listing was archived rather than left live with an incomplete schedule: ${recurrenceError.message}`,
       );
+    }
   }
 
   return { listingId: listing.id, venueId };
+}
+
+// The single write-through path that flips a listing to `archived`. Used
+// both by a moderator's direct action (origin: "moderator_archive") and by
+// createListingFromFields()'s recovery fallback (origin: "system_recovery")
+// when a listing goes live but its recurrence schedule fails to save right
+// after — see that function for why archiving is the safer outcome there.
+// Modeled on directAddListing: single-moderator, immediate, no propose/
+// confirm step, since archiving is reversible and moderator-initiated
+// rather than a silent, unilateral rejection of someone's contribution.
+export async function archiveListing(
+  client: SupabaseClient<Database>,
+  listingId: string,
+  reason: string,
+  origin: "moderator_archive" | "system_recovery" = "moderator_archive",
+): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error: listingError } = await client
+    .from("listings")
+    .update({ status: "archived" })
+    .eq("id", listingId);
+  if (listingError)
+    throw new Error(`Failed to archive listing: ${listingError.message}`);
+
+  const { error: queueError } = await client.from("moderation_queue").insert({
+    change_type: "archive",
+    listing_id: listingId,
+    proposed_data: null,
+    correction_note: null,
+    origin,
+    status: "approved",
+    approved_by: user.id,
+    approved_data: null,
+    approval_note: reason,
+    decided_at: new Date().toISOString(),
+  });
+  if (queueError)
+    throw new Error(
+      `Listing was archived, but the audit record failed to save: ${queueError.message}`,
+    );
 }
 
 export async function approveNewListing(
@@ -392,7 +521,7 @@ export async function approveListingUpdate(
   fields: ProposedListingFields,
   approvalNote: string | null = null,
 ): Promise<void> {
-  const venueId = await resolveVenueId(client, fields);
+  const { venueId } = await resolveVenueId(client, fields);
 
   const { error: listingError } = await client
     .from("listings")
@@ -552,7 +681,7 @@ export function parseProposedListingFields(
   };
 }
 
-function parseApprovalNote(formData: FormData): string | null {
+export function parseApprovalNote(formData: FormData): string | null {
   const reason = formData.get("reason")?.toString() ?? "";
   const otherReason = formData.get("otherReason")?.toString().trim() || null;
   return reason === "other" ? otherReason : reason || null;
@@ -572,6 +701,13 @@ export async function handleQueueReviewAction(
 
   if (action === "approve") {
     const fields = parseProposedListingFields(formData);
+    const missingReason = findMissingReason(formData);
+    if (missingReason.length > 0) {
+      return {
+        type: "validation_error",
+        message: "Choose a reason for this approval.",
+      };
+    }
     const approvalNote = parseApprovalNote(formData);
 
     if (entry.changeType === "new") {
@@ -591,6 +727,13 @@ export async function handleQueueReviewAction(
   if (action === "approve_cancellation") {
     const originalDate = formData.get("originalDate")?.toString() ?? "";
     const note = formData.get("note")?.toString() || null;
+    const missingReason = findMissingReason(formData);
+    if (missingReason.length > 0) {
+      return {
+        type: "validation_error",
+        message: "Choose a reason for this approval.",
+      };
+    }
     const approvalNote = parseApprovalNote(formData);
     await approveCancellation(
       client,

@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import {
   approveCancellation,
+  archiveListing,
   confirmRejection,
   getArchiveEntries,
   proposeRejection,
@@ -9,6 +10,12 @@ import {
   createAdminClient,
   signInTestModerator,
 } from "./moderation-test-helpers";
+import { getListingTitles } from "./listings";
+import {
+  CHANGE_TYPE_LABEL,
+  ORIGIN_LABEL,
+  previewFor,
+} from "../utils/moderation-labels";
 
 let insertedListingIds: string[] = [];
 let insertedEntryIds: string[] = [];
@@ -92,5 +99,47 @@ describe("getArchiveEntries", () => {
     const approvedIndex = entryIds.indexOf(approvedEntryId);
     // rejected was decided after approved in this test, so it sorts first.
     expect(rejectedIndex).toBeLessThan(approvedIndex);
+  });
+
+  it("includes an archive entry, previewed by the listing's title", async () => {
+    const admin = createAdminClient();
+    const { data: listing, error: createError } = await admin
+      .from("listings")
+      .insert({
+        type: "mic",
+        title: "Temp Listing For Archive Entry Rendering Test",
+        venue_id: "c0000000-0000-0000-0000-000000000001",
+        start_time: "19:00",
+        one_off_date: "2026-09-15",
+        status: "published",
+      })
+      .select("id")
+      .single();
+    if (createError) throw createError;
+    insertedListingIds.push(listing.id);
+
+    const moderator1 = await signInTestModerator(1);
+    await archiveListing(moderator1, listing.id, "Venue closed");
+
+    const entries = await getArchiveEntries(moderator1);
+    const entry = entries.find((e) => e.listingId === listing.id);
+    expect(entry).toBeDefined();
+    insertedEntryIds.push(entry!.id);
+
+    expect(CHANGE_TYPE_LABEL[entry!.changeType]).toBe("Archive");
+    expect(ORIGIN_LABEL[entry!.origin]).toBe("Archived by moderator");
+
+    const titles = await getListingTitles(moderator1, [listing.id]);
+    const preview = previewFor(
+      {
+        correctionNote: entry!.correctionNote,
+        proposedData: entry!.approvedData,
+        changeType: entry!.changeType,
+      },
+      titles[listing.id],
+    );
+    expect(preview).toBe(
+      "Archived: Temp Listing For Archive Entry Rendering Test",
+    );
   });
 });

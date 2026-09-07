@@ -2,14 +2,22 @@
 import Button from "../../../../components/forms/Button.astro";
 import FormSelect from "../../../../components/forms/FormSelect.astro";
 import FormTextarea from "../../../../components/forms/FormTextarea.astro";
+import AdminUtilityBar from "../../../../components/layout/AdminUtilityBar.astro";
 import ListingFieldsFields from "../../../../components/moderation/ListingFieldsFields.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
-import { getNeighborhoods, getVenues } from "../../../../lib/data/listings";
+import {
+  getListingById,
+  getNeighborhoods,
+  getVenues,
+} from "../../../../lib/data/listings";
 import {
   directAddListing,
   MissingRequiredFieldsError,
 } from "../../../../lib/data/moderation";
-import { APPROVAL_REASON_OPTIONS } from "../../../../lib/utils/moderation-labels";
+import {
+  APPROVAL_REASON_HINT,
+  APPROVAL_REASON_OPTIONS,
+} from "../../../../lib/utils/moderation-labels";
 
 const supabase = Astro.locals.supabase!;
 const user = Astro.locals.user!;
@@ -20,13 +28,28 @@ const [venues, neighborhoods] = await Promise.all([
 ]);
 
 let errorMessage: string | null = null;
-let added: { listingId: string; title: string } | null = null;
 let fieldErrors: Record<string, string> = {};
+let submittedReason = "";
+let submittedOtherReason = "";
+
+// The success card's copy comes from a fresh, verified lookup rather than
+// trusting a `title` query param, so the confirmation can't be spoofed or
+// replayed for a listing that's since been edited or archived.
+const addedId = Astro.url.searchParams.get("added");
+const addedListing = addedId ? await getListingById(addedId) : null;
+const added: { listingId: string; title: string } | null = addedListing
+  ? { listingId: addedListing.id, title: addedListing.title }
+  : null;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
+  submittedReason = formData.get("reason")?.toString() ?? "";
+  submittedOtherReason = formData.get("otherReason")?.toString() ?? "";
   try {
-    added = await directAddListing(supabase, formData);
+    const result = await directAddListing(supabase, formData);
+    return Astro.redirect(
+      `/admin/listings/new?added=${encodeURIComponent(result.listingId)}`,
+    );
   } catch (error) {
     if (error instanceof MissingRequiredFieldsError) {
       errorMessage = "Please fix the highlighted fields below.";
@@ -51,25 +74,37 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 ---
 
 <AdminLayout title="Add a listing — Crowd Work admin" userEmail={user.email}>
+  <AdminUtilityBar backHref="/admin" backLabel="Back to queue" />
   {
     added ? (
-      <div class="border-l-rule bg-paper-shadow mt-5 max-w-136 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
-        <h1 class="font-display text-[1.28rem] font-bold">
+      <div class="bg-paper-shadow mt-5 max-w-form rounded-sm border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] px-5 py-6 sm:px-7 sm:py-7">
+        <h1 class="font-display relative pl-5 text-[1.28rem] font-bold">
+          <span
+            class="bg-gold absolute top-1.75 left-0 h-2.5 w-2.5 rounded-full"
+            aria-hidden="true"
+          />
           Added — {added.title} is live.
         </h1>
         <p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
           Recorded in the archive as already approved, under your account.
         </p>
-        <Button
-          href={`/listings/${added.listingId}`}
-          variant="outline"
-          class="mt-5"
-        >
-          View listing
-        </Button>
+        <div class="mt-5 flex gap-3">
+          <Button href="/admin/listings/new" variant="outline">
+            Add another
+          </Button>
+          <Button href={`/listings/${added.listingId}`} variant="outline">
+            View listing
+          </Button>
+          <Button
+            href={`/listings/${added.listingId}/report?context=moderator`}
+            variant="outline"
+          >
+            Edit this listing
+          </Button>
+        </div>
       </div>
     ) : (
-      <div class="border-l-rule bg-paper-shadow mt-5 max-w-136 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
+      <div class="border-l-rule bg-paper-shadow mt-5 max-w-form rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
         <h1 class="font-display text-[1.28rem] font-bold">Add a listing</h1>
         <p class="text-ink-soft mt-1.5 text-[0.86rem]">
           Creates the listing directly — recorded in the archive as already
@@ -79,7 +114,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         {errorMessage && (
           <p
             role="alert"
-            class="bg-paper text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
+            class="border-l-error text-error bg-paper mt-5 rounded-sm border-l-[3px] px-3.5 py-2.5 text-[0.86rem] font-medium"
           >
             <strong>Error:</strong> {errorMessage}
           </p>
@@ -93,24 +128,43 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             fieldErrors={fieldErrors}
           />
 
-          <div class="border-rule flex flex-col gap-4 border-t pt-6">
-            <p class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+          <div class="flex flex-col gap-4 border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] pl-4">
+            <p
+              class="font-body text-ink-soft text-[0.72rem] font-semibold tracking-wider uppercase"
+            >
               Approval
             </p>
             <FormSelect
               label="Reason"
               name="reason"
               options={APPROVAL_REASON_OPTIONS}
-              value=""
+              value={submittedReason}
+              required
+              error={fieldErrors.reason}
+              hint={APPROVAL_REASON_HINT}
             />
-            <div data-other-reason hidden>
-              <FormTextarea label="Other reason" name="otherReason" />
+            <div data-other-reason hidden={submittedReason !== "other"}>
+              <FormTextarea
+                label="Other reason"
+                name="otherReason"
+                value={submittedOtherReason}
+                required
+                error={fieldErrors.otherReason}
+              />
             </div>
           </div>
 
-          <Button type="submit" variant="primary" class="self-start">
-            Add listing
-          </Button>
+          <p class="text-ink-soft text-[0.78rem]">
+            Publishes immediately, under your account — no second review.
+          </p>
+
+          <div
+            class="bg-paper-shadow border-rule sticky bottom-0 z-10 -mx-5 -mb-6 rounded-b-sm border-t px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7"
+          >
+            <Button type="submit" variant="primary" busyLabel="Adding…">
+              Add listing
+            </Button>
+          </div>
         </form>
       </div>
     )
@@ -131,5 +185,63 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
     };
     select.addEventListener("change", sync);
     sync();
+  }
+
+  // A moderator adding several listings in one sitting shouldn't have to
+  // re-pick the same type/venue every time — remember the last submission
+  // for this browser tab only (not persisted server-side or across users).
+  const LAST_LISTING_KEY = "crowdwork:admin:lastListing";
+  const form = document.querySelector<HTMLFormElement>("form");
+
+  if (form) {
+    form.querySelector<HTMLInputElement>('input[name="title"]')?.focus();
+
+    try {
+      const stored = sessionStorage.getItem(LAST_LISTING_KEY);
+      if (stored) {
+        const { type, venueId } = JSON.parse(stored) as {
+          type?: string;
+          venueId?: string;
+        };
+        const typeSelect =
+          form.querySelector<HTMLSelectElement>('select[name="type"]');
+        const venueSelect =
+          form.querySelector<HTMLSelectElement>('select[name="venueId"]');
+
+        if (type && typeSelect) {
+          typeSelect.value = type;
+          typeSelect.dispatchEvent(new Event("change"));
+        }
+        if (
+          venueId &&
+          venueSelect &&
+          Array.from(venueSelect.options).some((o) => o.value === venueId)
+        ) {
+          venueSelect.value = venueId;
+          venueSelect.dispatchEvent(new Event("change"));
+        }
+      }
+    } catch {
+      // sessionStorage unavailable (private browsing, etc.) — skip prefill
+    }
+
+    form.addEventListener("submit", () => {
+      const typeSelect =
+        form.querySelector<HTMLSelectElement>('select[name="type"]');
+      const venueSelect =
+        form.querySelector<HTMLSelectElement>('select[name="venueId"]');
+      const venueId = venueSelect?.value;
+      try {
+        sessionStorage.setItem(
+          LAST_LISTING_KEY,
+          JSON.stringify({
+            type: typeSelect?.value,
+            venueId: venueId && venueId !== "__new__" ? venueId : undefined,
+          }),
+        );
+      } catch {
+        // sessionStorage unavailable — nothing to persist
+      }
+    });
   }
 </script>

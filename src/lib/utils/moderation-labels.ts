@@ -8,6 +8,7 @@ export const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   new: "New",
   update: "Update",
   cancellation: "Cancellation",
+  archive: "Archive",
 };
 
 export const ORIGIN_LABEL: Record<string, string> = {
@@ -15,6 +16,9 @@ export const ORIGIN_LABEL: Record<string, string> = {
   report_form: "Public report",
   submission_form: "Public submission",
   moderator_direct_add: "Direct add",
+  source_check: "Automated source check",
+  moderator_archive: "Archived by moderator",
+  system_recovery: "Automatic (recovery)",
 };
 
 export const STATUS_LABEL: Record<string, string> = {
@@ -56,12 +60,15 @@ export const WEEK_OF_MONTH_OPTIONS = [
 ];
 
 export const APPROVAL_REASON_OPTIONS = [
-  { value: "", label: "No reason provided" },
+  { value: "", label: "Choose a reason" },
   { value: "Accurate as submitted", label: "Accurate as submitted" },
   { value: "Accurate after minor edits", label: "Accurate after minor edits" },
   { value: "Verified independently", label: "Verified independently" },
   { value: "other", label: "Other…" },
 ];
+
+export const APPROVAL_REASON_HINT =
+  '"Minor edits" covers small fixes to what was submitted. "Verified independently" means you confirmed it yourself against another source, like the venue\'s own site.';
 
 const PREVIEW_LENGTH = 90;
 
@@ -71,7 +78,11 @@ export function truncate(text: string, length = PREVIEW_LENGTH): string {
 
 export function previewFor(
   entry: Pick<QueueEntry, "correctionNote" | "proposedData" | "changeType">,
+  listingTitle?: string | null,
 ): string {
+  if (entry.changeType === "archive") {
+    return listingTitle ? `Archived: ${listingTitle}` : "Archived listing";
+  }
   if (entry.correctionNote) {
     return truncate(entry.correctionNote);
   }

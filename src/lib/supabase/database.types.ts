@@ -185,31 +185,50 @@ export type Database = {
         }
         Relationships: []
       }
-      neighborhoods: {
+      neighborhood_areas: {
         Row: {
           area_id: string
-          id: string
-          name: string
+          neighborhood_id: string
         }
         Insert: {
           area_id: string
-          id?: string
-          name: string
+          neighborhood_id: string
         }
         Update: {
           area_id?: string
-          id?: string
-          name?: string
+          neighborhood_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "neighborhoods_area_id_fkey"
+            foreignKeyName: "neighborhood_areas_area_id_fkey"
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "areas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "neighborhood_areas_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      neighborhoods: {
+        Row: {
+          id: string
+          name: string
+        }
+        Insert: {
+          id?: string
+          name: string
+        }
+        Update: {
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       occurrence_exceptions: {
         Row: {
@@ -288,6 +307,50 @@ export type Database = {
           },
         ]
       }
+      source_check_agents: {
+        Row: {
+          id: string
+        }
+        Insert: {
+          id: string
+        }
+        Update: {
+          id?: string
+        }
+        Relationships: []
+      }
+      sources: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          url: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          url: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          url?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sources_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           address: string
@@ -331,7 +394,7 @@ export type Database = {
       exception_type: "cancelled" | "modified"
       listing_status: "published" | "archived"
       listing_type: "mic" | "show"
-      moderation_change_type: "new" | "update" | "cancellation"
+      moderation_change_type: "new" | "update" | "cancellation" | "archive"
       moderation_status:
         | "pending"
         | "rejection_proposed"
@@ -471,7 +534,7 @@ export const Constants = {
       exception_type: ["cancelled", "modified"],
       listing_status: ["published", "archived"],
       listing_type: ["mic", "show"],
-      moderation_change_type: ["new", "update", "cancellation"],
+      moderation_change_type: ["new", "update", "cancellation", "archive"],
       moderation_status: [
         "pending",
         "rejection_proposed",

@@ -4,17 +4,27 @@ import FormField from "../forms/FormField.astro";
 import FormSelect from "../forms/FormSelect.astro";
 import FormTextarea from "../forms/FormTextarea.astro";
 import type { ProposedCancellation, QueueEntry } from "../../lib/data/moderation";
-import { APPROVAL_REASON_OPTIONS } from "../../lib/utils/moderation-labels";
+import {
+  APPROVAL_REASON_HINT,
+  APPROVAL_REASON_OPTIONS,
+} from "../../lib/utils/moderation-labels";
 
 interface Props {
   entry: QueueEntry;
   proposedCancellation: ProposedCancellation | null;
+  reason?: string;
+  otherReason?: string;
 }
 
-const { entry, proposedCancellation } = Astro.props;
+const {
+  entry,
+  proposedCancellation,
+  reason = "",
+  otherReason = "",
+} = Astro.props;
 ---
 
-<form method="post" class="mt-8 flex max-w-104 flex-col gap-4">
+<form method="post" class="mt-8 flex max-w-form-compact flex-col gap-4">
   <input type="hidden" name="action" value="approve_cancellation" />
   <FormField
     label="Date being cancelled"
@@ -32,10 +42,12 @@ const { entry, proposedCancellation } = Astro.props;
       label="Reason"
       name="reason"
       options={APPROVAL_REASON_OPTIONS}
-      value=""
+      value={reason}
+      required
+      hint={APPROVAL_REASON_HINT}
     />
-    <div data-other-reason hidden>
-      <FormTextarea label="Other reason" name="otherReason" />
+    <div data-other-reason hidden={reason !== "other"}>
+      <FormTextarea label="Other reason" name="otherReason" value={otherReason} />
     </div>
   </div>
   <Button

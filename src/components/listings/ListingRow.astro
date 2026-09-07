@@ -7,7 +7,7 @@ export interface ListingRowData {
   title: string;
   type: "mic" | "show";
   dayOfWeek: number;
-  areaId: string;
+  areaIds: string[];
   venueName: string;
   host?: string | null;
   signUpMethod?: string | null;
@@ -27,7 +27,7 @@ const {
   title,
   type,
   dayOfWeek,
-  areaId,
+  areaIds,
   venueName,
   host,
   signUpMethod,
@@ -55,7 +55,7 @@ const priceAmount = type === "mic" ? costToPerform : ticketPrice;
   data-listing-row
   data-type={type}
   data-day={dayOfWeek}
-  data-area={areaId}
+  data-area={areaIds.join(" ")}
   hidden={hidden}
 >
   <TicketStub

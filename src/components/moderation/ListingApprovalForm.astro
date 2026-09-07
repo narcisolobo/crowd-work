@@ -3,7 +3,10 @@ import type {
   ProposedListingFields,
   QueueEntry,
 } from "../../lib/data/moderation";
-import { APPROVAL_REASON_OPTIONS } from "../../lib/utils/moderation-labels";
+import {
+  APPROVAL_REASON_HINT,
+  APPROVAL_REASON_OPTIONS,
+} from "../../lib/utils/moderation-labels";
 import Button from "../forms/Button.astro";
 import FormSelect from "../forms/FormSelect.astro";
 import FormTextarea from "../forms/FormTextarea.astro";
@@ -14,12 +17,21 @@ interface Props {
   prefill: ProposedListingFields | null;
   venueOptions: { value: string; label: string }[];
   neighborhoodOptions: { value: string; label: string }[];
+  reason?: string;
+  otherReason?: string;
 }
 
-const { entry, prefill, venueOptions, neighborhoodOptions } = Astro.props;
+const {
+  entry,
+  prefill,
+  venueOptions,
+  neighborhoodOptions,
+  reason = "",
+  otherReason = "",
+} = Astro.props;
 ---
 
-<form method="post" class="mt-8 flex max-w-104 flex-col gap-6">
+<form method="post" class="mt-8 flex max-w-form flex-col gap-6">
   <input type="hidden" name="action" value="approve" />
 
   <ListingFieldsFields
@@ -38,10 +50,12 @@ const { entry, prefill, venueOptions, neighborhoodOptions } = Astro.props;
       label="Reason"
       name="reason"
       options={APPROVAL_REASON_OPTIONS}
-      value=""
+      value={reason}
+      required
+      hint={APPROVAL_REASON_HINT}
     />
-    <div data-other-reason hidden>
-      <FormTextarea label="Other reason" name="otherReason" />
+    <div data-other-reason hidden={reason !== "other"}>
+      <FormTextarea label="Other reason" name="otherReason" value={otherReason} />
     </div>
   </div>
 

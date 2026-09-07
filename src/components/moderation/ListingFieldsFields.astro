@@ -25,8 +25,13 @@ const {
 } = Astro.props;
 
 const venueSelectOptions = [
+  { value: "", label: "Choose a venue" },
   ...venueOptions,
   { value: "__new__", label: "Add a new venue…" },
+];
+const neighborhoodSelectOptions = [
+  { value: "", label: "Choose a neighborhood" },
+  ...neighborhoodOptions,
 ];
 const isNewVenue = Boolean(prefill?.newVenue);
 const initialType = prefill?.type ?? "mic";
@@ -40,7 +45,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
 
 <div class="flex flex-col gap-4">
   <p
-    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+    class="font-body text-ink-soft text-[0.72rem] font-semibold tracking-wider uppercase"
   >
     What it is
   </p>
@@ -69,7 +74,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
 
 <div class="border-rule flex flex-col gap-4 border-t pt-6">
   <p
-    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+    class="font-body text-ink-soft text-[0.72rem] font-semibold tracking-wider uppercase"
   >
     Venue
   </p>
@@ -99,7 +104,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     <FormSelect
       label="Neighborhood"
       name="newVenueNeighborhoodId"
-      options={neighborhoodOptions}
+      options={neighborhoodSelectOptions}
       value={prefill?.newVenue?.neighborhoodId ?? ""}
       required
       error={fieldErrors.newVenueNeighborhoodId}
@@ -108,6 +113,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
       label="Google Maps URL"
       name="newVenueGoogleMapsUrl"
       type="url"
+      placeholder="https://maps.google.com/?q=The+Virgil+LA"
       value={prefill?.newVenue?.googleMapsUrl ?? ""}
     />
   </div>
@@ -115,7 +121,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
 
 <div class="border-rule flex flex-col gap-4 border-t pt-6">
   <p
-    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+    class="font-body text-ink-soft text-[0.72rem] font-semibold tracking-wider uppercase"
   >
     Timing & cost
   </p>
@@ -131,6 +137,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     <FormField
       label="Sign-up method"
       name="signUpMethod"
+      placeholder="Sign-up list at the door, 7:30pm"
       value={prefill?.signUpMethod ?? ""}
     />
   </div>
@@ -138,6 +145,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     <FormField
       label="Cost to perform"
       name="costToPerform"
+      placeholder="Free, or $5"
       value={prefill?.costToPerform ?? ""}
     />
   </div>
@@ -145,6 +153,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     <FormField
       label="Ticket price"
       name="ticketPrice"
+      placeholder="$15"
       value={prefill?.ticketPrice ?? ""}
     />
   </div>
@@ -153,6 +162,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
       label="Ticket URL"
       name="ticketUrl"
       type="url"
+      placeholder="https://example.com/tickets"
       value={prefill?.ticketUrl ?? ""}
     />
   </div>
@@ -160,7 +170,7 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
 
 <div class="border-rule flex flex-col gap-4 border-t pt-6">
   <p
-    class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+    class="font-body text-ink-soft text-[0.72rem] font-semibold tracking-wider uppercase"
   >
     Recurrence
   </p>

@@ -2,10 +2,10 @@ insert into areas (id, name) values
   ('a0000000-0000-0000-0000-000000000001', 'Eastside'),
   ('a0000000-0000-0000-0000-000000000002', 'Westside');
 
-insert into neighborhoods (id, name, area_id) values
-  ('b0000000-0000-0000-0000-000000000001', 'Los Feliz', 'a0000000-0000-0000-0000-000000000001'),
-  ('b0000000-0000-0000-0000-000000000002', 'Silver Lake', 'a0000000-0000-0000-0000-000000000001'),
-  ('b0000000-0000-0000-0000-000000000003', 'Santa Monica', 'a0000000-0000-0000-0000-000000000002');
+insert into neighborhoods (id, name) values
+  ('b0000000-0000-0000-0000-000000000001', 'Los Feliz'),
+  ('b0000000-0000-0000-0000-000000000002', 'Silver Lake'),
+  ('b0000000-0000-0000-0000-000000000003', 'Santa Monica');
 
 insert into venues (id, name, address, neighborhood_id, google_maps_url) values
   ('c0000000-0000-0000-0000-000000000001', 'The Virgil', '4519 Santa Monica Blvd, Los Angeles, CA', 'b0000000-0000-0000-0000-000000000002', 'https://maps.google.com/?q=The+Virgil+LA'),
