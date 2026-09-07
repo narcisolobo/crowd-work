@@ -4,6 +4,25 @@
 
 type Field = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
+// Fields that opt in (`data-require-change`) aren't satisfied just because
+// a value is present — a value a moderator never actually chose (e.g. one
+// silently restored by the browser's own form-history-on-navigation
+// behavior) must not pass as a real selection. Tracked in memory rather
+// than a DOM attribute so a script-dispatched "change" (the batch-entry
+// session-memory restore) counts as a real choice exactly like a click does,
+// while a value the browser drops in on page load — which fires no event
+// at all — does not.
+const changedFields = new WeakSet<Field>();
+
+function requiresChange(field: Field): boolean {
+  return field.dataset.requireChange === "true";
+}
+
+function isEffectivelyValid(field: Field): boolean {
+  if (requiresChange(field) && !changedFields.has(field)) return false;
+  return field.validity.valid;
+}
+
 function getLabel(field: Element): HTMLElement | null {
   return field.closest("label");
 }
@@ -35,6 +54,9 @@ function messageFor(field: Field): string {
   const { validity } = field;
   const noun = getFieldNoun(field);
 
+  if (requiresChange(field) && !changedFields.has(field)) {
+    return `Choose ${articleFor(noun)} ${noun}`;
+  }
   if (validity.valueMissing) {
     if (field instanceof HTMLSelectElement) {
       return `Choose ${articleFor(noun)} ${noun}`;
@@ -97,7 +119,7 @@ function check(field: Field): boolean {
     clearInvalid(field);
     return true;
   }
-  if (field.validity.valid) {
+  if (isEffectivelyValid(field)) {
     clearInvalid(field);
     return true;
   }
@@ -118,6 +140,12 @@ function wireForm(form: HTMLFormElement): void {
     field.addEventListener("input", () => {
       if (field.style.borderColor) check(field);
     });
+    if (requiresChange(field)) {
+      field.addEventListener("change", () => {
+        changedFields.add(field);
+        check(field);
+      });
+    }
   }
 
   form.addEventListener("submit", (event) => {
