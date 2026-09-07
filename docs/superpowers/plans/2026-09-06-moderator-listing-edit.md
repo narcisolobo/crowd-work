@@ -61,13 +61,13 @@ crowd-work/
 - Consumes: `moderation_queue` as it exists today (no enum or column changes needed — `update` is already a valid `change_type`, and `origin` is a free-text column)
 - Produces: a permissive INSERT policy allowing an authenticated moderator to insert a pre-approved `update` entry — consumed by Task 4's `directUpdateListing`
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new moderator_direct_edit_queue_insert_policy
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 Open the generated file and write:
 
@@ -99,7 +99,7 @@ create policy "moderators can directly insert a pre-approved update entry"
   );
 ```
 
-- [ ] **Step 3: Apply the migration locally and verify**
+- [x] **Step 3: Apply the migration locally and verify**
 
 ```bash
 supabase db reset
@@ -107,7 +107,7 @@ supabase db reset
 
 Expected: all prior migrations plus `moderator_direct_edit_queue_insert_policy` apply with no errors. No `database.types.ts` regeneration is needed — RLS policies aren't reflected in generated types (unlike an enum or column addition).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations
@@ -134,7 +134,7 @@ EOF
 
 This is a pure refactor — no behavior change, so it's verified by the existing `approveListingUpdate` test coverage staying green, not a new failing test.
 
-- [ ] **Step 1: Run the existing tests to confirm the baseline is green**
+- [x] **Step 1: Run the existing tests to confirm the baseline is green**
 
 ```bash
 pnpm test moderation-approve
@@ -142,7 +142,7 @@ pnpm test moderation-approve
 
 Expected: PASS (2 tests under `describe("approveListingUpdate", ...)`).
 
-- [ ] **Step 2: Extract the function**
+- [x] **Step 2: Extract the function**
 
 In `src/lib/data/moderation.ts`, replace the current `approveListingUpdate`:
 
@@ -275,7 +275,7 @@ export async function approveListingUpdate(
 }
 ```
 
-- [ ] **Step 3: Run the tests to verify no regression**
+- [x] **Step 3: Run the tests to verify no regression**
 
 ```bash
 pnpm test moderation-approve
@@ -283,7 +283,7 @@ pnpm test moderation-approve
 
 Expected: PASS — same 2 tests, unchanged behavior.
 
-- [ ] **Step 4: Run the full test suite**
+- [x] **Step 4: Run the full test suite**
 
 ```bash
 pnpm test
@@ -291,7 +291,7 @@ pnpm test
 
 Expected: PASS, no regressions.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts
@@ -322,7 +322,7 @@ EOF
 - Consumes: `ListingWithVenue` type from `./listings`
 - Produces: `export function listingToProposedFields(listing: ListingWithVenue): ProposedListingFields` — consumed by Task 5's new edit page and by `getPrefillForEntry`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `src/lib/data/moderation-parse.test.ts`:
 
@@ -416,7 +416,7 @@ describe("listingToProposedFields", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 pnpm test moderation-parse
@@ -424,7 +424,7 @@ pnpm test moderation-parse
 
 Expected: FAIL — `listingToProposedFields` is not exported yet.
 
-- [ ] **Step 3: Implement `listingToProposedFields` and refactor `getPrefillForEntry`**
+- [x] **Step 3: Implement `listingToProposedFields` and refactor `getPrefillForEntry`**
 
 In `src/lib/data/moderation.ts`, update the import at the top of the file:
 
@@ -518,7 +518,7 @@ export async function getPrefillForEntry(
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation-parse
@@ -526,7 +526,7 @@ pnpm test moderation-parse
 
 Expected: PASS.
 
-- [ ] **Step 5: Run the full test suite**
+- [x] **Step 5: Run the full test suite**
 
 ```bash
 pnpm test
@@ -534,7 +534,7 @@ pnpm test
 
 Expected: PASS, no regressions (this also exercises `getPrefillForEntry` indirectly via `moderation-transitions.test.ts` and the queue page, if covered there).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-parse.test.ts
@@ -565,7 +565,7 @@ EOF
 - Consumes: Task 1's RLS policy; Task 2's `applyListingFields(client, listingId, fields)`; the already-exported `parseProposedListingFields`, `findMissingRequiredFields`, `findMissingReason`, `parseApprovalNote`, `MissingRequiredFieldsError`; `createAdminClient`/`signInTestModerator` from `moderation-test-helpers.ts`
 - Produces: `export async function directUpdateListing(client: SupabaseClient<Database>, listingId: string, formData: FormData): Promise<void>` — consumed by Task 5's new page
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/lib/data/moderation-direct-edit.test.ts`:
 
@@ -724,7 +724,7 @@ describe("moderator_direct_edit RLS", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 pnpm test moderation-direct-edit
@@ -732,7 +732,7 @@ pnpm test moderation-direct-edit
 
 Expected: the two RLS tests PASS already (Task 1's policy is applied); the `directUpdateListing` tests FAIL because the function doesn't exist yet.
 
-- [ ] **Step 3: Implement `directUpdateListing()`**
+- [x] **Step 3: Implement `directUpdateListing()`**
 
 In `src/lib/data/moderation.ts`, add the following function after `directAddListing`:
 
@@ -787,7 +787,7 @@ export async function directUpdateListing(
 }
 ```
 
-- [ ] **Step 4: Add the origin label**
+- [x] **Step 4: Add the origin label**
 
 In `src/lib/utils/moderation-labels.ts`, add to `ORIGIN_LABEL`:
 
@@ -804,7 +804,7 @@ export const ORIGIN_LABEL: Record<string, string> = {
 };
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation-direct-edit
@@ -812,7 +812,7 @@ pnpm test moderation-direct-edit
 
 Expected: PASS — all 4 tests.
 
-- [ ] **Step 6: Run the full test suite**
+- [x] **Step 6: Run the full test suite**
 
 ```bash
 pnpm test
@@ -820,7 +820,7 @@ pnpm test
 
 Expected: PASS, no regressions.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-direct-edit.test.ts src/lib/utils/moderation-labels.ts
@@ -851,7 +851,7 @@ EOF
 
 Auth is handled for free by the existing `/admin` prefix check in `src/middleware.ts` — no page-level auth code needed.
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 Create `src/pages/admin/listings/edit/[id].astro`:
 
@@ -939,7 +939,9 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 >
   <AdminUtilityBar backHref="/admin/listings" backLabel="Back to listings" />
 
-  <div class="border-l-rule bg-paper-shadow mt-5 max-w-form rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
+  <div
+    class="border-l-rule bg-paper-shadow max-w-form mt-5 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7"
+  >
     <h1 class="font-display text-[1.28rem] font-bold">Edit listing</h1>
     <p class="text-ink-soft mt-1.5 text-[0.86rem]">{listing.title}</p>
 
@@ -973,8 +975,12 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         fieldErrors={fieldErrors}
       />
 
-      <div class="flex flex-col gap-4 border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] pl-4">
-        <p class="font-body text-ink-soft text-[0.72rem] font-semibold tracking-wider uppercase">
+      <div
+        class="flex flex-col gap-4 border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] pl-4"
+      >
+        <p
+          class="font-body text-ink-soft text-[0.72rem] font-semibold tracking-wider uppercase"
+        >
           Approval
         </p>
         <FormSelect
@@ -1001,7 +1007,9 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         Saves immediately, under your account — no second review.
       </p>
 
-      <div class="bg-paper-shadow border-rule sticky bottom-0 z-10 -mx-5 -mb-6 rounded-b-sm border-t px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7">
+      <div
+        class="bg-paper-shadow border-rule sticky bottom-0 z-10 -mx-5 -mb-6 rounded-b-sm border-t px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7"
+      >
         <Button type="submit" variant="primary" busyLabel="Saving…">
           Save changes
         </Button>
@@ -1030,7 +1038,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
 
 Note: on a validation error, the base listing fields re-render from the listing's stored values (via `listingToProposedFields(listing)`), not from the failed submission — the submitted `reason`/`otherReason` are preserved, but a rejected title/venue edit would need to be re-typed. This mirrors `/admin/listings/new`'s existing behavior on error (`prefill={null}` there discards the failed submission too) — not a new gap introduced here.
 
-- [ ] **Step 2: Run the full test suite**
+- [x] **Step 2: Run the full test suite**
 
 ```bash
 pnpm test
@@ -1038,7 +1046,7 @@ pnpm test
 
 Expected: PASS (this page has no automated tests — Astro pages are verified manually in this project, per Task 8).
 
-- [ ] **Step 3: Verify manually**
+- [x] **Step 3: Verify manually**
 
 ```bash
 astro dev --background
@@ -1046,7 +1054,7 @@ astro dev --background
 
 Sign in as a moderator, navigate to `/admin/listings/edit/<id>` for any published listing, and confirm the form is prefilled with its current values. Leave this running for Task 6.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/pages/admin/listings/edit/
@@ -1076,111 +1084,103 @@ EOF
 - Consumes: the `/admin/listings/edit/[id]` route from Task 5
 - Produces: none — terminal UI wiring
 
-- [ ] **Step 1: Repoint the direct-add success card's "Edit this listing" link**
+- [x] **Step 1: Repoint the direct-add success card's "Edit this listing" link**
 
 In `src/pages/admin/listings/new/index.astro`, replace:
 
 ```astro
-          <Button
-            href={`/listings/${added.listingId}/report?context=moderator`}
-            variant="outline"
-          >
-            Edit this listing
-          </Button>
+<Button
+  href={`/listings/${added.listingId}/report?context=moderator`}
+  variant="outline"
+>
+  Edit this listing
+</Button>
 ```
 
 with:
 
 ```astro
-          <Button
-            href={`/admin/listings/edit/${added.listingId}`}
-            variant="outline"
-          >
-            Edit this listing
-          </Button>
+<Button href={`/admin/listings/edit/${added.listingId}`} variant="outline">
+  Edit this listing
+</Button>
 ```
 
-- [ ] **Step 2: Add a per-row "Edit" link on `/admin/listings`**
+- [x] **Step 2: Add a per-row "Edit" link on `/admin/listings`**
 
 In `src/pages/admin/listings/index.astro`, replace the whole `<li>` block (from `<li class="border-rule ...">` through its closing `</li>`) with:
 
 ```astro
-            <li class="border-rule flex flex-col gap-3 border-b py-5">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p class="text-[0.95rem] font-medium">{listing.title}</p>
-                  <p class="text-ink-soft text-[0.82rem]">
-                    {typeLabel} · {listing.venue.name}
-                  </p>
-                </div>
-                <div class="flex items-center gap-3">
-                  <Button
-                    href={`/admin/listings/edit/${listing.id}`}
-                    variant="outline"
-                  >
-                    Edit
-                  </Button>
-                  <details open={rowHasError}>
-                    <summary class="font-display text-ink-soft hover:text-ink inline-block cursor-pointer text-[0.82rem] font-bold tracking-wide uppercase [&::-webkit-details-marker]:hidden">
-                      Archive
-                    </summary>
-                    <form
-                      method="post"
-                      novalidate
-                      class="max-w-form-compact mt-3 flex flex-col gap-4"
-                    >
-                      <input type="hidden" name="listingId" value={listing.id} />
+<li class="border-rule flex flex-col gap-3 border-b py-5">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p class="text-[0.95rem] font-medium">{listing.title}</p>
+      <p class="text-ink-soft text-[0.82rem]">
+        {typeLabel} · {listing.venue.name}
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <Button href={`/admin/listings/edit/${listing.id}`} variant="outline">
+        Edit
+      </Button>
+      <details open={rowHasError}>
+        <summary
+          class="font-display text-ink-soft hover:text-ink inline-block cursor-pointer text-[0.82rem] font-bold tracking-wide uppercase [&::-webkit-details-marker]:hidden"
+        >
+          Archive
+        </summary>
+        <form
+          method="post"
+          novalidate
+          class="max-w-form-compact mt-3 flex flex-col gap-4"
+        >
+          <input type="hidden" name="listingId" value={listing.id} />
 
-                      {rowHasError && errorMessage && (
-                        <p
-                          role="alert"
-                          class="border-l-error text-error bg-paper rounded-sm border-l-[3px] px-3.5 py-2.5 text-[0.86rem] font-medium"
-                        >
-                          <strong>Error:</strong> {errorMessage}
-                        </p>
-                      )}
+          {
+            rowHasError && errorMessage && (
+              <p
+                role="alert"
+                class="border-l-error text-error bg-paper rounded-sm border-l-[3px] px-3.5 py-2.5 text-[0.86rem] font-medium"
+              >
+                <strong>Error:</strong> {errorMessage}
+              </p>
+            )
+          }
 
-                      <FormSelect
-                        label="Reason"
-                        name="reason"
-                        options={APPROVAL_REASON_OPTIONS}
-                        value={rowHasError ? submittedReason : ""}
-                        required
-                        error={rowHasError ? fieldErrors.reason : undefined}
-                        hint={APPROVAL_REASON_HINT}
-                      />
-                      <div
-                        data-other-reason
-                        hidden={!rowHasError || submittedReason !== "other"}
-                      >
-                        <FormTextarea
-                          label="Other reason"
-                          name="otherReason"
-                          value={rowHasError ? submittedOtherReason : ""}
-                          required
-                          error={
-                            rowHasError ? fieldErrors.otherReason : undefined
-                          }
-                        />
-                      </div>
+          <FormSelect
+            label="Reason"
+            name="reason"
+            options={APPROVAL_REASON_OPTIONS}
+            value={rowHasError ? submittedReason : ""}
+            required
+            error={rowHasError ? fieldErrors.reason : undefined}
+            hint={APPROVAL_REASON_HINT}
+          />
+          <div
+            data-other-reason
+            hidden={!rowHasError || submittedReason !== "other"}
+          >
+            <FormTextarea
+              label="Other reason"
+              name="otherReason"
+              value={rowHasError ? submittedOtherReason : ""}
+              required
+              error={rowHasError ? fieldErrors.otherReason : undefined}
+            />
+          </div>
 
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        busyLabel="Archiving…"
-                      >
-                        Archive this listing
-                      </Button>
-                    </form>
-                  </details>
-                </div>
-              </div>
-            </li>
+          <Button type="submit" variant="outline" busyLabel="Archiving…">
+            Archive this listing
+          </Button>
+        </form>
+      </details>
+    </div>
+  </div>
+</li>
 ```
 
 The only changes from the original: a new `<div class="flex items-center gap-3">` now wraps the "Edit" `Button` and the existing `<details>` disclosure (which is otherwise untouched, just re-indented one level deeper), with a matching closing `</div>` added right after `</details>`.
 
-- [ ] **Step 3: Run the full test suite**
+- [x] **Step 3: Run the full test suite**
 
 ```bash
 pnpm test
@@ -1188,14 +1188,14 @@ pnpm test
 
 Expected: PASS, no regressions.
 
-- [ ] **Step 4: Verify manually**
+- [x] **Step 4: Verify manually**
 
 With the dev server still running from Task 5:
 
 1. Open `/admin/listings`, confirm each row now shows an "Edit" link next to "Archive", and it navigates to the correct listing's edit page.
 2. Direct-add a new listing, confirm the success card's "Edit this listing" link goes to `/admin/listings/edit/<id>` and loads prefilled.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pages/admin/listings/new/index.astro src/pages/admin/listings/index.astro
@@ -1221,10 +1221,11 @@ EOF
 
 **Interfaces:** none — this task only removes code.
 
-- [ ] **Step 1: Remove `isModeratorContext` and its copy branches**
+- [x] **Step 1: Remove `isModeratorContext` and its copy branches**
 
 In `src/pages/listings/[id]/report.astro`, remove:
 
+<!-- prettier-ignore -->
 ```astro
 // A moderator arrives here from the direct-add success card's "Edit this
 // listing" link, not as an anonymous visitor — same form and same queue
@@ -1236,102 +1237,109 @@ const isModeratorContext = Astro.url.searchParams.get("context") === "moderator"
 Replace the title block:
 
 ```astro
-    <title>
-      {isModeratorContext
-        ? `Edit listing — ${listing.title} — Crowd Work admin`
-        : `Report a problem — ${listing.title} — Crowd Work`}
-    </title>
+<title>
+  {
+    isModeratorContext
+      ? `Edit listing — ${listing.title} — Crowd Work admin`
+      : `Report a problem — ${listing.title} — Crowd Work`
+  }
+</title>
 ```
 
 with:
 
 ```astro
-    <title>Report a problem — {listing.title} — Crowd Work</title>
+<title>Report a problem — {listing.title} — Crowd Work</title>
 ```
 
 Replace the submitted-state heading and body:
 
 ```astro
-            <h1 class="font-display text-[1.28rem] font-bold">
-              {isModeratorContext
-                ? "Submitted for review."
-                : "Thanks — a moderator will review this shortly."}
-            </h1>
-            <p class="mt-2.5 max-w-[45ch] text-[0.95rem] text-ink-soft">
-              {isModeratorContext
-                ? "It's in the queue as a pending update, same as any other correction. Approve it from there whenever you're ready."
-                : "Crowd Work listings are reviewed by working comics, not one person's spreadsheet — reports like yours are how the list stays accurate."}
-            </p>
+<h1 class="font-display text-[1.28rem] font-bold">
+  {
+    isModeratorContext
+      ? "Submitted for review."
+      : "Thanks — a moderator will review this shortly."
+  }
+</h1>
+<p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
+  {
+    isModeratorContext
+      ? "It's in the queue as a pending update, same as any other correction. Approve it from there whenever you're ready."
+      : "Crowd Work listings are reviewed by working comics, not one person's spreadsheet — reports like yours are how the list stays accurate."
+  }
+</p>
 ```
 
 with:
 
 ```astro
-            <h1 class="font-display text-[1.28rem] font-bold">
-              Thanks — a moderator will review this shortly.
-            </h1>
-            <p class="mt-2.5 max-w-[45ch] text-[0.95rem] text-ink-soft">
-              Crowd Work listings are reviewed by working comics, not one
-              person's spreadsheet — reports like yours are how the list
-              stays accurate.
-            </p>
+<h1 class="font-display text-[1.28rem] font-bold">
+  Thanks — a moderator will review this shortly.
+</h1>
+<p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
+  Crowd Work listings are reviewed by working comics, not one person's
+  spreadsheet — reports like yours are how the list stays accurate.
+</p>
 ```
 
 Replace the form heading and subtitle:
 
 ```astro
-            <h1 class="font-display text-[1.28rem] font-bold">
-              {isModeratorContext ? "Edit this listing" : "Report a problem"}
-            </h1>
-            <p class="mt-1.5 text-[0.9rem] text-ink-soft">
-              {isModeratorContext ? listing.title : `with ${listing.title}`}
-            </p>
+<h1 class="font-display text-[1.28rem] font-bold">
+  {isModeratorContext ? "Edit this listing" : "Report a problem"}
+</h1>
+<p class="text-ink-soft mt-1.5 text-[0.9rem]">
+  {isModeratorContext ? listing.title : `with ${listing.title}`}
+</p>
 ```
 
 with:
 
 ```astro
-            <h1 class="font-display text-[1.28rem] font-bold">
-              Report a problem
-            </h1>
-            <p class="mt-1.5 text-[0.9rem] text-ink-soft">
-              with {listing.title}
-            </p>
+<h1 class="font-display text-[1.28rem] font-bold">Report a problem</h1>
+<p class="text-ink-soft mt-1.5 text-[0.9rem]">
+  with {listing.title}
+</p>
 ```
 
 Replace the fieldset legend:
 
 ```astro
-                <legend class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
-                  {isModeratorContext ? "What needs to change?" : "What's wrong?"}
-                </legend>
+<legend
+  class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+>
+  {isModeratorContext ? "What needs to change?" : "What's wrong?"}
+</legend>
 ```
 
 with:
 
 ```astro
-                <legend class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
-                  What's wrong?
-                </legend>
+<legend
+  class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+>
+  What's wrong?
+</legend>
 ```
 
 Replace the submit button label:
 
 ```astro
-              <Button type="submit" variant="primary" class="self-start">
-                {isModeratorContext ? "Submit correction" : "Submit report"}
-              </Button>
+<Button type="submit" variant="primary" class="self-start">
+  {isModeratorContext ? "Submit correction" : "Submit report"}
+</Button>
 ```
 
 with:
 
 ```astro
-              <Button type="submit" variant="primary" class="self-start">
-                Submit report
-              </Button>
+<Button type="submit" variant="primary" class="self-start">
+  Submit report
+</Button>
 ```
 
-- [ ] **Step 2: Run the full test suite**
+- [x] **Step 2: Run the full test suite**
 
 ```bash
 pnpm test
@@ -1339,14 +1347,14 @@ pnpm test
 
 Expected: PASS — no existing test references `isModeratorContext` or `context=moderator` (confirmed: neither string appears in any `*.test.ts` or `e2e/*.spec.ts` file).
 
-- [ ] **Step 3: Verify manually**
+- [x] **Step 3: Verify manually**
 
 With the dev server still running:
 
 1. Visit `/listings/<id>/report` directly (no query param) — confirm it still works exactly as before: "Report a problem" heading, "What's wrong?" legend, "Submit report" button.
 2. Visit `/listings/<id>/report?context=moderator` — confirm the copy is now identical to the plain version (the query param no longer does anything).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/pages/listings/\[id\]/report.astro
@@ -1373,7 +1381,7 @@ EOF
 
 **Interfaces:** none.
 
-- [ ] **Step 1: Full moderator flow**
+- [x] **Step 1: Full moderator flow**
 
 With the dev server still running (`astro dev --background` from Task 5), sign in as a moderator and:
 
@@ -1384,15 +1392,15 @@ With the dev server still running (`astro dev --background` from Task 5), sign i
 5. Open `/admin/listings`, confirm the listing you just edited shows an "Edit" link, and that it opens the same prefilled page.
 6. Open `/admin/archive`, confirm an "Update" entry appears for the edit, with origin "Direct edit" and the correct who/why/when.
 
-- [ ] **Step 2: Confirm the spoofable path is gone**
+- [x] **Step 2: Confirm the spoofable path is gone**
 
 Visit `/listings/<any-published-id>/report?context=moderator` while signed out — confirm the copy is the plain public "Report a problem" form, not moderator-flavored, and submitting it lands in the queue as `pending` like any other report (check `/admin` queue list).
 
-- [ ] **Step 3: Accessibility check at high zoom**
+- [x] **Step 3: Accessibility check at high zoom**
 
 Per `PRODUCT.md`'s validated accessibility need, set the browser to 400% zoom and reload `/admin/listings/edit/<id>`. Confirm the page reflows to a single readable column with no horizontal scrolling, and the sticky "Save changes" button at the bottom doesn't overlap or clip the form above it.
 
-- [ ] **Step 4: Full regression suite**
+- [x] **Step 4: Full regression suite**
 
 ```bash
 pnpm test
@@ -1406,7 +1414,7 @@ astro dev logs
 
 Expected: no errors across the whole session.
 
-- [ ] **Step 5: Stop the dev server**
+- [x] **Step 5: Stop the dev server**
 
 ```bash
 astro dev stop
