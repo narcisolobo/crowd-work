@@ -394,7 +394,7 @@ export type Database = {
       exception_type: "cancelled" | "modified"
       listing_status: "published" | "archived"
       listing_type: "mic" | "show"
-      moderation_change_type: "new" | "update" | "cancellation"
+      moderation_change_type: "new" | "update" | "cancellation" | "archive"
       moderation_status:
         | "pending"
         | "rejection_proposed"
@@ -534,7 +534,7 @@ export const Constants = {
       exception_type: ["cancelled", "modified"],
       listing_status: ["published", "archived"],
       listing_type: ["mic", "show"],
-      moderation_change_type: ["new", "update", "cancellation"],
+      moderation_change_type: ["new", "update", "cancellation", "archive"],
       moderation_status: [
         "pending",
         "rejection_proposed",
