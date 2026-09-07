@@ -155,13 +155,14 @@ Warm, low-saturation neutrals carry almost the entire page; a single gold accent
 - **Body** (400–600, ~0.86–1.02rem, line-height 1.5): descriptions, venue lines, metadata, nav links, form labels. Weight steps up to 600 for emphasis (the listing count, footer's "See something wrong?").
 - **Label** (Body face, 600, 0.65rem, letter-spacing 0.05em, uppercase): the type-tag chip and the ticket-stub day/month.
 - **Label (Display variant)** (Display face, 700, 0.95rem, letter-spacing 0.025em, uppercase): the filter tabs — the same small-caps _treatment_ as Label, but set in the heavier Display face rather than Body, matching their role as the page's most prominent control.
+- **Label (Form Kicker variant)** (Body face, 600, 0.72rem, letter-spacing 0.025em, uppercase): the section-group dividers inside the shared listing-fields form — `What it is`, `Venue`, `Timing & cost`, `Recurrence`, and `Approval` — used identically across the public submission form, the queue's approval form, and the admin direct-add page. A third small-caps context distinct from the base Label: a dense, top-to-bottom form scans better with a slightly larger, slightly airier kicker than a chip or a ticket-stub date needs.
 - **Mono** (500–600, ~0.85–1.15rem, tabular-nums): the time column and the ticket-stub date number only.
 
 ### Named Rules
 
 **The Mono Discipline Rule.** IBM Plex Mono is used for exactly one job: keeping times and stub dates aligned down a scannable column. It never appears decoratively anywhere else in the system.
 
-**The Marquee Caps Rule.** Small caps are deliberately rare and specific: the ticket stub's day/month, the mic/show type tag, and the type-filter tabs — all styled after physical marquee-letterboard and ticket-stub conventions, which are themselves capitals. Everything else (titles, venue names, body copy, nav links) stays sentence case. A new component reaching for uppercase text needs to justify it against this list, not just "it looks bold."
+**The Marquee Caps Rule.** Small caps are deliberately rare and specific: the ticket stub's day/month, the mic/show type tag, the type-filter tabs, and a listing form's section-group kickers (`What it is`, `Venue`, `Timing & cost`, `Recurrence`, `Approval`). The first three are styled after physical marquee-letterboard and ticket-stub conventions; the form kickers are styled after a classifieds page's own run of small-caps section heads — both are capitals in print already, which is what earns them the treatment here. Everything else (titles, venue names, body copy, nav links, and any individual field's own label) stays sentence case. A new component reaching for uppercase text needs to justify it against this list, not just "it looks bold."
 
 ## Layout
 
@@ -219,11 +220,15 @@ Controls throughout are tactile and confident: small in footprint, but state cha
 - **Sticky header:** persistent across all pages, `position: sticky; top: 0`, `1px --ink` bottom border. Holds the brand mark + wordmark, primary nav ("Browse," "Submit a listing"), and the theme switcher.
 - **Nav links:** Body-face, `--ink-soft`, underline on hover
 - **Mobile treatment:** below 480px, "Browse" hides and "Submit a listing" shortens to "Submit"
-- **Admin variant:** the admin header separates two jobs instead of listing everything flat — feature links (Archive, and future admin surfaces) stay as plain visible nav links, while session identity collapses into the Account Menu below. The row is `flex-wrap` with `min-height` rather than a fixed height, so it reflows to a second line as feature links accumulate or at high browser zoom, instead of clipping or scrolling horizontally.
+- **Admin variant:** the admin header separates two jobs, each folded into its own native disclosure instead of a flat, wrappable link row — feature links (New listing, Listings, Archive, and future admin surfaces) collapse into the Admin Section Menu, while session identity collapses into the Account Menu beside it. The row still carries `flex-wrap` with `min-height` as a fallback rather than a fixed height, but with both jobs condensed to a pair of short disclosure triggers, the header stays a single line at ordinary widths and only wraps at the most extreme zoom levels.
+
+### Admin Section Menu
+
+Folds the admin header's feature links (New listing, Listings, Archive, and any future admin surface) into a single native `<details>`/`<summary>` disclosure instead of a flat row that has to wrap or overflow as sections accumulate. The trigger reads the active section's label when the moderator is already on one of those pages (e.g. "New listing ⌄"), falling back to "Menu" everywhere else — recognition over recall, and no lost sense of location. Shares its exact `<details>`/`<summary>` mechanics, panel styling, and outside-click/Escape script with the Account Menu immediately to its right; opening either one closes the other, so the header never shows two open panels at once.
 
 ### Account Menu
 
-The moderator's email, styled as a plain nav link with a trailing chevron, discloses "Log out" on click rather than sitting inline as its own nav item — the fix for an admin nav that grows a feature link at a time while session actions stay constant. Built as a native `<details>`/`<summary>` disclosure: it opens and closes with no JavaScript required, and a small script only adds outside-click and Escape dismissal on top of that native behavior. The opened panel is `--paper-shadow` fill with a `1px --rule` border and `4px` radius — the same tonal-elevation vocabulary as everywhere else in the system, never a `box-shadow` (The No Card, No Gimmick Rule applies here too). The chevron rotates 180° when open as the only state cue beyond the panel itself.
+The moderator's email, styled as a plain nav link with a trailing chevron, discloses "Log out" on click rather than sitting inline as its own nav item — the fix for an admin nav that grows a feature link at a time while session actions stay constant. Built as a native `<details>`/`<summary>` disclosure — the same shared mechanics as the Admin Section Menu beside it (see above) — it opens and closes with no JavaScript required, and a small script only adds outside-click and Escape dismissal on top of that native behavior. The opened panel is `--paper-shadow` fill with a `1px --rule` border and `4px` radius — the same tonal-elevation vocabulary as everywhere else in the system, never a `box-shadow` (The No Card, No Gimmick Rule applies here too). The chevron rotates 180° when open as the only state cue beyond the panel itself.
 
 ### Ticket Stub (signature component)
 
@@ -246,7 +251,7 @@ The Icon Assist Rule's icon: the same marquee bulb as the Theme Toggle's on-air 
 - **Do** use relative units (`rem`, `clamp()`) with no fixed-width containers on every layout, public or admin — a working moderator navigates at 400%+ zoom.
 - **Do** keep every interactive control's `:focus-visible` state a visible `--gold-ink` outline.
 - **Do** gate any new transition or animation behind `(prefers-reduced-motion: no-preference)`, matching the one existing row-fade transition.
-- **Do** build any new disclosure or menu (account actions, overflow nav, etc.) on native `<details>`/`<summary>` so it works with no JavaScript, adding script only for the polish a browser doesn't provide for free (outside-click, Escape) — see Account Menu.
+- **Do** build any new disclosure or menu (account actions, overflow nav, etc.) on native `<details>`/`<summary>` so it works with no JavaScript, adding script only for the polish a browser doesn't provide for free (outside-click, Escape) — see Admin Section Menu and Account Menu.
 - **Do** pair every Cancellation Red flag with an authored icon, never color alone (The Icon Assist Rule).
 - **Do** use Error Red (`--error`), not Cancellation Red (`--red`), for form-validation states — they're separate tokens on purpose.
 
@@ -254,6 +259,6 @@ The Icon Assist Rule's icon: the same marquee bulb as the Theme Toggle's on-air 
 
 - **Don't** introduce a card, a rounded tile, or a `box-shadow` for grouping or elevation — use a tonal background (`--paper-shadow`) or a hairline rule instead (The No Card, No Gimmick Rule).
 - **Don't** use Cancellation Red for anything other than an actual cancellation or urgent time-sensitive change — reach for Error Red instead (The Red Line Rule).
-- **Don't** reach for uppercase/small-caps styling outside the confirmed list (ticket-stub day/month, type tag, filter tabs) — see The Marquee Caps Rule.
+- **Don't** reach for uppercase/small-caps styling outside the confirmed list (ticket-stub day/month, type tag, filter tabs, listing-form section kickers) — see The Marquee Caps Rule.
 - **Don't** rely on a native browser control's default appearance (a `<select>` caret, a checkbox) for anything visible in dark mode without checking it actually themes — it may be drawn by the OS/browser chrome, not by this system's tokens.
 - **Don't** use IBM Plex Mono anywhere except the time column and ticket-stub date (The Mono Discipline Rule).
