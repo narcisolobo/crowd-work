@@ -71,6 +71,37 @@ export const APPROVAL_REASON_OPTIONS = [
 export const APPROVAL_REASON_HINT =
   '"Minor edits" covers small fixes to what was submitted. "Verified independently" means you confirmed it yourself against another source, like the venue\'s own site.';
 
+// For direct-add and direct-edit: the moderator IS the source, not a
+// reviewer of someone else's submission, so "accurate as submitted" and
+// "verified independently" (both phrased around judging external input)
+// don't parse. These name why the moderator believes the listing is
+// accurate, which still feeds the same approval_note audit trail.
+export const DIRECT_ENTRY_REASON_OPTIONS = [
+  { value: "", label: "Choose a reason" },
+  { value: "Personal knowledge", label: "Personal knowledge" },
+  { value: "Confirmed with venue", label: "Confirmed with venue" },
+  { value: "other", label: "Other…" },
+];
+
+export const DIRECT_ENTRY_REASON_HINT =
+  '"Personal knowledge" means you know this firsthand — you run, host, or regularly attend it. "Confirmed with venue" means you checked it against the venue\'s own site or social.';
+
+// For archiving a published listing: this isn't approving content, it's
+// removing it, so "accurate as submitted"/"verified independently" (both
+// about judging whether data was right) don't apply — the question here is
+// why the listing no longer belongs on the public site.
+export const ARCHIVE_REASON_OPTIONS = [
+  { value: "", label: "Choose a reason" },
+  { value: "Permanently closed", label: "Permanently closed" },
+  { value: "Duplicate listing", label: "Duplicate listing" },
+  { value: "Requested by venue or host", label: "Requested by venue or host" },
+  { value: "Should not have been published", label: "Should not have been published" },
+  { value: "other", label: "Other…" },
+];
+
+export const ARCHIVE_REASON_HINT =
+  '"Permanently closed" covers a mic or show that no longer runs. "Should not have been published" covers a listing that was wrong from the start — bad data, not something that\'s simply gone out of date.';
+
 const PREVIEW_LENGTH = 90;
 
 export function truncate(text: string, length = PREVIEW_LENGTH): string {

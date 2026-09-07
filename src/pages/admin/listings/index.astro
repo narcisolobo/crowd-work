@@ -11,8 +11,8 @@ import {
   parseApprovalNote,
 } from "../../../lib/data/moderation";
 import {
-  APPROVAL_REASON_HINT,
-  APPROVAL_REASON_OPTIONS,
+  ARCHIVE_REASON_HINT,
+  ARCHIVE_REASON_OPTIONS,
   TYPE_OPTIONS,
 } from "../../../lib/utils/moderation-labels";
 
@@ -128,11 +128,11 @@ const justArchived = Astro.url.searchParams.get("archived") === "1";
                       <FormSelect
                         label="Reason"
                         name="reason"
-                        options={APPROVAL_REASON_OPTIONS}
+                        options={ARCHIVE_REASON_OPTIONS}
                         value={rowHasError ? submittedReason : ""}
                         required
                         error={rowHasError ? fieldErrors.reason : undefined}
-                        hint={APPROVAL_REASON_HINT}
+                        hint={ARCHIVE_REASON_HINT}
                       />
                       <div
                         data-other-reason

@@ -16,8 +16,8 @@ import {
   MissingRequiredFieldsError,
 } from "../../../../lib/data/moderation";
 import {
-  APPROVAL_REASON_HINT,
-  APPROVAL_REASON_OPTIONS,
+  DIRECT_ENTRY_REASON_HINT,
+  DIRECT_ENTRY_REASON_OPTIONS,
 } from "../../../../lib/utils/moderation-labels";
 
 const supabase = Astro.locals.supabase!;
@@ -122,11 +122,11 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         <FormSelect
           label="Reason"
           name="reason"
-          options={APPROVAL_REASON_OPTIONS}
+          options={DIRECT_ENTRY_REASON_OPTIONS}
           value={submittedReason}
           required
           error={fieldErrors.reason}
-          hint={APPROVAL_REASON_HINT}
+          hint={DIRECT_ENTRY_REASON_HINT}
         />
         <div data-other-reason hidden={submittedReason !== "other"}>
           <FormTextarea
