@@ -35,6 +35,9 @@ pnpm-debug.log*
 # host
 .vercel
 
+# git worktrees
+.worktrees
+
 # agents
 .impeccable
 .claude/settings.local.json
