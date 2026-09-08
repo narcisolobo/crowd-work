@@ -343,7 +343,7 @@ pnpm test
 
 Expected: PASS, no regressions.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add supabase/migrations src/lib/data/moderation-report-rls.test.ts
