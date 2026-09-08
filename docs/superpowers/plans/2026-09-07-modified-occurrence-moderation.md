@@ -975,7 +975,7 @@ EOF
 
 This is a presentational component with no standalone data logic, verified manually together with Task 6 (it can't be rendered in isolation without the queue page around it).
 
-- [ ] **Step 1: Write the component**
+- [x] **Step 1: Write the component**
 
 Create `src/components/moderation/ModificationApprovalForm.astro`:
 
@@ -1102,7 +1102,7 @@ const newVenueOptions = [{ value: "", label: "No change" }, ...venueOptions];
 </script>
 ```
 
-- [ ] **Step 2: Run the full test suite**
+- [x] **Step 2: Run the full test suite**
 
 ```bash
 pnpm test
@@ -1110,7 +1110,7 @@ pnpm test
 
 Expected: PASS, no regressions.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/moderation/ModificationApprovalForm.astro

@@ -1,0 +1,128 @@
+---
+import Button from "../forms/Button.astro";
+import FormField from "../forms/FormField.astro";
+import FormSelect from "../forms/FormSelect.astro";
+import FormTextarea from "../forms/FormTextarea.astro";
+import type {
+  ProposedCancellation,
+  QueueEntry,
+} from "../../lib/data/moderation";
+import {
+  APPROVAL_REASON_HINT,
+  APPROVAL_REASON_OPTIONS,
+} from "../../lib/utils/moderation-labels";
+
+interface VenueOption {
+  value: string;
+  label: string;
+}
+
+interface Props {
+  entry: QueueEntry;
+  proposedModification: ProposedCancellation | null;
+  venueOptions: VenueOption[];
+  reason?: string;
+  otherReason?: string;
+}
+
+const {
+  entry,
+  proposedModification,
+  venueOptions,
+  reason = "",
+  otherReason = "",
+} = Astro.props;
+
+const newVenueOptions = [{ value: "", label: "No change" }, ...venueOptions];
+---
+
+<form
+  method="post"
+  data-modification-form
+  class="max-w-form-compact mt-8 flex flex-col gap-4"
+>
+  <input type="hidden" name="action" value="approve_modification" />
+  <FormField
+    label="Date being modified"
+    name="originalDate"
+    type="date"
+    value={proposedModification?.originalDate}
+    required
+  />
+  <div class="border-rule flex flex-col gap-4 border-t pt-6">
+    <p
+      class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+    >
+      What's different
+    </p>
+    <FormField label="New date (if changed)" name="newDate" type="date" />
+    <FormField
+      label="New start time (if changed)"
+      name="newStartTime"
+      type="time"
+    />
+    <FormSelect
+      label="New venue (if changed)"
+      name="newVenueId"
+      options={newVenueOptions}
+    />
+  </div>
+  <FormTextarea label="Note" name="note" value={entry.correctionNote ?? ""} />
+  <div class="border-rule flex flex-col gap-4 border-t pt-6">
+    <p
+      class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase"
+    >
+      Approval
+    </p>
+    <FormSelect
+      label="Reason"
+      name="reason"
+      options={APPROVAL_REASON_OPTIONS}
+      value={reason}
+      required
+      hint={APPROVAL_REASON_HINT}
+    />
+    <div data-other-reason hidden={reason !== "other"}>
+      <FormTextarea
+        label="Other reason"
+        name="otherReason"
+        value={otherReason}
+      />
+    </div>
+  </div>
+  <Button
+    type="submit"
+    variant="primary"
+    disabled={entry.status !== "pending"}
+    class="mt-2 self-start"
+  >
+    Approve modification
+  </Button>
+</form>
+
+<script>
+  // At least one of new date/time/venue must actually be set, or approving
+  // would create an occurrence_exceptions row indistinguishable in effect
+  // from no exception at all.
+  const forms = document.querySelectorAll<HTMLFormElement>(
+    "form[data-modification-form]",
+  );
+  for (const form of forms) {
+    const submitButton = form.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+    if (!submitButton || submitButton.disabled) continue;
+    const watched = form.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+      '[name="newDate"], [name="newStartTime"], [name="newVenueId"]',
+    );
+    const sync = () => {
+      const hasChange = Array.from(watched).some((el) => el.value !== "");
+      submitButton.disabled = !hasChange;
+    };
+    for (const el of watched) {
+      el.addEventListener("input", sync);
+      el.addEventListener("change", sync);
+    }
+    sync();
+  }
+</script>
