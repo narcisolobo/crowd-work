@@ -735,7 +735,7 @@ EOF
 - Consumes: Task 2's tightened report-form RLS policy (this task is what makes `report.astro` satisfy it — before this task, a "not happening" report submitted through the running dev site would be rejected by RLS with no date, same as Task 2's tests describe)
 - Produces: no new exports — this is a page-level change verified manually, per this project's existing testing conventions (Astro pages aren't unit-tested)
 
-- [ ] **Step 1: Add the `FormField` import**
+- [x] **Step 1: Add the `FormField` import**
 
 In `src/pages/listings/[id]/report.astro`, add to the existing imports:
 
@@ -743,7 +743,7 @@ In `src/pages/listings/[id]/report.astro`, add to the existing imports:
 import FormField from "../../../components/forms/FormField.astro";
 ```
 
-- [ ] **Step 2: Update the frontmatter logic**
+- [x] **Step 2: Update the frontmatter logic**
 
 Replace the existing block (from `let submitted = false;` through the `reasonOptions` declaration):
 
@@ -868,7 +868,7 @@ const showDateField =
   selectedReason !== null && OCCURRENCE_REASONS.has(selectedReason);
 ```
 
-- [ ] **Step 3: Add the conditional date field to the markup**
+- [x] **Step 3: Add the conditional date field to the markup**
 
 In the form markup, replace:
 
@@ -891,7 +891,7 @@ with:
               <FormTextarea label="Details" name="note" required rows={4} />
 ```
 
-- [ ] **Step 4: Add the client-side toggle script**
+- [x] **Step 4: Add the client-side toggle script**
 
 Right before the closing `</body>` tag, add:
 
@@ -920,7 +920,7 @@ Right before the closing `</body>` tag, add:
     </script>
 ```
 
-- [ ] **Step 5: Run the full test suite**
+- [x] **Step 5: Run the full test suite**
 
 ```bash
 pnpm test
@@ -928,7 +928,7 @@ pnpm test
 
 Expected: PASS, no regressions (no existing test targets `report.astro`'s markup or reason logic directly).
 
-- [ ] **Step 6: Verify manually**
+- [x] **Step 6: Verify manually**
 
 ```bash
 astro dev --background
@@ -944,7 +944,7 @@ Navigate to `/listings/<any-published-id>/report` and confirm:
 
 Leave the dev server running for Task 6.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/listings/\[id\]/report.astro
