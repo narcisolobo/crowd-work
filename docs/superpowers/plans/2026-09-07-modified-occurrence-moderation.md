@@ -63,13 +63,13 @@ crowd-work/
 
 This is a schema-only change with no application-level behavior to test yet — verified by the migration applying cleanly, not a failing test.
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new modification_change_type
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 Open the generated file and write:
 
@@ -92,7 +92,7 @@ Open the generated file and write:
 alter type moderation_change_type add value 'modification';
 ```
 
-- [ ] **Step 3: Apply the migration locally and verify**
+- [x] **Step 3: Apply the migration locally and verify**
 
 ```bash
 supabase db reset
@@ -100,7 +100,7 @@ supabase db reset
 
 Expected: all prior migrations plus `modification_change_type` apply with no errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations

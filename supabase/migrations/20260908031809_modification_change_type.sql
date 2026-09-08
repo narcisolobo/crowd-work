@@ -1,0 +1,16 @@
+-- occurrence_exceptions already supports a 'modified' row (new_date,
+-- new_start_time, new_venue_id, note overriding a single occurrence
+-- without touching the recurring rule) and recurrence.ts already resolves
+-- it, but nothing in moderation_queue could ever produce one — only
+-- 'cancelled' exceptions have an authoring path (approveCancellation).
+-- This adds the matching change_type for the missing flow.
+--
+-- The RLS policy that lets the public report form actually insert a
+-- 'modification'-shaped moderation_queue row lives in a separate, later
+-- migration (report_form_modification_policy) — Postgres forbids using a
+-- new enum value within the same transaction that added it via
+-- ALTER TYPE ... ADD VALUE (SQLSTATE 55P04, "unsafe use of new value of
+-- enum type"), the same reason 'archive'/'restore' were split across two
+-- migrations each (20260907025858/20260907030344, 20260907080000/
+-- 20260907080100).
+alter type moderation_change_type add value 'modification';
