@@ -149,19 +149,23 @@ afterEach(async () => {
 describe("report_form RLS", () => {
   it("accepts a 'modification' report with a date", async () => {
     const anon = createAnonClient();
-    const { data, error } = await anon
-      .from("moderation_queue")
-      .insert({
-        listing_id: EXISTING_LISTING_ID,
-        change_type: "modification",
-        proposed_data: { originalDate: "2026-09-15" },
-        correction_note: "Moved to the back room this week",
-        origin: "report_form",
-        status: "pending",
-      })
-      .select("id")
-      .single();
+    const correctionNote = "Moved to the back room this week";
+    const { error } = await anon.from("moderation_queue").insert({
+      listing_id: EXISTING_LISTING_ID,
+      change_type: "modification",
+      proposed_data: { originalDate: "2026-09-15" },
+      correction_note: correctionNote,
+      origin: "report_form",
+      status: "pending",
+    });
     expect(error).toBeNull();
+
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("moderation_queue")
+      .select("id")
+      .eq("correction_note", correctionNote)
+      .single();
     if (data) insertedEntryIds.push(data.id);
   });
 
@@ -193,41 +197,51 @@ describe("report_form RLS", () => {
 
   it("still accepts a 'cancellation' report with a date", async () => {
     const anon = createAnonClient();
-    const { data, error } = await anon
-      .from("moderation_queue")
-      .insert({
-        listing_id: EXISTING_LISTING_ID,
-        change_type: "cancellation",
-        proposed_data: { originalDate: "2026-09-15" },
-        correction_note: "Not happening anymore",
-        origin: "report_form",
-        status: "pending",
-      })
-      .select("id")
-      .single();
+    const correctionNote = "Not happening anymore";
+    const { error } = await anon.from("moderation_queue").insert({
+      listing_id: EXISTING_LISTING_ID,
+      change_type: "cancellation",
+      proposed_data: { originalDate: "2026-09-15" },
+      correction_note: correctionNote,
+      origin: "report_form",
+      status: "pending",
+    });
     expect(error).toBeNull();
+
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("moderation_queue")
+      .select("id")
+      .eq("correction_note", correctionNote)
+      .single();
     if (data) insertedEntryIds.push(data.id);
   });
 
   it("still accepts an 'update' report with no proposed_data", async () => {
     const anon = createAnonClient();
-    const { data, error } = await anon
-      .from("moderation_queue")
-      .insert({
-        listing_id: EXISTING_LISTING_ID,
-        change_type: "update",
-        proposed_data: null,
-        correction_note: "Wrong sign-up method listed",
-        origin: "report_form",
-        status: "pending",
-      })
-      .select("id")
-      .single();
+    const correctionNote = "Wrong sign-up method listed";
+    const { error } = await anon.from("moderation_queue").insert({
+      listing_id: EXISTING_LISTING_ID,
+      change_type: "update",
+      proposed_data: null,
+      correction_note: correctionNote,
+      origin: "report_form",
+      status: "pending",
+    });
     expect(error).toBeNull();
+
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("moderation_queue")
+      .select("id")
+      .eq("correction_note", correctionNote)
+      .single();
     if (data) insertedEntryIds.push(data.id);
   });
 });
 ```
+
+**Note on the three "accepts"/"still accepts" tests:** they insert via the `anon` client without chaining `.select()`. Chaining `.select("id").single()` turns the insert into `INSERT ... RETURNING id`, and Postgres evaluates RETURNING against RLS's SELECT policies too — but `moderation_queue` has no SELECT policy for `anon` (only `"moderators can read the queue"`, scoped to `authenticated`). That produces the same "new row violates row-level security policy" error as a failed `WITH CHECK`, even when the insert itself is allowed. The fix is to insert without `.select()`, then look up the new row's id via `createAdminClient()` — the same pattern already used in `moderation-submission.test.ts`, not a change to the RLS policy (granting `anon` SELECT here would let anyone browse other people's reports).
 
 - [x] **Step 2: Run the tests to verify they fail**
 
@@ -313,7 +327,7 @@ supabase db reset
 
 Expected: all migrations apply with no errors.
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation-report-rls
@@ -321,7 +335,7 @@ pnpm test moderation-report-rls
 
 Expected: PASS — all 5 tests.
 
-- [ ] **Step 7: Run the full test suite**
+- [x] **Step 7: Run the full test suite**
 
 ```bash
 pnpm test
