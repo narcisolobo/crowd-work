@@ -1281,25 +1281,25 @@ EOF
 
 **Interfaces:** none.
 
-- [ ] **Step 1: Full moderator flow, cancellation path**
+- [x] **Step 1: Full moderator flow, cancellation path**
 
 With the dev server still running:
 
 1. From `/listings/<id>/report`, submit "This isn't happening anymore" with a date and a note — confirm it now requires the date (matching Task 2's tightened policy) and succeeds once provided.
 2. Approve it from `/admin` as before — confirm the existing cancellation flow (`CancellationApprovalForm`) is completely unaffected by this plan's changes.
 
-- [ ] **Step 2: Full moderator flow, modification path**
+- [x] **Step 2: Full moderator flow, modification path**
 
 Repeat Task 6 Step 6's manual flow once more end to end, this time also confirming:
 
 1. The listing's public detail page (`/listings/<id>`) or directory listing reflects the modified occurrence correctly for that specific date once the exception is approved (per `recurrence.ts`'s existing resolution logic — unchanged by this plan, but this is the first time it's ever fed a `'modified'` row that didn't come from seed data).
 2. A different, non-modified future occurrence of the same recurring listing is unaffected.
 
-- [ ] **Step 3: Accessibility check at high zoom**
+- [x] **Step 3: Accessibility check at high zoom**
 
 Per this project's validated accessibility need, set the browser to 400% zoom and reload both `/listings/<id>/report` and an open `'modification'` entry at `/admin/queue/<id>`. Confirm both reflow to a single readable column with no horizontal scrolling.
 
-- [ ] **Step 4: Full regression suite**
+- [x] **Step 4: Full regression suite**
 
 ```bash
 pnpm test
@@ -1314,7 +1314,7 @@ astro dev logs
 
 Expected: no errors across the whole session.
 
-- [ ] **Step 5: Stop the dev server**
+- [x] **Step 5: Stop the dev server**
 
 ```bash
 astro dev stop
