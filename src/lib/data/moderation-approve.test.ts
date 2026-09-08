@@ -3,6 +3,7 @@ import {
   approveNewListing,
   approveListingUpdate,
   approveCancellation,
+  approveModification,
   type ProposedListingFields,
 } from "./moderation";
 import {
@@ -438,5 +439,73 @@ describe("approval RLS", () => {
 
     expect(error).not.toBeNull();
     expect(data).toBeNull();
+  });
+});
+
+describe("approveModification", () => {
+  it("records a modified occurrence exception", async () => {
+    const admin = createAdminClient();
+    const { data: listing, error: createError } = await admin
+      .from("listings")
+      .insert({
+        type: "mic",
+        title: "Temp Listing For Modification Test",
+        venue_id: EXISTING_VENUE_ID,
+        start_time: "19:00",
+        one_off_date: "2026-09-15",
+        status: "published",
+      })
+      .select("id")
+      .single();
+    if (createError) throw createError;
+    insertedListingIds.push(listing.id);
+
+    const entryId = await createPendingEntry({
+      change_type: "modification",
+      listing_id: listing.id,
+      proposed_data: { originalDate: "2026-09-15" },
+      correction_note: "Moved to the back room this week",
+    });
+
+    const moderator1 = await signInTestModerator(1);
+    await approveModification(
+      moderator1,
+      entryId,
+      listing.id,
+      "2026-09-15",
+      null,
+      "20:30",
+      null,
+      "Moved to the back room this week",
+      "Accurate as submitted",
+    );
+
+    const { data: exception } = await admin
+      .from("occurrence_exceptions")
+      .select(
+        "type, original_date, new_date, new_start_time, new_venue_id, note",
+      )
+      .eq("listing_id", listing.id)
+      .eq("original_date", "2026-09-15")
+      .single();
+    expect(exception!.type).toBe("modified");
+    expect(exception!.new_date).toBeNull();
+    expect(exception!.new_start_time).toBe("20:30:00");
+    expect(exception!.new_venue_id).toBeNull();
+    expect(exception!.note).toBe("Moved to the back room this week");
+
+    const { data: entry } = await admin
+      .from("moderation_queue")
+      .select("approved_data, approval_note")
+      .eq("id", entryId)
+      .single();
+    expect(entry!.approval_note).toBe("Accurate as submitted");
+    expect(entry!.approved_data).toEqual({
+      originalDate: "2026-09-15",
+      newDate: null,
+      newStartTime: "20:30",
+      newVenueId: null,
+      note: "Moved to the back room this week",
+    });
   });
 });

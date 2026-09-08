@@ -74,6 +74,7 @@ const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   new: "New listing",
   update: "Update",
   cancellation: "Cancellation",
+  modification: "Modification",
   archive: "Archive",
   restore: "Restore",
 };
@@ -157,7 +158,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
     entry.status === "pending" && (
       <form
         method="post"
-        class="border-rule mt-10 flex max-w-form-compact flex-col gap-3 border-t pt-6"
+        class="border-rule max-w-form-compact mt-10 flex flex-col gap-3 border-t pt-6"
       >
         <input type="hidden" name="action" value="propose_reject" />
         <FormTextarea label="Reason for rejection" name="reason" required />

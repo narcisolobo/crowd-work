@@ -8,6 +8,7 @@ export const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   new: "New",
   update: "Update",
   cancellation: "Cancellation",
+  modification: "Modification",
   archive: "Archive",
   restore: "Restore",
 };
@@ -97,7 +98,10 @@ export const ARCHIVE_REASON_OPTIONS = [
   { value: "Permanently closed", label: "Permanently closed" },
   { value: "Duplicate listing", label: "Duplicate listing" },
   { value: "Requested by venue or host", label: "Requested by venue or host" },
-  { value: "Should not have been published", label: "Should not have been published" },
+  {
+    value: "Should not have been published",
+    label: "Should not have been published",
+  },
   { value: "other", label: "Other…" },
 ];
 
@@ -143,5 +147,5 @@ export function previewFor(
       ? `New listing: ${data.title}`
       : `Update: ${data.title}`;
   }
-  return "Cancellation";
+  return entry.changeType === "modification" ? "Modification" : "Cancellation";
 }

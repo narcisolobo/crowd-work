@@ -380,7 +380,7 @@ EOF
   - `handleQueueReviewAction` now handles `action === "approve_modification"`
   - `QueueChangeType` becomes `"new" | "update" | "cancellation" | "modification" | "archive" | "restore"` — consumed by Task 5's `ModificationApprovalForm` and Task 6's page wiring
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `src/lib/data/moderation-approve.test.ts`, add `approveModification` to the existing import from `./moderation`:
 
@@ -466,7 +466,7 @@ describe("approveModification", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 ```bash
 pnpm test moderation-approve
@@ -474,7 +474,7 @@ pnpm test moderation-approve
 
 Expected: FAIL — `approveModification` is not exported yet (and `change_type: "modification"` isn't a valid enum value in the generated TypeScript types yet either, which Step 3 also fixes).
 
-- [ ] **Step 3: Regenerate database types, add the new type and function**
+- [x] **Step 3: Regenerate database types, add the new type and function**
 
 The `moderation_change_type` enum change from Task 1 needs to be reflected in `src/lib/supabase/database.types.ts` before TypeScript will accept `change_type: "modification"` anywhere. Regenerate it:
 
@@ -624,7 +624,7 @@ Add the review-action branch. In `handleQueueReviewAction`, right after the exis
   }
 ```
 
-- [ ] **Step 4: Update the labels**
+- [x] **Step 4: Update the labels**
 
 In `src/lib/utils/moderation-labels.ts`, add `modification` to `CHANGE_TYPE_LABEL`:
 
@@ -653,7 +653,7 @@ with:
 }
 ```
 
-- [ ] **Step 5: Fix the local `CHANGE_TYPE_LABEL` duplicate in the queue review page**
+- [x] **Step 5: Fix the local `CHANGE_TYPE_LABEL` duplicate in the queue review page**
 
 `src/pages/admin/queue/[id].astro` defines its own separate `CHANGE_TYPE_LABEL` constant (not the one imported from `moderation-labels.ts`) — it must also cover `'modification'` or the `Record<QueueChangeType, string>` type will no longer be satisfied. In `src/pages/admin/queue/[id].astro`, replace:
 
@@ -680,7 +680,7 @@ const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
 };
 ```
 
-- [ ] **Step 6: Run the type checker**
+- [x] **Step 6: Run the type checker**
 
 ```bash
 pnpm run check
@@ -688,7 +688,7 @@ pnpm run check
 
 Expected: PASS, no type errors (this confirms both `CHANGE_TYPE_LABEL` records and every other place typed against `QueueChangeType` still compile after the union grew).
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
 
 ```bash
 pnpm test moderation-approve
@@ -696,7 +696,7 @@ pnpm test moderation-approve
 
 Expected: PASS — including the new `approveModification` test.
 
-- [ ] **Step 8: Run the full test suite**
+- [x] **Step 8: Run the full test suite**
 
 ```bash
 pnpm test
@@ -704,7 +704,7 @@ pnpm test
 
 Expected: PASS, no regressions.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/lib/supabase/database.types.ts src/lib/data/moderation.ts src/lib/data/moderation-approve.test.ts src/lib/utils/moderation-labels.ts src/pages/admin/queue/\[id\].astro

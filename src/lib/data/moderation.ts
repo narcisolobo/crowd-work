@@ -5,7 +5,7 @@ import type { Database, Json } from "../supabase/database.types";
 export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
 export type QueueChangeType =
-  "new" | "update" | "cancellation" | "archive" | "restore";
+  "new" | "update" | "cancellation" | "modification" | "archive" | "restore";
 
 export interface ProposedVenue {
   name: string;
@@ -47,11 +47,20 @@ export interface ProposedCancellation {
   note?: string | null;
 }
 
+export interface ProposedModification {
+  originalDate: string;
+  newDate?: string | null;
+  newStartTime?: string | null;
+  newVenueId?: string | null;
+  note?: string | null;
+}
+
 export interface QueueEntry {
   id: string;
   listingId: string | null;
   changeType: QueueChangeType;
-  proposedData: ProposedListingFields | ProposedCancellation | null;
+  proposedData:
+    ProposedListingFields | ProposedCancellation | ProposedModification | null;
   correctionNote: string | null;
   origin: string;
   status: QueueStatus;
@@ -59,7 +68,8 @@ export interface QueueEntry {
   proposedReason: string | null;
   confirmedBy: string | null;
   approvedBy: string | null;
-  approvedData: ProposedListingFields | ProposedCancellation | null;
+  approvedData:
+    ProposedListingFields | ProposedCancellation | ProposedModification | null;
   approvalNote: string | null;
   decidedAt: string | null;
   createdAt: string;
@@ -702,11 +712,47 @@ export async function approveCancellation(
   );
 }
 
+export async function approveModification(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  listingId: string,
+  originalDate: string,
+  newDate: string | null,
+  newStartTime: string | null,
+  newVenueId: string | null,
+  note: string | null,
+  approvalNote: string | null = null,
+): Promise<void> {
+  const { error: exceptionError } = await client
+    .from("occurrence_exceptions")
+    .insert({
+      listing_id: listingId,
+      original_date: originalDate,
+      type: "modified",
+      new_date: newDate,
+      new_start_time: newStartTime,
+      new_venue_id: newVenueId,
+      note,
+    });
+
+  if (exceptionError)
+    throw new Error(`Failed to record modification: ${exceptionError.message}`);
+
+  await markApproved(
+    client,
+    entryId,
+    listingId,
+    { originalDate, newDate, newStartTime, newVenueId, note },
+    approvalNote,
+  );
+}
+
 async function markApproved(
   client: SupabaseClient<Database>,
   entryId: string,
   listingId: string,
-  approvedData: ProposedListingFields | ProposedCancellation,
+  approvedData:
+    ProposedListingFields | ProposedCancellation | ProposedModification,
   approvalNote: string | null,
 ): Promise<void> {
   const {
@@ -844,6 +890,34 @@ export async function handleQueueReviewAction(
       entry.id,
       entry.listingId!,
       originalDate,
+      note,
+      approvalNote,
+    );
+    return { type: "redirect" };
+  }
+
+  if (action === "approve_modification") {
+    const originalDate = formData.get("originalDate")?.toString() ?? "";
+    const newDate = formData.get("newDate")?.toString() || null;
+    const newStartTime = formData.get("newStartTime")?.toString() || null;
+    const newVenueId = formData.get("newVenueId")?.toString() || null;
+    const note = formData.get("note")?.toString() || null;
+    const missingReason = findMissingReason(formData);
+    if (missingReason.length > 0) {
+      return {
+        type: "validation_error",
+        message: "Choose a reason for this approval.",
+      };
+    }
+    const approvalNote = parseApprovalNote(formData);
+    await approveModification(
+      client,
+      entry.id,
+      entry.listingId!,
+      originalDate,
+      newDate,
+      newStartTime,
+      newVenueId,
       note,
       approvalNote,
     );
