@@ -38,44 +38,68 @@ No new tables. `occurrence_exceptions` already has everything a `'modified'` row
 alter type moderation_change_type add value 'modification';
 ```
 
-**Migration 2** — RLS policy update. The existing anonymous report-form policy:
+**Migration 2** — RLS policy update. The existing anonymous report-form policy — already renamed and extended once, by the listing-submission phase, to also cover brand-new listing proposals:
 
 ```sql
-create policy "anyone can submit a correction report"
+create policy "anyone can submit a correction report or a new listing"
   on moderation_queue for insert
   to anon
   with check (
-    change_type in ('update', 'cancellation')
-    and origin = 'report_form'
-    and listing_id is not null
-    and correction_note is not null
-    and proposed_by is null
-    and proposed_reason is null
-    and confirmed_by is null
-    and status = 'pending'
+    (
+      change_type in ('update', 'cancellation')
+      and origin = 'report_form'
+      and listing_id is not null
+      and correction_note is not null
+      and proposed_by is null
+      and proposed_reason is null
+      and confirmed_by is null
+      and status = 'pending'
+    )
+    or (
+      change_type = 'new'
+      and origin = 'submission_form'
+      and listing_id is null
+      and proposed_data is not null
+      and proposed_by is null
+      and proposed_reason is null
+      and confirmed_by is null
+      and status = 'pending'
+    )
   );
 ```
 
-is replaced with a version that adds `'modification'` to the allowed change types, and — since both occurrence-specific report types now carry a date at submission time — enforces that the date is actually present:
+is replaced with a version that adds `'modification'` to the allowed change types on the correction-report branch, and — since both occurrence-specific report types now carry a date at submission time — enforces that the date is actually present, while leaving the `'new'`-listing branch untouched:
 
 ```sql
-drop policy "anyone can submit a correction report" on moderation_queue;
+drop policy "anyone can submit a correction report or a new listing" on moderation_queue;
 
-create policy "anyone can submit a correction report"
+create policy "anyone can submit a correction report or a new listing"
   on moderation_queue for insert
   to anon
   with check (
-    change_type in ('update', 'cancellation', 'modification')
-    and origin = 'report_form'
-    and listing_id is not null
-    and correction_note is not null
-    and proposed_by is null
-    and proposed_reason is null
-    and confirmed_by is null
-    and status = 'pending'
-    and (
-      change_type = 'update'
-      or (proposed_data ->> 'originalDate') is not null
+    (
+      change_type in ('update', 'cancellation', 'modification')
+      and origin = 'report_form'
+      and listing_id is not null
+      and correction_note is not null
+      and proposed_by is null
+      and proposed_reason is null
+      and confirmed_by is null
+      and status = 'pending'
+      and (
+        change_type = 'update'
+        or (proposed_data ->> 'originalDate') is not null
+      )
+    )
+    or (
+      change_type = 'new'
+      and origin = 'submission_form'
+      and listing_id is null
+      and proposed_data is not null
+      and proposed_by is null
+      and proposed_reason is null
+      and confirmed_by is null
+      and status = 'pending'
     )
   );
 ```

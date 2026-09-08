@@ -92,7 +92,7 @@ Open the generated file and write:
 alter type moderation_change_type add value 'modification';
 ```
 
-- [x] **Step 3: Apply the migration locally and verify**
+- [ ] **Step 3: Apply the migration locally and verify**
 
 ```bash
 supabase db reset
@@ -100,7 +100,7 @@ supabase db reset
 
 Expected: all prior migrations plus `modification_change_type` apply with no errors.
 
-- [x] **Step 4: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations
@@ -123,10 +123,10 @@ EOF
 
 **Interfaces:**
 
-- Consumes: Task 1's `'modification'` enum value; the existing `"anyone can submit a correction report"` policy on `moderation_queue`
+- Consumes: Task 1's `'modification'` enum value; the existing `"anyone can submit a correction report or a new listing"` policy on `moderation_queue` (renamed from `"anyone can submit a correction report"` and given a `'new'`-listing `or` branch by 20260904182818_listing_submission_policies.sql)
 - Produces: a report-form RLS policy that allows `'modification'` and requires `proposed_data->>'originalDate'` for both `'cancellation'` and `'modification'` — consumed by Task 4's updated `report.astro`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/lib/data/moderation-report-rls.test.ts`:
 
@@ -229,7 +229,7 @@ describe("report_form RLS", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 pnpm test moderation-report-rls
@@ -237,19 +237,25 @@ pnpm test moderation-report-rls
 
 Expected: FAIL on both "accepts a 'modification' report with a date" (the current policy's `change_type in ('update', 'cancellation')` check doesn't list `'modification'` yet) and "rejects a 'cancellation' report with no date" (the current policy has no date requirement at all, so this currently succeeds when the test expects an error). The other three should already pass.
 
-- [ ] **Step 3: Generate the migration file**
+- [x] **Step 3: Generate the migration file**
 
 ```bash
 supabase migration new report_form_modification_policy
 ```
 
-- [ ] **Step 4: Write the migration**
+- [x] **Step 4: Write the migration**
 
 Open the generated file and write:
 
 ```sql
 -- The public report form needs two changes to its existing anonymous
--- INSERT policy (20260903183709_moderation_queue.sql):
+-- INSERT policy. That policy started as "anyone can submit a correction
+-- report" (20260903183709_moderation_queue.sql) and was already renamed to
+-- "anyone can submit a correction report or a new listing"
+-- (20260904182818_listing_submission_policies.sql) when it gained an `or`
+-- branch for brand-new listing submissions (change_type = 'new'). This
+-- migration targets that current name and preserves the 'new' branch
+-- untouched, while changing only the correction-report branch:
 --
 -- 1. Allow the new 'modification' change_type (report.astro's new
 --    "something's different this time" option), alongside the existing
@@ -266,28 +272,40 @@ Open the generated file and write:
 -- 'modification' enum value it references) because Postgres forbids using
 -- a new enum value within the same transaction that added it — see
 -- 20260907025858_archive_listing_rls.sql for the same pattern.
-drop policy "anyone can submit a correction report" on moderation_queue;
+drop policy "anyone can submit a correction report or a new listing" on moderation_queue;
 
-create policy "anyone can submit a correction report"
+create policy "anyone can submit a correction report or a new listing"
   on moderation_queue for insert
   to anon
   with check (
-    change_type in ('update', 'cancellation', 'modification')
-    and origin = 'report_form'
-    and listing_id is not null
-    and correction_note is not null
-    and proposed_by is null
-    and proposed_reason is null
-    and confirmed_by is null
-    and status = 'pending'
-    and (
-      change_type = 'update'
-      or (proposed_data ->> 'originalDate') is not null
+    (
+      change_type in ('update', 'cancellation', 'modification')
+      and origin = 'report_form'
+      and listing_id is not null
+      and correction_note is not null
+      and proposed_by is null
+      and proposed_reason is null
+      and confirmed_by is null
+      and status = 'pending'
+      and (
+        change_type = 'update'
+        or (proposed_data ->> 'originalDate') is not null
+      )
+    )
+    or (
+      change_type = 'new'
+      and origin = 'submission_form'
+      and listing_id is null
+      and proposed_data is not null
+      and proposed_by is null
+      and proposed_reason is null
+      and confirmed_by is null
+      and status = 'pending'
     )
   );
 ```
 
-- [ ] **Step 5: Apply the migration locally**
+- [x] **Step 5: Apply the migration locally**
 
 ```bash
 supabase db reset
