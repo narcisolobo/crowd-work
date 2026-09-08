@@ -1140,7 +1140,7 @@ EOF
 - Consumes: Task 5's `ModificationApprovalForm`; the existing `venues`/`venueOptions` already computed on this page
 - Produces: none — terminal UI wiring
 
-- [ ] **Step 1: Import the new component**
+- [x] **Step 1: Import the new component**
 
 Add to the existing imports:
 
@@ -1148,7 +1148,7 @@ Add to the existing imports:
 import ModificationApprovalForm from "../../../components/moderation/ModificationApprovalForm.astro";
 ```
 
-- [ ] **Step 2: Preserve reason/otherReason for the new action**
+- [x] **Step 2: Preserve reason/otherReason for the new action**
 
 Replace:
 
@@ -1172,7 +1172,7 @@ with:
   }
 ```
 
-- [ ] **Step 3: Compute the proposed-modification prefill**
+- [x] **Step 3: Compute the proposed-modification prefill**
 
 Right after the existing `proposedCancellation` computation, add:
 
@@ -1183,7 +1183,7 @@ const proposedModification =
     : null;
 ```
 
-- [ ] **Step 4: Render the new form for `'modification'` entries**
+- [x] **Step 4: Render the new form for `'modification'` entries**
 
 Replace:
 
@@ -1241,7 +1241,7 @@ with:
   }
 ```
 
-- [ ] **Step 5: Run the type checker and full test suite**
+- [x] **Step 5: Run the type checker and full test suite**
 
 ```bash
 pnpm run check
@@ -1250,7 +1250,7 @@ pnpm test
 
 Expected: both PASS, no regressions.
 
-- [ ] **Step 6: Verify manually**
+- [x] **Step 6: Verify manually**
 
 With the dev server still running from Task 4:
 
@@ -1261,7 +1261,7 @@ With the dev server still running from Task 4:
 5. Open `/admin/archive`, confirm a "Modification" entry appears with the correct origin ("Public report") and reason.
 6. As a second check, directly query (or ask a moderator to check) that the listing's `occurrence_exceptions` now has a `type: 'modified'` row for that date with the new start time set.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/admin/queue/\[id\].astro

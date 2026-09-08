@@ -17,6 +17,7 @@ import {
   ORIGIN_LABEL,
   STATUS_LABEL,
 } from "../../../lib/utils/moderation-labels";
+import ModificationApprovalForm from "../../../components/moderation/ModificationApprovalForm.astro";
 
 const { id } = Astro.params;
 const supabase = Astro.locals.supabase!;
@@ -43,7 +44,11 @@ let submittedOtherReason = "";
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const action = formData.get("action")?.toString();
-  if (action === "approve" || action === "approve_cancellation") {
+  if (
+    action === "approve" ||
+    action === "approve_cancellation" ||
+    action === "approve_modification"
+  ) {
     submittedReason = formData.get("reason")?.toString() ?? "";
     submittedOtherReason = formData.get("otherReason")?.toString() ?? "";
   }
@@ -66,6 +71,10 @@ if (Astro.request.method === "POST") {
 const prefill = await getPrefillForEntry(entry);
 const proposedCancellation =
   entry.changeType === "cancellation"
+    ? (entry.proposedData as ProposedCancellation)
+    : null;
+const proposedModification =
+  entry.changeType === "modification"
     ? (entry.proposedData as ProposedCancellation)
     : null;
 const isOwnProposal = entry.proposedBy === user.id;
@@ -139,6 +148,14 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
       <CancellationApprovalForm
         entry={entry}
         proposedCancellation={proposedCancellation}
+        reason={submittedReason}
+        otherReason={submittedOtherReason}
+      />
+    ) : entry.changeType === "modification" ? (
+      <ModificationApprovalForm
+        entry={entry}
+        proposedModification={proposedModification}
+        venueOptions={venueOptions}
         reason={submittedReason}
         otherReason={submittedOtherReason}
       />
