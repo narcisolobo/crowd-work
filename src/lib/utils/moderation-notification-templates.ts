@@ -2,13 +2,21 @@ import {
   CHANGE_TYPE_LABEL,
   ORIGIN_LABEL,
   previewFor,
-} from "./moderation-labels";
-import type {
-  ProposedCancellation,
-  ProposedListingFields,
-  ProposedModification,
-  QueueChangeType,
-} from "../data/moderation";
+} from "./moderation-labels.ts";
+
+// No import from "../data/moderation", even type-only — see the note in
+// moderation-labels.ts. A single merged shape (rather than the real
+// ProposedListingFields | ProposedCancellation | ProposedModification
+// union) is enough here: every field this module reads is optional, and a
+// real QueueEntry's proposedData is structurally assignable to it
+// regardless of which union member it actually is.
+type QueueChangeType =
+  | "new"
+  | "update"
+  | "cancellation"
+  | "modification"
+  | "archive"
+  | "restore";
 
 const FONT_STACK =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, system-ui';
@@ -18,22 +26,12 @@ interface TemplateEntry {
   changeType: QueueChangeType;
   origin: string;
   correctionNote: string | null;
-  proposedData:
-    | ProposedListingFields
-    | ProposedCancellation
-    | ProposedModification
-    | null;
+  proposedData: { originalDate?: string | null; title?: string | null } | null;
   createdAt: string;
 }
 
-// Only cancellation/modification proposedData carries originalDate —
-// ProposedListingFields (new/update) doesn't have the property at all, so
-// a plain `?.originalDate` won't type-check on the union. The `in` check
-// narrows to the two members that do.
 function originalDateOf(entry: TemplateEntry): string | null {
-  const data = entry.proposedData;
-  if (data && "originalDate" in data) return data.originalDate;
-  return null;
+  return entry.proposedData?.originalDate ?? null;
 }
 
 function daysAway(dateStr: string, now: Date): number {

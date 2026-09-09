@@ -3,7 +3,6 @@ import {
   buildUrgentEmail,
   buildDigestEmail,
 } from "./moderation-notification-templates";
-import type { ProposedListingFields } from "../data/moderation";
 
 const NOW = new Date("2026-09-10T12:00:00Z");
 
@@ -21,10 +20,7 @@ const NEW_LISTING_ENTRY = {
   changeType: "new" as const,
   origin: "source_check",
   correctionNote: "Detected via automated check",
-  // Only `title` matters to previewFor's 'new'/'update' branch — the rest
-  // of ProposedListingFields is irrelevant to this test, so it's cast
-  // rather than fully populated.
-  proposedData: { title: "Brand New Open Mic" } as ProposedListingFields,
+  proposedData: { title: "Brand New Open Mic" },
   createdAt: "2026-09-09T08:00:00Z",
 };
 

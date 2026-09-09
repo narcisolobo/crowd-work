@@ -1,8 +1,17 @@
-import type {
-  ProposedListingFields,
-  QueueChangeType,
-  QueueEntry,
-} from "../data/moderation";
+// Deliberately no import from "../data/moderation" here, even type-only:
+// `supabase functions serve` resolves type-only imports too (unlike
+// Vitest/esbuild, which strip them before ever resolving), and moderation.ts
+// has a real transitive dependency on ../supabase/supabase.ts, which reads
+// import.meta.env — a Vite-only mechanism Deno's edge runtime doesn't have.
+// This local QueueChangeType is structurally identical to the one in
+// moderation.ts, so every real QueueEntry still satisfies it.
+type QueueChangeType =
+  | "new"
+  | "update"
+  | "cancellation"
+  | "modification"
+  | "archive"
+  | "restore";
 
 export const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   new: "New",
@@ -128,8 +137,22 @@ export function truncate(text: string, length = PREVIEW_LENGTH): string {
   return text.length > length ? `${text.slice(0, length)}…` : text;
 }
 
+export interface PreviewableQueueEntry {
+  correctionNote: string | null;
+  // Loosened to the two fields real proposedData shapes actually carry,
+  // rather than importing the full ProposedListingFields |
+  // ProposedCancellation | ProposedModification union. previewFor only
+  // ever reads `title`; `originalDate` is included purely so every real
+  // shape shares at least one property with this type — TS's "weak type"
+  // check (all-optional-properties) otherwise rejects assigning a
+  // ProposedCancellation/ProposedModification value here, since neither
+  // has a `title` field at all.
+  proposedData: { title?: string | null; originalDate?: string | null } | null;
+  changeType: QueueChangeType;
+}
+
 export function previewFor(
-  entry: Pick<QueueEntry, "correctionNote" | "proposedData" | "changeType">,
+  entry: PreviewableQueueEntry,
   listingTitle?: string | null,
 ): string {
   if (entry.changeType === "archive") {
@@ -141,11 +164,10 @@ export function previewFor(
   if (entry.correctionNote) {
     return truncate(entry.correctionNote);
   }
-  const data = entry.proposedData as ProposedListingFields | null;
-  if (data?.title) {
+  if (entry.proposedData?.title) {
     return entry.changeType === "new"
-      ? `New listing: ${data.title}`
-      : `Update: ${data.title}`;
+      ? `New listing: ${entry.proposedData.title}`
+      : `Update: ${entry.proposedData.title}`;
   }
   return entry.changeType === "modification" ? "Modification" : "Cancellation";
 }
