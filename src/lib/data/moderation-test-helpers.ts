@@ -62,3 +62,22 @@ export async function signInSourceCheckAgent(): Promise<
 
   return client;
 }
+
+export async function signInNotificationAgent(): Promise<
+  SupabaseClient<Database>
+> {
+  const client = createClient<Database>(
+    requiredEnv("PUBLIC_SUPABASE_URL"),
+    requiredEnv("PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+
+  const { error } = await client.auth.signInWithPassword({
+    email: requiredEnv("NOTIFICATION_AGENT_EMAIL"),
+    password: requiredEnv("NOTIFICATION_AGENT_PASSWORD"),
+  });
+  if (error)
+    throw new Error(`Failed to sign in notification agent: ${error.message}`);
+
+  return client;
+}

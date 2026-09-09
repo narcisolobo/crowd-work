@@ -205,7 +205,7 @@ EOF
 
 This task has no automated test — mirrors `provision-source-check-agent.mjs`, verified by running it.
 
-- [ ] **Step 1: Write the provisioning script**
+- [x] **Step 1: Write the provisioning script**
 
 Create `scripts/provision-notification-agent.mjs`:
 
@@ -252,7 +252,7 @@ if (agentError) throw agentError;
 console.log(`Provisioned notification agent: ${email} (${user.user.id})`);
 ```
 
-- [ ] **Step 2: Add env var placeholders**
+- [x] **Step 2: Add env var placeholders**
 
 In `.env.example`, add after the existing `SOURCE_CHECK_AGENT_PASSWORD` line:
 
@@ -269,7 +269,7 @@ RESEND_FROM_EMAIL=
 NOTIFICATION_FUNCTION_SECRET=
 ```
 
-- [ ] **Step 3: Provision the account locally and verify**
+- [x] **Step 3: Provision the account locally and verify**
 
 In `.env` (gitignored), choose a local-only email/password pair.
 
@@ -279,7 +279,7 @@ node scripts/provision-notification-agent.mjs notifications@crowdwork.test <pass
 
 Expected: logs `Provisioned notification agent: notifications@crowdwork.test (<uuid>)` with no errors.
 
-- [ ] **Step 4: Add the test-helper sign-in function**
+- [x] **Step 4: Add the test-helper sign-in function**
 
 In `src/lib/data/moderation-test-helpers.ts`, add after `signInSourceCheckAgent`:
 
@@ -304,7 +304,7 @@ export async function signInNotificationAgent(): Promise<
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/provision-notification-agent.mjs .env.example src/lib/data/moderation-test-helpers.ts
