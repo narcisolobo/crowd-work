@@ -12,7 +12,10 @@
     "astro": "astro",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "check": "pnpm exec astro check"
+    "check": "pnpm exec astro check",
+    "provision:test-mods": "node scripts/provision-moderators.mjs",
+    "provision:source-check-agent": "node scripts/provision-source-check-agent.mjs",
+    "provision:notification-agent": "node scripts/provision-notification-agent.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

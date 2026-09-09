@@ -8,7 +8,11 @@ try {
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const [email1, password1, email2, password2] = process.argv.slice(2);
+const [argEmail1, argPassword1, argEmail2, argPassword2] = process.argv.slice(2);
+const email1 = argEmail1 ?? process.env.TEST_MODERATOR_1_EMAIL;
+const password1 = argPassword1 ?? process.env.TEST_MODERATOR_1_PASSWORD;
+const email2 = argEmail2 ?? process.env.TEST_MODERATOR_2_EMAIL;
+const password2 = argPassword2 ?? process.env.TEST_MODERATOR_2_PASSWORD;
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
@@ -17,7 +21,8 @@ if (!supabaseUrl || !serviceRoleKey) {
 }
 if (!email1 || !password1 || !email2 || !password2) {
   throw new Error(
-    "Usage: node scripts/provision-moderators.mjs <email1> <password1> <email2> <password2>",
+    "Usage: node scripts/provision-moderators.mjs [<email1> <password1> <email2> <password2>] " +
+      "(defaults to TEST_MODERATOR_1_*/TEST_MODERATOR_2_* from .env)",
   );
 }
 

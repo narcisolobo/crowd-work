@@ -8,7 +8,9 @@ try {
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const [email, password] = process.argv.slice(2);
+const [argEmail, argPassword] = process.argv.slice(2);
+const email = argEmail ?? process.env.NOTIFICATION_AGENT_EMAIL;
+const password = argPassword ?? process.env.NOTIFICATION_AGENT_PASSWORD;
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
@@ -17,7 +19,8 @@ if (!supabaseUrl || !serviceRoleKey) {
 }
 if (!email || !password) {
   throw new Error(
-    "Usage: node scripts/provision-notification-agent.mjs <email> <password>",
+    "Usage: node scripts/provision-notification-agent.mjs [<email> <password>] " +
+      "(defaults to NOTIFICATION_AGENT_EMAIL/PASSWORD from .env)",
   );
 }
 
