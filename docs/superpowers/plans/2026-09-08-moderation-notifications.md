@@ -1046,7 +1046,7 @@ select vault.create_secret('<your NOTIFICATION_FUNCTION_SECRET value from .env>'
 
 `host.docker.internal` is the standard way for the local Postgres container to reach the local Edge Runtime container; the port (`54521` here) must match this project's `[api]` port in `supabase/config.toml`. If your local Supabase CLI version resolves container networking differently, adjust the URL and re-verify Task 8's manual invocation still succeeds end-to-end.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations
