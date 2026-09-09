@@ -1,4 +1,14 @@
-import type { QueueChangeType, QueueStatus } from "../data/moderation";
+// No import from "../data/moderation", even type-only — see the identical
+// note in moderation-labels.ts. These locally-declared unions are
+// structurally identical to the real QueueChangeType/QueueStatus.
+type QueueChangeType =
+  | "new"
+  | "update"
+  | "cancellation"
+  | "modification"
+  | "archive"
+  | "restore";
+type QueueStatus = "pending" | "rejection_proposed" | "approved" | "rejected";
 
 export const URGENT_WINDOW_DAYS = 3;
 
