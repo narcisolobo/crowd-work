@@ -740,16 +740,17 @@ EOF
 
 **Interfaces:**
 
-- Consumes: `CHANGE_TYPE_LABEL`, `ORIGIN_LABEL`, `previewFor` (value imports) from `./moderation-labels`; `QueueChangeType` type (type-only) from `../data/moderation`
+- Consumes: `CHANGE_TYPE_LABEL`, `ORIGIN_LABEL`, `previewFor` (value imports) from `./moderation-labels`; `QueueChangeType`, `ProposedListingFields`, `ProposedCancellation`, `ProposedModification` types (type-only) from `../data/moderation`
 - Produces: `buildUrgentEmail(entries, now: Date): { subject: string; html: string }`, `buildDigestEmail(entries, now: Date): { subject: string; html: string } | null` — consumed by Task 7's orchestration module
 
 `moderation-labels.ts` has no non-type-only imports of its own, so this module stays Deno-importable by relative path (see Global Constraints).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, it, expect } from "vitest";
 import { buildUrgentEmail, buildDigestEmail } from "./moderation-notification-templates";
+import type { ProposedListingFields } from "../data/moderation";
 
 const NOW = new Date("2026-09-10T12:00:00Z");
 
@@ -767,7 +768,10 @@ const NEW_LISTING_ENTRY = {
   changeType: "new" as const,
   origin: "source_check",
   correctionNote: "Detected via automated check",
-  proposedData: { title: "Brand New Open Mic" },
+  // Only `title` matters to previewFor's 'new'/'update' branch — the rest
+  // of ProposedListingFields is irrelevant to this test, so it's cast
+  // rather than fully populated.
+  proposedData: { title: "Brand New Open Mic" } as ProposedListingFields,
   createdAt: "2026-09-09T08:00:00Z",
 };
 
@@ -800,14 +804,17 @@ describe("buildDigestEmail", () => {
     expect(result!.subject).toBe("Daily digest: 2 pending moderation items");
     expect(result!.html).toContain("Cancellation");
     expect(result!.html).toContain("New");
-    expect(result!.html).toContain("Brand New Open Mic");
+    // previewFor prefers correctionNote over proposedData.title when both
+    // are present (matches the admin dashboard's own headline logic), so
+    // this is what actually renders — not the title.
+    expect(result!.html).toContain("Detected via automated check");
     expect(result!.html).toContain("Automated source check");
     expect(result!.html).toContain("2026-09-08");
   });
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 pnpm test -- moderation-notification-templates
@@ -815,11 +822,16 @@ pnpm test -- moderation-notification-templates
 
 Expected: FAIL with "Cannot find module './moderation-notification-templates'".
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 import { CHANGE_TYPE_LABEL, ORIGIN_LABEL, previewFor } from "./moderation-labels";
-import type { QueueChangeType } from "../data/moderation";
+import type {
+  ProposedCancellation,
+  ProposedListingFields,
+  ProposedModification,
+  QueueChangeType,
+} from "../data/moderation";
 
 const FONT_STACK =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, system-ui';
@@ -829,8 +841,23 @@ interface TemplateEntry {
   changeType: QueueChangeType;
   origin: string;
   correctionNote: string | null;
-  proposedData: { originalDate?: string | null; title?: string | null } | null;
+  proposedData:
+    | ProposedListingFields
+    | ProposedCancellation
+    | ProposedModification
+    | null;
   createdAt: string;
+}
+
+// Only cancellation/modification proposedData carries originalDate —
+// ProposedListingFields (new/update) doesn't have the property at all, so
+// a plain `?.originalDate` won't type-check on the union. previewFor's own
+// QueueEntry parameter type is exactly this union, which is why
+// TemplateEntry has to match it rather than use a looser inline shape.
+function originalDateOf(entry: TemplateEntry): string | null {
+  const data = entry.proposedData;
+  if (data && "originalDate" in data) return data.originalDate;
+  return null;
 }
 
 function daysAway(dateStr: string, now: Date): number {
@@ -870,7 +897,7 @@ export function buildUrgentEmail(
 ): { subject: string; html: string } {
   const items = entries
     .map((entry) => {
-      const originalDate = entry.proposedData?.originalDate ?? "";
+      const originalDate = originalDateOf(entry) ?? "";
       const secondLine = `${ORIGIN_LABEL[entry.origin] ?? entry.origin} · Occurs ${dateLabel(originalDate)} (in ${daysAway(originalDate, now)} days)`;
       return itemHtml(entry, secondLine);
     })
@@ -910,7 +937,7 @@ export function buildDigestEmail(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 pnpm test -- moderation-notification-templates
@@ -918,7 +945,7 @@ pnpm test -- moderation-notification-templates
 
 Expected: PASS, all tests. (The subject-line assertions in Step 1 use singular/plural exactly as this implementation produces — adjust either side if they drift.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/utils/moderation-notification-templates.ts src/lib/utils/moderation-notification-templates.test.ts
