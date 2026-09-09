@@ -1074,7 +1074,7 @@ EOF
 
 This is the piece the spec calls out explicitly: "Resend calls mocked in tests" and "one integration-style test covering a full urgent-then-digest cycle." It runs against the **real local Supabase instance** (same convention as every other data-layer test in this project) authenticated as the real `notification_agents` account (proving the Task 1 RLS grant is sufficient for the whole cycle, not just the isolated update tested in Task 3), with only the `sendEmail` callback mocked — nothing about Resend itself needs a real network call to test this logic. It has zero non-type-only imports beyond Tasks 4-5, so it stays Deno-importable (see Global Constraints).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, it, expect, afterEach, vi } from "vitest";
@@ -1187,7 +1187,7 @@ describe("runNotificationCycle", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 pnpm test -- moderation-notification-send
@@ -1195,7 +1195,7 @@ pnpm test -- moderation-notification-send
 
 Expected: FAIL with "Cannot find module './moderation-notification-send'".
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -1285,7 +1285,7 @@ export async function runNotificationCycle(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 pnpm test -- moderation-notification-send
@@ -1293,7 +1293,7 @@ pnpm test -- moderation-notification-send
 
 Expected: PASS, all tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/utils/moderation-notification-send.ts src/lib/utils/moderation-notification-send.test.ts
