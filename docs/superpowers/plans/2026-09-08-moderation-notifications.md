@@ -1320,7 +1320,7 @@ EOF
 
 Since the substantive logic now lives in Task 7 (fully tested under Vitest), this file has no automated test of its own — it's a thin Deno wrapper, verified by local invocation, the same "run it and check the result" treatment as the provisioning script.
 
-- [ ] **Step 1: Write the function**
+- [x] **Step 1: Write the function**
 
 ```ts
 import { createClient } from "npm:@supabase/supabase-js@2.112.4";
@@ -1381,7 +1381,7 @@ Deno.serve(async (req) => {
 });
 ```
 
-- [ ] **Step 2: Set local Edge Function secrets**
+- [x] **Step 2: Set local Edge Function secrets**
 
 Create `supabase/functions/.env` (gitignored — do not commit):
 
