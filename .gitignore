@@ -48,3 +48,6 @@ drama
 .DS_Store
 
 .env*
+
+# supabase snippets
+supabase/snippets/Set the per-environment Vault secrets locally.sql

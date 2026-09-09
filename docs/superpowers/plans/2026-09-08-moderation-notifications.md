@@ -970,15 +970,15 @@ EOF
 - Consumes: `pg_cron`, `pg_net`, `supabase_vault` extensions (enabled by this task)
 - Produces: two scheduled jobs (`notify-urgent`, `notify-digest`) that POST to the Task 8 Edge Function — no other task depends on this file directly, but Task 8 must exist (even as a stub) before these schedules do anything useful
 
-The three Vault secrets below are environment-specific and must never be committed — set them once per environment (local included, since `supabase db reset` wipes Vault along with all other data) via the Studio SQL editor or `supabase db execute`, the same way `NOTIFICATION_AGENT_EMAIL`/`PASSWORD` are set once per environment rather than hardcoded.
+The three Vault secrets below are environment-specific and must never be committed — set them once per environment (local included, since `supabase db reset` wipes Vault along with all other data) via the Studio SQL editor or `supabase db query --local`, the same way `NOTIFICATION_AGENT_EMAIL`/`PASSWORD` are set once per environment rather than hardcoded.
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new notification_cron_schedules
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 ```sql
 create extension if not exists pg_cron;
@@ -1020,7 +1020,7 @@ select cron.schedule(
 );
 ```
 
-- [ ] **Step 3: Apply the migration locally and verify**
+- [x] **Step 3: Apply the migration locally and verify**
 
 ```bash
 supabase db reset
@@ -1029,14 +1029,14 @@ supabase db reset
 Expected: no errors. Verify the jobs registered:
 
 ```bash
-supabase db execute --sql "select jobname, schedule from cron.job;"
+supabase db query "select jobname, schedule from cron.job;" --local
 ```
 
 Expected: `notify-urgent` and `notify-digest` listed with their schedules.
 
-- [ ] **Step 4: Set the per-environment Vault secrets locally**
+- [x] **Step 4: Set the per-environment Vault secrets locally**
 
-Run once (and again after any future `supabase db reset`) via `supabase db execute` or the Studio SQL editor — do not add this to a migration file, since the values differ per environment and the URL/anon key are not meant to be committed alongside a secret:
+Run once (and again after any future `supabase db reset`) via `supabase db query --local` or the Studio SQL editor — do not add this to a migration file, since the values differ per environment and the URL/anon key are not meant to be committed alongside a secret:
 
 ```sql
 select vault.create_secret('http://host.docker.internal:54521/functions/v1/send-moderation-notifications', 'notification_function_url');
@@ -1421,10 +1421,10 @@ Expected: `200 OK` with `{"sent":true,"matched":N}` if any pending entries exist
 With the function still served locally and the Task 6 Vault secrets set, manually trigger the cron job to confirm wiring without waiting 15 minutes:
 
 ```bash
-supabase db execute --sql "select cron.schedule_in_database('notify-urgent-test', '5 seconds', \$\$select net.http_post(url := (select decrypted_secret from vault.decrypted_secrets where name = 'notification_function_url'), headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'notification_function_anon_key'), 'x-notification-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'notification_function_secret')), body := jsonb_build_object('mode', 'urgent')) as request_id;\$\$, 'postgres');"
+supabase db query "select cron.schedule_in_database('notify-urgent-test', '5 seconds', \$\$select net.http_post(url := (select decrypted_secret from vault.decrypted_secrets where name = 'notification_function_url'), headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'notification_function_anon_key'), 'x-notification-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'notification_function_secret')), body := jsonb_build_object('mode', 'urgent')) as request_id;\$\$, 'postgres');" --local
 ```
 
-Expected: the function logs (`supabase functions serve` output) show an incoming request within a few seconds. Clean up the one-off test job afterward: `select cron.unschedule('notify-urgent-test');`.
+Expected: the function logs (`supabase functions serve` output) show an incoming request within a few seconds. Clean up the one-off test job afterward: `supabase db query "select cron.unschedule('notify-urgent-test');" --local`.
 
 - [ ] **Step 5: Commit**
 
