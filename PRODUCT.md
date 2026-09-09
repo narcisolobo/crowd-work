@@ -32,7 +32,7 @@ The differentiating mechanism is governance, not a feature list. A single shared
 - **Daily sourcing agent**: a scheduled Supabase Edge Function checks each seed source (venue sites, Instagram, etc.) for changes, using Claude Haiku 4.5 with a defined JSON schema to extract structured listing data. Sources start `unverified` and graduate to `trusted` after enough clean approvals in a row, at which point their future proposals auto-publish (still logged for audit).
 - **Moderation** (authenticated admin area, Supabase Auth): the site owner and volunteer comic moderators work the shared queue — approve, edit, or propose-and-confirm rejection. User submissions never accrue trust and are always human-reviewed regardless of history.
 - **Post-publish corrections**: a "report a problem" link on each listing detail page feeds back into the same moderation queue.
-- **Notifications**: Resend-powered daily digest of pending queue items, plus a real-time alert for time-sensitive changes (a cancellation or modification within 2-3 days).
+- **Notifications**: Resend-powered daily digest of pending queue items, plus an instant alert (via `pg_cron`, polling every 15 minutes) for time-sensitive changes — a pending cancellation or modification within 3 days.
 
 ## Capabilities and Constraints
 

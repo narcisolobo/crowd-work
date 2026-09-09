@@ -96,6 +96,8 @@ Both paths converge on one shared queue, worked by the site owner and volunteer 
 
 **Post-publish corrections**: a "report a problem" link on each listing detail page feeds back into the same moderation queue as a correction — no separate mechanism needed. Trust demotion (manually knocking a `trusted` source back to requiring review) is included as a field now even though the automatic "demote after N bad ones" logic isn't needed until it's actually observed.
 
+> **Update (2026-09-08):** Superseded by [2026-09-08-moderation-notifications-design.md](2026-09-08-moderation-notifications-design.md) — the digest/urgent-alert split below is accurate in spirit, but the trigger mechanism (a `pg_cron`-invoked Edge Function, not a database webhook) and the urgency window (3 days, not "2-3") have both changed.
+
 ## Notifications
 
 Moderators need to know when something's waiting without having to remember to check the admin dashboard. Two triggers, both via **Resend**:
