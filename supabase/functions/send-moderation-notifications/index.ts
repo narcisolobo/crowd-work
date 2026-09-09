@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2.112.4";
+import { createClient } from "@supabase/supabase-js";
 import { runNotificationCycle } from "../../../src/lib/utils/moderation-notification-send.ts";
 
 Deno.serve(async (req) => {
@@ -14,8 +14,13 @@ Deno.serve(async (req) => {
   }
 
   const client = createClient(
-    Deno.env.get("PUBLIC_SUPABASE_URL")!,
-    Deno.env.get("PUBLIC_SUPABASE_PUBLISHABLE_KEY")!,
+    // SUPABASE_URL/SUPABASE_ANON_KEY are reserved names Supabase's Edge
+    // Runtime auto-injects (both locally and when deployed) — distinct
+    // from this project's own PUBLIC_SUPABASE_URL/PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    // which are just this app's Vite/Astro naming convention and were
+    // never going to be set here.
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
