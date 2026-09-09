@@ -1,10 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../supabase/database.types";
-import { isUrgent, isDigestEligible } from "./moderation-notification-rules";
+import {
+  isUrgent,
+  isDigestEligible,
+} from "./moderation-notification-rules.ts";
 import {
   buildUrgentEmail,
   buildDigestEmail,
-} from "./moderation-notification-templates";
+} from "./moderation-notification-templates.ts";
 
 export type SendEmail = (args: {
   subject: string;
@@ -13,7 +15,7 @@ export type SendEmail = (args: {
 }) => Promise<boolean>;
 
 export async function runNotificationCycle(
-  client: SupabaseClient<Database>,
+  client: SupabaseClient,
   mode: "urgent" | "digest",
   now: Date,
   sendEmail: SendEmail,
