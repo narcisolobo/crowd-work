@@ -5,6 +5,8 @@
 
 > **Update (2026-09-06):** The "daily AI-assisted agent" described throughout this doc (Path 1, the scheduled Supabase Edge Function, the `sourcing agent` LLM budget line) has been scoped down for the MVP to a manually-triggered Claude Code skill (`/check-sources`), with the fully autonomous, continuously-scheduled version moved to post-MVP. See [2026-09-05-source-check-agent-design.md](2026-09-05-source-check-agent-design.md) and [future-considerations.md](../../../notes/future-considerations.md) for the current design.
 
+> **Update (2026-09-09):** Geographic filtering (see Geographic Filtering and Key Pages / Components below) is scoped down for the MVP to area-only. Given how sparse the directory's listings will be early on, filtering down to individual neighborhood risks empty or single-result filter states; area already covers the vision doc's core "what's happening on the Eastside tonight" case, and each listing still shows its neighborhood for a visitor to scan within an area's results. Neighborhood-level filtering is a maybe for post-MVP — see [future-considerations.md](../../../notes/future-considerations.md).
+
 ## Summary
 
 Crowd Work's MVP is a directory of Los Angeles open mics and comedy shows, serving two audiences (comics looking for stage time, general audiences looking for shows) from one shared dataset. Listings are sourced two ways — a daily AI-assisted agent that checks a curated list of sources for changes, and a public submission form — both converging on a single, accountable moderation queue before anything publishes. The design is deliberately built around a specific failure mode: a prior community-maintained LA open mic list collapsed when its sole maintainer left and its successor became a point of community conflict. Nothing here should depend on one person's unilateral judgment or availability.
@@ -95,6 +97,8 @@ Both paths converge on one shared queue, worked by the site owner and volunteer 
 **Trust escalation applies only to `sources`, never to user submissions.** Anonymous form submissions have no persistent identity to accumulate trust against, so every single one is human-reviewed, regardless of submission history. Once a source is `trusted`, the agent still writes to `moderation_queue` for the audit trail, but those entries auto-transition to `approved` and publish immediately.
 
 **Post-publish corrections**: a "report a problem" link on each listing detail page feeds back into the same moderation queue as a correction — no separate mechanism needed. Trust demotion (manually knocking a `trusted` source back to requiring review) is included as a field now even though the automatic "demote after N bad ones" logic isn't needed until it's actually observed.
+
+> **Update (2026-09-08):** Superseded by [2026-09-08-moderation-notifications-design.md](2026-09-08-moderation-notifications-design.md) — the digest/urgent-alert split below is accurate in spirit, but the trigger mechanism (a `pg_cron`-invoked Edge Function, not a database webhook) and the urgency window (3 days, not "2-3") have both changed.
 
 ## Notifications
 

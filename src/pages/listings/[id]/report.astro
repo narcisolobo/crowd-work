@@ -5,6 +5,7 @@ import FormTextarea from "../../../components/forms/FormTextarea.astro";
 import Button from "../../../components/forms/Button.astro";
 import { supabase } from "../../../lib/supabase/supabase";
 import { getListingById } from "../../../lib/data/listings";
+import FormField from "../../../components/forms/FormField.astro";
 
 const { id } = Astro.params;
 
@@ -18,35 +19,54 @@ if (!listing) {
   return Astro.redirect("/404");
 }
 
-// A moderator arrives here from the direct-add success card's "Edit this
-// listing" link, not as an anonymous visitor — same form and same queue
-// path (still reviewed like any other update), but the copy shouldn't
-// address them as a stranger reporting someone else's mistake.
-const isModeratorContext = Astro.url.searchParams.get("context") === "moderator";
+// Both 'not_happening' (cancellation) and 'different_this_time'
+// (modification) are about one specific occurrence, so both need a date;
+// 'something_else' is a non-occurrence-specific correction (wrong
+// description, wrong sign-up method) and stays date-less.
+const OCCURRENCE_REASONS = new Set(["not_happening", "different_this_time"]);
+const VALID_REASONS = new Set([
+  "not_happening",
+  "different_this_time",
+  "something_else",
+]);
 
 let submitted = false;
 let errorMessage: string | null = null;
 let selectedReason: string | null = null;
+let selectedOriginalDate: string | null = null;
 
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const honeypot = formData.get("company")?.toString() ?? "";
   const reason = formData.get("reason")?.toString();
   const note = formData.get("note")?.toString();
+  const originalDate = formData.get("originalDate")?.toString();
   selectedReason = reason ?? null;
+  selectedOriginalDate = originalDate ?? null;
+
+  const needsDate = reason !== undefined && OCCURRENCE_REASONS.has(reason);
 
   if (honeypot !== "") {
     // Silently succeed for bots without writing anything.
     submitted = true;
-  } else if (reason !== "not_happening" && reason !== "something_else") {
+  } else if (!reason || !VALID_REASONS.has(reason)) {
     errorMessage = "Please choose a reason.";
+  } else if (needsDate && (!originalDate || originalDate.trim().length === 0)) {
+    errorMessage = "Please choose which date this is about.";
   } else if (!note || note.trim().length === 0) {
     errorMessage = "Please describe what's wrong.";
   } else {
+    const changeType =
+      reason === "not_happening"
+        ? "cancellation"
+        : reason === "different_this_time"
+          ? "modification"
+          : "update";
+
     const { error } = await supabase.from("moderation_queue").insert({
       listing_id: listing.id,
-      change_type: reason === "not_happening" ? "cancellation" : "update",
-      proposed_data: reason === "not_happening" ? { originalDate: null } : null,
+      change_type: changeType,
+      proposed_data: needsDate ? { originalDate } : null,
       correction_note: note.trim(),
       origin: "report_form",
       status: "pending",
@@ -63,8 +83,14 @@ if (Astro.request.method === "POST") {
 
 const reasonOptions = [
   { value: "not_happening", label: "This isn't happening anymore" },
+  {
+    value: "different_this_time",
+    label: "It's happening, but something's different this time",
+  },
   { value: "something_else", label: "Something else is wrong" },
 ];
+const showDateField =
+  selectedReason !== null && OCCURRENCE_REASONS.has(selectedReason);
 ---
 
 <!doctype html>
@@ -72,11 +98,7 @@ const reasonOptions = [
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      {isModeratorContext
-        ? `Edit listing — ${listing.title} — Crowd Work admin`
-        : `Report a problem — ${listing.title} — Crowd Work`}
-    </title>
+    <title>Report a problem — {listing.title} — Crowd Work</title>
     <script is:inline>
       (function () {
         const stored = localStorage.getItem("theme");
@@ -89,11 +111,15 @@ const reasonOptions = [
     <Font cssVariable="--font-ibm-plex-sans" preload />
     <Font cssVariable="--font-ibm-plex-mono" />
   </head>
-  <body class="flex min-h-screen flex-col font-body text-base text-ink antialiased">
-    <div class="bg-paper mx-auto flex w-full max-w-form flex-1 flex-col px-5 py-10">
+  <body
+    class="font-body text-ink flex min-h-screen flex-col text-base antialiased"
+  >
+    <div
+      class="bg-paper max-w-form mx-auto flex w-full flex-1 flex-col px-5 py-10"
+    >
       <a
         href={`/listings/${listing.id}`}
-        class="inline-flex items-center gap-1.5 text-[0.86rem] text-ink-soft underline-offset-2 hover:underline"
+        class="text-ink-soft inline-flex items-center gap-1.5 text-[0.86rem] underline-offset-2 hover:underline"
       >
         <svg class="h-2.5 w-2.5 rotate-90" viewBox="0 0 12 12" fill="none">
           <path
@@ -101,39 +127,36 @@ const reasonOptions = [
             stroke="currentColor"
             stroke-width="1.3"
             stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+            stroke-linejoin="round"></path>
         </svg>
         Back to {listing.title}
       </a>
 
       {
         submitted ? (
-          <div class="mt-8 rounded-sm border-l-[3px] border-l-rule bg-paper-shadow px-5 py-6 sm:px-7 sm:py-7">
+          <div class="border-l-rule bg-paper-shadow mt-8 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
             <h1 class="font-display text-[1.28rem] font-bold">
-              {isModeratorContext
-                ? "Submitted for review."
-                : "Thanks — a moderator will review this shortly."}
+              Thanks — a moderator will review this shortly.
             </h1>
-            <p class="mt-2.5 max-w-[45ch] text-[0.95rem] text-ink-soft">
-              {isModeratorContext
-                ? "It's in the queue as a pending update, same as any other correction. Approve it from there whenever you're ready."
-                : "Crowd Work listings are reviewed by working comics, not one person's spreadsheet — reports like yours are how the list stays accurate."}
+            <p class="text-ink-soft mt-2.5 max-w-[45ch] text-[0.95rem]">
+              Crowd Work listings are reviewed by working comics, not one
+              person's spreadsheet — reports like yours are how the list stays
+              accurate.
             </p>
           </div>
         ) : (
-          <div class="mt-8 rounded-sm border-l-[3px] border-l-rule bg-paper-shadow px-5 py-6 sm:px-7 sm:py-7">
+          <div class="border-l-rule bg-paper-shadow mt-8 rounded-sm border-l-[3px] px-5 py-6 sm:px-7 sm:py-7">
             <h1 class="font-display text-[1.28rem] font-bold">
-              {isModeratorContext ? "Edit this listing" : "Report a problem"}
+              Report a problem
             </h1>
-            <p class="mt-1.5 text-[0.9rem] text-ink-soft">
-              {isModeratorContext ? listing.title : `with ${listing.title}`}
+            <p class="text-ink-soft mt-1.5 text-[0.9rem]">
+              with {listing.title}
             </p>
 
             {errorMessage && (
               <p
                 role="alert"
-                class="mt-5 rounded-sm bg-paper px-3.5 py-2.5 text-[0.86rem] font-medium text-ink"
+                class="bg-paper text-ink mt-5 rounded-sm px-3.5 py-2.5 text-[0.86rem] font-medium"
               >
                 <strong>Error:</strong> {errorMessage}
               </p>
@@ -153,33 +176,63 @@ const reasonOptions = [
               </div>
 
               <fieldset class="flex flex-col gap-2.5">
-                <legend class="font-body text-[0.65rem] font-semibold tracking-wider text-ink-soft uppercase">
-                  {isModeratorContext ? "What needs to change?" : "What's wrong?"}
+                <legend class="font-body text-ink-soft text-[0.65rem] font-semibold tracking-wider uppercase">
+                  What's wrong?
                 </legend>
                 {reasonOptions.map((option) => (
-                  <label class="flex cursor-pointer items-start gap-3 rounded-sm border border-rule bg-paper px-4 py-3 has-checked:border-ink">
+                  <label class="border-rule bg-paper has-checked:border-ink flex cursor-pointer items-start gap-3 rounded-sm border px-4 py-3">
                     <input
                       type="radio"
                       name="reason"
                       value={option.value}
                       required
                       checked={selectedReason === option.value}
-                      class="mt-0.5 h-4 w-4 accent-ink"
+                      class="accent-ink mt-0.5 h-4 w-4"
                     />
                     <span class="text-[0.95rem]">{option.label}</span>
                   </label>
                 ))}
               </fieldset>
 
+              <div data-occurrence-date hidden={!showDateField}>
+                <FormField
+                  label="Which date is this about?"
+                  name="originalDate"
+                  type="date"
+                  value={selectedOriginalDate}
+                />
+              </div>
               <FormTextarea label="Details" name="note" required rows={4} />
 
               <Button type="submit" variant="primary" class="self-start">
-                {isModeratorContext ? "Submit correction" : "Submit report"}
+                Submit report
               </Button>
             </form>
           </div>
         )
       }
     </div>
+    <script>
+      const radios = document.querySelectorAll<HTMLInputElement>(
+        'input[name="reason"]',
+      );
+      const dateContainer = document.querySelector<HTMLElement>(
+        "[data-occurrence-date]",
+      );
+      if (dateContainer && radios.length > 0) {
+        const sync = () => {
+          const checked = document.querySelector<HTMLInputElement>(
+            'input[name="reason"]:checked',
+          );
+          dateContainer.hidden =
+            checked?.value !== "not_happening" &&
+            checked?.value !== "different_this_time";
+        };
+        for (const radio of radios) {
+          radio.addEventListener("change", sync);
+        }
+        sync();
+      }
+    </script>
   </body>
 </html>

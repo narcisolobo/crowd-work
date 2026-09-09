@@ -1,18 +1,19 @@
 ---
 import Button from "../../../components/forms/Button.astro";
+import FilterSelect from "../../../components/filters/FilterSelect.astro";
 import FormSelect from "../../../components/forms/FormSelect.astro";
 import FormTextarea from "../../../components/forms/FormTextarea.astro";
 import AdminUtilityBar from "../../../components/layout/AdminUtilityBar.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { getPublishedListings } from "../../../lib/data/listings";
+import { getAreas, getPublishedListings } from "../../../lib/data/listings";
 import {
   archiveListing,
   findMissingReason,
   parseApprovalNote,
 } from "../../../lib/data/moderation";
 import {
-  APPROVAL_REASON_HINT,
-  APPROVAL_REASON_OPTIONS,
+  ARCHIVE_REASON_HINT,
+  ARCHIVE_REASON_OPTIONS,
   TYPE_OPTIONS,
 } from "../../../lib/utils/moderation-labels";
 
@@ -51,10 +52,49 @@ if (Astro.request.method === "POST") {
   }
 }
 
-const listings = (await getPublishedListings()).sort((a, b) =>
-  a.title.localeCompare(b.title),
-);
+const [listings, areas] = await Promise.all([
+  getPublishedListings(),
+  getAreas(),
+]);
+const sortedListings = listings.sort((a, b) => a.title.localeCompare(b.title));
 const justArchived = Astro.url.searchParams.get("archived") === "1";
+
+// Edit and Archive read as one matched pair of plain body-text controls,
+// not a bordered button next to a text link. `py-1` pads the tap target to
+// the WCAG 2.2 SC 2.5.8 24px minimum without changing the visible text size.
+const rowActionLinkClass =
+  "text-ink-soft hover:text-ink py-1 text-[0.86rem] font-medium no-underline underline-offset-2 hover:underline";
+
+const typeFilter = Astro.url.searchParams.get("type") || "";
+const areaFilter = Astro.url.searchParams.get("area") || "";
+const searchFilter = Astro.url.searchParams.get("q") || "";
+const searchNormalized = searchFilter.trim().toLowerCase();
+
+const typeTabs = [
+  { value: "", label: "All" },
+  { value: "mic", label: "Mics" },
+  { value: "show", label: "Shows" },
+];
+const areaOptions = [
+  { value: "", label: "All of LA" },
+  ...areas.map((area) => ({ value: area.id, label: area.name })),
+];
+
+// Every listing always renders (hidden via a boolean rather than filtered
+// out server-side), matching the public browse page's own progressive-
+// enhancement pattern: the client filter script can toggle visibility
+// instantly with no reload, while a server-computed `hidden` still respects
+// the current query params with no JS at all.
+const rows = sortedListings.map((listing) => {
+  const matchesType = !typeFilter || listing.type === typeFilter;
+  const matchesArea = !areaFilter || listing.venue.areaIds.includes(areaFilter);
+  const searchHaystack = `${listing.title} ${listing.venue.name}`.toLowerCase();
+  const matchesSearch =
+    !searchNormalized || searchHaystack.includes(searchNormalized);
+  return { listing, hidden: !(matchesType && matchesArea && matchesSearch) };
+});
+const visibleCount = rows.filter((row) => !row.hidden).length;
+const hasVisibleRows = visibleCount > 0;
 ---
 
 <AdminLayout title="Listings — Crowd Work admin" userEmail={user.email}>
@@ -63,8 +103,8 @@ const justArchived = Astro.url.searchParams.get("archived") === "1";
   <div class="border-rule mt-5 border-b pb-5">
     <h1 class="font-display text-[1.28rem] font-bold">Listings</h1>
     <p class="text-ink-soft mt-2 text-[0.95rem]">
-      Every currently published listing. Archiving removes it from the
-      public site and records who did it and why.
+      Every currently published listing. Archiving removes it from the public
+      site and records who did it and why.
     </p>
   </div>
 
@@ -74,7 +114,11 @@ const justArchived = Astro.url.searchParams.get("archived") === "1";
         role="status"
         class="bg-paper-shadow mt-5 rounded-sm border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] px-3.5 py-2.5 text-[0.86rem] font-medium"
       >
-        Listing archived.
+        Listing archived.{" "}
+        <a href="/admin/archive" class="text-gold-ink underline">
+          Restore it from the Archive log
+        </a>{" "}
+        if that was a mistake.
       </p>
     )
   }
@@ -83,84 +127,323 @@ const justArchived = Astro.url.searchParams.get("archived") === "1";
     listings.length === 0 ? (
       <p class="text-ink-soft py-10 text-[0.95rem]">No published listings.</p>
     ) : (
-      <ul class="m-0 list-none p-0">
-        {listings.map((listing) => {
-          const typeLabel =
-            TYPE_OPTIONS.find((option) => option.value === listing.type)
-              ?.label ?? listing.type;
-          const rowHasError = errorListingId === listing.id;
-          return (
-            <li class="border-rule flex flex-col gap-3 border-b py-5">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p class="text-[0.95rem] font-medium">{listing.title}</p>
-                  <p class="text-ink-soft text-[0.82rem]">
-                    {typeLabel} · {listing.venue.name}
-                  </p>
-                </div>
-                <details open={rowHasError}>
-                  <summary class="font-display text-ink-soft hover:text-ink inline-block cursor-pointer text-[0.82rem] font-bold tracking-wide uppercase [&::-webkit-details-marker]:hidden">
-                    Archive
-                  </summary>
-                  <form
-                    method="post"
-                    novalidate
-                    class="max-w-form-compact mt-3 flex flex-col gap-4"
-                  >
-                    <input type="hidden" name="listingId" value={listing.id} />
+      <>
+        <form
+          method="get"
+          id="listings-filter-bar"
+          class="border-rule flex flex-wrap items-center justify-between gap-4 border-b py-5"
+        >
+          <div class="flex gap-1.5" role="group" aria-label="Filter by type">
+            {typeTabs.map((tab) => {
+              const pressed = typeFilter === tab.value;
+              return (
+                <button
+                  type="submit"
+                  name="type"
+                  value={tab.value}
+                  aria-pressed={pressed}
+                  class:list={[
+                    "font-display cursor-pointer rounded-sm border px-4 py-1.75 text-[0.95rem] font-bold tracking-wide uppercase",
+                    pressed
+                      ? "border-ink bg-ink text-paper"
+                      : "border-rule text-ink-soft bg-transparent",
+                  ]}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+          <div class="flex flex-1 flex-wrap items-center justify-end gap-2.5">
+            <label class="flex items-center">
+              <span class="sr-only">Search listings by title or venue</span>
+              <input
+                type="search"
+                name="q"
+                value={searchFilter}
+                placeholder="Search title or venue…"
+                class="border-rule bg-paper font-body text-ink placeholder:text-ink-soft w-full min-w-40 rounded-sm border py-1.75 pr-3 pl-2.5 text-[0.92rem]"
+              />
+            </label>
+            <FilterSelect
+              name="area"
+              id="area-select"
+              ariaLabel="Filter by area"
+              options={areaOptions}
+              value={areaFilter}
+            />
+            <button
+              type="submit"
+              id="apply-filter"
+              class="text-gold-ink text-[0.86rem] underline underline-offset-2"
+            >
+              Apply
+            </button>
+          </div>
+        </form>
 
-                    {rowHasError && errorMessage && (
-                      <p
-                        role="alert"
-                        class="border-l-error text-error bg-paper rounded-sm border-l-[3px] px-3.5 py-2.5 text-[0.86rem] font-medium"
+        <p
+          data-listing-count
+          aria-live="polite"
+          hidden={!hasVisibleRows}
+          class="text-ink-soft py-3 text-[0.82rem]"
+        >
+          <strong class="text-gold-ink font-semibold" data-count>
+            {visibleCount}
+          </strong>{" "}
+          <span data-count-label>
+            {visibleCount === 1 ? "listing" : "listings"}
+          </span>
+        </p>
+        <p
+          data-listing-empty-filter
+          aria-live="polite"
+          hidden={hasVisibleRows}
+          class="text-ink-soft py-10 text-[0.95rem]"
+        >
+          No listings match this search or filter.{" "}
+          <a
+            href="/admin/listings"
+            id="clear-filters"
+            class="text-gold-ink underline underline-offset-2"
+          >
+            Clear filters
+          </a>
+          .
+        </p>
+
+        <ul class="m-0 list-none p-0">
+          {rows.map(({ listing, hidden }) => {
+            const typeLabel =
+              TYPE_OPTIONS.find((option) => option.value === listing.type)
+                ?.label ?? listing.type;
+            const rowHasError = errorListingId === listing.id;
+            return (
+              <li
+                data-listing-row
+                data-type={listing.type}
+                data-areas={listing.venue.areaIds.join(",")}
+                data-search={`${listing.title} ${listing.venue.name}`.toLowerCase()}
+                data-force-visible={rowHasError ? "true" : undefined}
+                hidden={hidden && !rowHasError}
+                class="border-rule flex flex-col gap-3 border-b py-5"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[0.95rem] font-medium">{listing.title}</p>
+                    <p class="text-ink-soft text-[0.82rem]">
+                      {typeLabel} · {listing.venue.name}
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <a
+                      href={`/admin/listings/edit/${listing.id}`}
+                      class={rowActionLinkClass}
+                    >
+                      Edit
+                    </a>
+                    <details open={rowHasError} class="relative">
+                      <summary
+                        class={`${rowActionLinkClass} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
                       >
-                        <strong>Error:</strong> {errorMessage}
-                      </p>
-                    )}
+                        Archive
+                      </summary>
+                      <form
+                        method="post"
+                        novalidate
+                        class="border-rule bg-paper-shadow absolute top-[calc(100%+8px)] right-0 z-10 flex w-[min(26rem,calc(100vw-2.5rem))] flex-col gap-4 rounded-sm border p-4"
+                      >
+                        <input
+                          type="hidden"
+                          name="listingId"
+                          value={listing.id}
+                        />
 
-                    <FormSelect
-                      label="Reason"
-                      name="reason"
-                      options={APPROVAL_REASON_OPTIONS}
-                      value={rowHasError ? submittedReason : ""}
-                      required
-                      error={rowHasError ? fieldErrors.reason : undefined}
-                      hint={APPROVAL_REASON_HINT}
-                    />
-                    <div
-                      data-other-reason
-                      hidden={!rowHasError || submittedReason !== "other"}
-                    >
-                      <FormTextarea
-                        label="Other reason"
-                        name="otherReason"
-                        value={rowHasError ? submittedOtherReason : ""}
-                        required
-                        error={
-                          rowHasError ? fieldErrors.otherReason : undefined
-                        }
-                      />
-                    </div>
+                        {rowHasError && errorMessage && (
+                          <p
+                            role="alert"
+                            tabindex="-1"
+                            data-row-error
+                            class="border-l-error text-error bg-paper rounded-sm border-l-[3px] px-3.5 py-2.5 text-[0.86rem] font-medium"
+                          >
+                            <strong>Error:</strong> {errorMessage}
+                          </p>
+                        )}
 
-                    <Button
-                      type="submit"
-                      variant="outline"
-                      busyLabel="Archiving…"
-                    >
-                      Archive this listing
-                    </Button>
-                  </form>
-                </details>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+                        <FormSelect
+                          label="Reason"
+                          name="reason"
+                          options={ARCHIVE_REASON_OPTIONS}
+                          value={rowHasError ? submittedReason : ""}
+                          required
+                          error={rowHasError ? fieldErrors.reason : undefined}
+                          hint={ARCHIVE_REASON_HINT}
+                        />
+                        <div
+                          data-other-reason
+                          hidden={!rowHasError || submittedReason !== "other"}
+                        >
+                          <FormTextarea
+                            label="Other reason"
+                            name="otherReason"
+                            value={rowHasError ? submittedOtherReason : ""}
+                            required
+                            error={
+                              rowHasError ? fieldErrors.otherReason : undefined
+                            }
+                          />
+                        </div>
+
+                        <Button
+                          type="submit"
+                          variant="outline"
+                          busyLabel="Archiving…"
+                        >
+                          Archive this listing
+                        </Button>
+                      </form>
+                    </details>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </>
     )
   }
 </AdminLayout>
 
 <script>
+  // Type tabs, area select, and title/venue search all filter the same
+  // already-loaded row set client-side (no data left to fetch — see
+  // getPublishedListings()), mirroring the public browse page's own
+  // FilterBar: a real <form method="get"> so filtering works with no JS,
+  // progressively enhanced here to filter instantly and sync the URL via
+  // history.pushState instead of reloading.
+  const filterForm = document.getElementById(
+    "listings-filter-bar",
+  ) as HTMLFormElement | null;
+  if (filterForm) {
+    const typeButtons = Array.from(
+      filterForm.querySelectorAll<HTMLButtonElement>('button[name="type"]'),
+    );
+    const areaSelect = filterForm.querySelector<HTMLSelectElement>(
+      'select[name="area"]',
+    );
+    const searchInput =
+      filterForm.querySelector<HTMLInputElement>('input[name="q"]');
+    const applyButton = document.getElementById("apply-filter");
+    const rows = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-listing-row]"),
+    );
+    const countMessage = document.querySelector<HTMLElement>(
+      "[data-listing-count]",
+    );
+    const countValue = countMessage?.querySelector("[data-count]") ?? null;
+    const countLabel =
+      countMessage?.querySelector("[data-count-label]") ?? null;
+    const emptyFilterMessage = document.querySelector<HTMLElement>(
+      "[data-listing-empty-filter]",
+    );
+
+    let activeType =
+      typeButtons.find((btn) => btn.getAttribute("aria-pressed") === "true")
+        ?.value ?? "";
+    let activeArea = areaSelect?.value ?? "";
+    let activeSearch = (searchInput?.value ?? "").trim().toLowerCase();
+
+    function applyFilters() {
+      let visibleCount = 0;
+      for (const row of rows) {
+        const matchesType = !activeType || row.dataset.type === activeType;
+        const matchesArea =
+          !activeArea ||
+          (row.dataset.areas ?? "").split(",").includes(activeArea);
+        const matchesSearch =
+          !activeSearch || (row.dataset.search ?? "").includes(activeSearch);
+        // A row showing a server-side archive error stays visible
+        // regardless of the active filters — it just responded to a
+        // submission, and hiding it would bury the error the moment the
+        // page finishes loading (see `data-row-error`'s scroll-to-error
+        // handling below).
+        const visible =
+          (matchesType && matchesArea && matchesSearch) ||
+          row.dataset.forceVisible === "true";
+        row.hidden = !visible;
+        if (visible) visibleCount++;
+      }
+      if (countMessage) {
+        countMessage.hidden = visibleCount === 0;
+        if (countValue) countValue.textContent = String(visibleCount);
+        if (countLabel) {
+          countLabel.textContent = visibleCount === 1 ? "listing" : "listings";
+        }
+      }
+      if (emptyFilterMessage) emptyFilterMessage.hidden = visibleCount > 0;
+    }
+
+    function updateUrl() {
+      const url = new URL(window.location.href);
+      if (activeType) url.searchParams.set("type", activeType);
+      else url.searchParams.delete("type");
+      if (activeArea) url.searchParams.set("area", activeArea);
+      else url.searchParams.delete("area");
+      if (activeSearch) url.searchParams.set("q", activeSearch);
+      else url.searchParams.delete("q");
+      window.history.pushState({}, "", url);
+    }
+
+    function setActiveType(value: string) {
+      activeType = value;
+      for (const btn of typeButtons) {
+        const pressed = btn.value === value;
+        btn.setAttribute("aria-pressed", String(pressed));
+        btn.classList.toggle("border-ink", pressed);
+        btn.classList.toggle("bg-ink", pressed);
+        btn.classList.toggle("text-paper", pressed);
+        btn.classList.toggle("border-rule", !pressed);
+        btn.classList.toggle("bg-transparent", !pressed);
+        btn.classList.toggle("text-ink-soft", !pressed);
+      }
+    }
+
+    for (const button of typeButtons) {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveType(button.value);
+        applyFilters();
+        updateUrl();
+      });
+    }
+
+    areaSelect?.addEventListener("change", () => {
+      activeArea = areaSelect.value;
+      applyFilters();
+      updateUrl();
+    });
+
+    // Debounced so filtering doesn't re-scan every row on every keystroke.
+    let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+    searchInput?.addEventListener("input", () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        activeSearch = searchInput.value.trim().toLowerCase();
+        applyFilters();
+        updateUrl();
+      }, 150);
+    });
+
+    // Once JS owns filtering, a real form submit (the hidden Apply button,
+    // or Enter in the search field) would reload the page and lose the
+    // instant-filter state for no reason — every path already updates the
+    // URL itself via pushState.
+    filterForm.addEventListener("submit", (event) => event.preventDefault());
+
+    if (applyButton) applyButton.hidden = true;
+    applyFilters();
+  }
+
   const reasonSelects = document.querySelectorAll<HTMLSelectElement>(
     'select[name="reason"]',
   );
@@ -174,5 +457,51 @@ const justArchived = Astro.url.searchParams.get("archived") === "1";
     };
     select.addEventListener("change", sync);
     sync();
+  }
+
+  // The Archive form now drops down as a floating panel (like the header's
+  // Account Menu / Admin Section Menu) rather than pushing the row taller,
+  // so it needs the same mutual-exclusion and outside-click/Escape
+  // dismissal those menus already have — otherwise two rows' panels could
+  // stack open on top of each other with no way to close but re-clicking
+  // the exact trigger.
+  const archiveDisclosures =
+    document.querySelectorAll<HTMLDetailsElement>("li details");
+  for (const details of archiveDisclosures) {
+    details.addEventListener("toggle", () => {
+      if (!details.open) return;
+
+      for (const other of archiveDisclosures) {
+        if (other !== details) other.open = false;
+      }
+
+      document.addEventListener(
+        "click",
+        (event) => {
+          if (!details.contains(event.target as Node)) details.open = false;
+        },
+        { once: true, capture: true },
+      );
+
+      document.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.key === "Escape") details.open = false;
+        },
+        { once: true },
+      );
+    });
+  }
+
+  // A server-side archive failure (e.g. a database error) reloads the page
+  // with the failing row's <details> forced open (see `open={rowHasError}`
+  // above), but on an unpaginated list that row can be far below the fold —
+  // client-side validation already scrolls to and focuses its own errors
+  // (form-field-validation.ts), this mirrors that for the case it can't
+  // cover: a real backend failure surfacing after a full-page reload.
+  const rowError = document.querySelector<HTMLElement>("[data-row-error]");
+  if (rowError) {
+    rowError.scrollIntoView({ block: "center", behavior: "smooth" });
+    rowError.focus();
   }
 </script>

@@ -9,8 +9,8 @@ try {
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const [argEmail, argPassword] = process.argv.slice(2);
-const email = argEmail ?? process.env.SOURCE_CHECK_AGENT_EMAIL;
-const password = argPassword ?? process.env.SOURCE_CHECK_AGENT_PASSWORD;
+const email = argEmail ?? process.env.NOTIFICATION_AGENT_EMAIL;
+const password = argPassword ?? process.env.NOTIFICATION_AGENT_PASSWORD;
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
@@ -19,8 +19,8 @@ if (!supabaseUrl || !serviceRoleKey) {
 }
 if (!email || !password) {
   throw new Error(
-    "Usage: node scripts/provision-source-check-agent.mjs [<email> <password>] " +
-      "(defaults to SOURCE_CHECK_AGENT_EMAIL/PASSWORD from .env)",
+    "Usage: node scripts/provision-notification-agent.mjs [<email> <password>] " +
+      "(defaults to NOTIFICATION_AGENT_EMAIL/PASSWORD from .env)",
   );
 }
 
@@ -36,8 +36,8 @@ const { data: user, error: userError } = await admin.auth.admin.createUser({
 if (userError) throw userError;
 
 const { error: agentError } = await admin
-  .from("source_check_agents")
+  .from("notification_agents")
   .insert({ id: user.user.id });
 if (agentError) throw agentError;
 
-console.log(`Provisioned source-check agent: ${email} (${user.user.id})`);
+console.log(`Provisioned notification agent: ${email} (${user.user.id})`);

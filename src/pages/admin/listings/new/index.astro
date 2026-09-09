@@ -15,8 +15,8 @@ import {
   MissingRequiredFieldsError,
 } from "../../../../lib/data/moderation";
 import {
-  APPROVAL_REASON_HINT,
-  APPROVAL_REASON_OPTIONS,
+  DIRECT_ENTRY_REASON_HINT,
+  DIRECT_ENTRY_REASON_OPTIONS,
 } from "../../../../lib/utils/moderation-labels";
 
 const supabase = Astro.locals.supabase!;
@@ -96,7 +96,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             View listing
           </Button>
           <Button
-            href={`/listings/${added.listingId}/report?context=moderator`}
+            href={`/admin/listings/edit/${added.listingId}`}
             variant="outline"
           >
             Edit this listing
@@ -126,6 +126,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             venueOptions={venueOptions}
             neighborhoodOptions={neighborhoodOptions}
             fieldErrors={fieldErrors}
+            requireVenueChange
           />
 
           <div class="flex flex-col gap-4 border-l-[3px] border-l-[color-mix(in_srgb,var(--gold)_60%,var(--paper)_40%)] pl-4">
@@ -137,11 +138,11 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             <FormSelect
               label="Reason"
               name="reason"
-              options={APPROVAL_REASON_OPTIONS}
+              options={DIRECT_ENTRY_REASON_OPTIONS}
               value={submittedReason}
               required
               error={fieldErrors.reason}
-              hint={APPROVAL_REASON_HINT}
+              hint={DIRECT_ENTRY_REASON_HINT}
             />
             <div data-other-reason hidden={submittedReason !== "other"}>
               <FormTextarea
@@ -158,9 +159,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
             Publishes immediately, under your account — no second review.
           </p>
 
-          <div
-            class="bg-paper-shadow border-rule sticky bottom-0 z-10 -mx-5 -mb-6 rounded-b-sm border-t px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7"
-          >
+          <div class="border-rule border-t pt-6">
             <Button type="submit" variant="primary" busyLabel="Adding…">
               Add listing
             </Button>

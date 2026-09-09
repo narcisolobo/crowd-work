@@ -1,10 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getListingById } from "./listings";
+import { getListingById, type ListingWithVenue } from "./listings";
 import type { Database, Json } from "../supabase/database.types";
 
 export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
-export type QueueChangeType = "new" | "update" | "cancellation" | "archive";
+export type QueueChangeType =
+  "new" | "update" | "cancellation" | "modification" | "archive" | "restore";
 
 export interface ProposedVenue {
   name: string;
@@ -46,11 +47,20 @@ export interface ProposedCancellation {
   note?: string | null;
 }
 
+export interface ProposedModification {
+  originalDate: string;
+  newDate?: string | null;
+  newStartTime?: string | null;
+  newVenueId?: string | null;
+  note?: string | null;
+}
+
 export interface QueueEntry {
   id: string;
   listingId: string | null;
   changeType: QueueChangeType;
-  proposedData: ProposedListingFields | ProposedCancellation | null;
+  proposedData:
+    ProposedListingFields | ProposedCancellation | ProposedModification | null;
   correctionNote: string | null;
   origin: string;
   status: QueueStatus;
@@ -58,7 +68,8 @@ export interface QueueEntry {
   proposedReason: string | null;
   confirmedBy: string | null;
   approvedBy: string | null;
-  approvedData: ProposedListingFields | ProposedCancellation | null;
+  approvedData:
+    ProposedListingFields | ProposedCancellation | ProposedModification | null;
   approvalNote: string | null;
   decidedAt: string | null;
   createdAt: string;
@@ -327,6 +338,55 @@ export async function directAddListing(
   return { listingId, title: fields.title };
 }
 
+// The direct-edit counterpart to directAddListing/archiveListing: a single
+// moderator edits a published listing's fields immediately, self-approved,
+// with no propose/confirm ceremony. Shares applyListingFields() with the
+// queue-approval path (approveListingUpdate) so there's one implementation
+// of "how to write a listing's fields."
+export async function directUpdateListing(
+  client: SupabaseClient<Database>,
+  listingId: string,
+  formData: FormData,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const fields = parseProposedListingFields(formData);
+  const missing = [
+    ...findMissingRequiredFields(fields),
+    ...findMissingReason(formData),
+  ];
+  if (missing.length > 0) throw new MissingRequiredFieldsError(missing);
+  const approvalNote = parseApprovalNote(formData);
+
+  const { venueId } = await applyListingFields(client, listingId, fields);
+  const approvedData: ProposedListingFields = {
+    ...fields,
+    venueId,
+    newVenue: null,
+  };
+
+  const { error } = await client.from("moderation_queue").insert({
+    change_type: "update",
+    listing_id: listingId,
+    proposed_data: null,
+    correction_note: null,
+    origin: "moderator_direct_edit",
+    status: "approved",
+    approved_by: user.id,
+    approved_data: approvedData as unknown as Json,
+    approval_note: approvalNote,
+    decided_at: new Date().toISOString(),
+  });
+
+  if (error)
+    throw new Error(
+      `Listing was updated, but the audit record failed to save: ${error.message}`,
+    );
+}
+
 export async function submitSourceCheckFinding(
   client: SupabaseClient<Database>,
   finding: SourceCheckFinding,
@@ -499,6 +559,47 @@ export async function archiveListing(
     );
 }
 
+// The restore counterpart to archiveListing() — flips a listing back to
+// `published` and logs it through the same moderation_queue machinery,
+// closing the reversibility gap archiveListing()'s own comment relies on.
+// Single-moderator and immediate, matching archiveListing()'s own
+// single-moderator/immediate model rather than introducing a second
+// governance tier for undoing a single-moderator action.
+export async function restoreListing(
+  client: SupabaseClient<Database>,
+  listingId: string,
+  reason: string,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error: listingError } = await client
+    .from("listings")
+    .update({ status: "published" })
+    .eq("id", listingId);
+  if (listingError)
+    throw new Error(`Failed to restore listing: ${listingError.message}`);
+
+  const { error: queueError } = await client.from("moderation_queue").insert({
+    change_type: "restore",
+    listing_id: listingId,
+    proposed_data: null,
+    correction_note: null,
+    origin: "moderator_restore",
+    status: "approved",
+    approved_by: user.id,
+    approved_data: null,
+    approval_note: reason,
+    decided_at: new Date().toISOString(),
+  });
+  if (queueError)
+    throw new Error(
+      `Listing was restored, but the audit record failed to save: ${queueError.message}`,
+    );
+}
+
 export async function approveNewListing(
   client: SupabaseClient<Database>,
   entryId: string,
@@ -514,13 +615,15 @@ export async function approveNewListing(
   await markApproved(client, entryId, listingId, approvedData, approvalNote);
 }
 
-export async function approveListingUpdate(
+// Shared by approveListingUpdate (queue-review path) and directUpdateListing
+// (moderator direct-edit path) — the only difference between the two is how
+// the resulting moderation_queue row is recorded, not how a listing's fields
+// get written.
+async function applyListingFields(
   client: SupabaseClient<Database>,
-  entryId: string,
   listingId: string,
   fields: ProposedListingFields,
-  approvalNote: string | null = null,
-): Promise<void> {
+): Promise<{ venueId: string }> {
   const { venueId } = await resolveVenueId(client, fields);
 
   const { error: listingError } = await client
@@ -561,6 +664,17 @@ export async function approveListingUpdate(
       );
   }
 
+  return { venueId };
+}
+
+export async function approveListingUpdate(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  listingId: string,
+  fields: ProposedListingFields,
+  approvalNote: string | null = null,
+): Promise<void> {
+  const { venueId } = await applyListingFields(client, listingId, fields);
   const approvedData: ProposedListingFields = {
     ...fields,
     venueId,
@@ -598,11 +712,47 @@ export async function approveCancellation(
   );
 }
 
+export async function approveModification(
+  client: SupabaseClient<Database>,
+  entryId: string,
+  listingId: string,
+  originalDate: string,
+  newDate: string | null,
+  newStartTime: string | null,
+  newVenueId: string | null,
+  note: string | null,
+  approvalNote: string | null = null,
+): Promise<void> {
+  const { error: exceptionError } = await client
+    .from("occurrence_exceptions")
+    .insert({
+      listing_id: listingId,
+      original_date: originalDate,
+      type: "modified",
+      new_date: newDate,
+      new_start_time: newStartTime,
+      new_venue_id: newVenueId,
+      note,
+    });
+
+  if (exceptionError)
+    throw new Error(`Failed to record modification: ${exceptionError.message}`);
+
+  await markApproved(
+    client,
+    entryId,
+    listingId,
+    { originalDate, newDate, newStartTime, newVenueId, note },
+    approvalNote,
+  );
+}
+
 async function markApproved(
   client: SupabaseClient<Database>,
   entryId: string,
   listingId: string,
-  approvedData: ProposedListingFields | ProposedCancellation,
+  approvedData:
+    ProposedListingFields | ProposedCancellation | ProposedModification,
   approvalNote: string | null,
 ): Promise<void> {
   const {
@@ -746,6 +896,34 @@ export async function handleQueueReviewAction(
     return { type: "redirect" };
   }
 
+  if (action === "approve_modification") {
+    const originalDate = formData.get("originalDate")?.toString() ?? "";
+    const newDate = formData.get("newDate")?.toString() || null;
+    const newStartTime = formData.get("newStartTime")?.toString() || null;
+    const newVenueId = formData.get("newVenueId")?.toString() || null;
+    const note = formData.get("note")?.toString() || null;
+    const missingReason = findMissingReason(formData);
+    if (missingReason.length > 0) {
+      return {
+        type: "validation_error",
+        message: "Choose a reason for this approval.",
+      };
+    }
+    const approvalNote = parseApprovalNote(formData);
+    await approveModification(
+      client,
+      entry.id,
+      entry.listingId!,
+      originalDate,
+      newDate,
+      newStartTime,
+      newVenueId,
+      note,
+      approvalNote,
+    );
+    return { type: "redirect" };
+  }
+
   if (action === "propose_reject") {
     const reason = formData.get("reason")?.toString();
     if (!reason) {
@@ -776,6 +954,26 @@ export async function handleQueueReviewAction(
 // proposal). A report-form 'update' has no proposed_data — pre-fill from
 // the listing's current values instead, since the moderator is translating
 // free text into field edits, not reviewing a structured diff.
+export function listingToProposedFields(
+  listing: ListingWithVenue,
+): ProposedListingFields {
+  return {
+    type: listing.type,
+    title: listing.title,
+    host: listing.host,
+    description: listing.description,
+    venueId: listing.venue.id,
+    newVenue: null,
+    startTime: listing.startTime,
+    signUpMethod: listing.signUpMethod,
+    costToPerform: listing.costToPerform,
+    ticketPrice: listing.ticketPrice,
+    ticketUrl: listing.ticketUrl,
+    recurrence: listing.recurrenceRule,
+    oneOffDate: listing.oneOffDate,
+  };
+}
+
 export async function getPrefillForEntry(
   entry: QueueEntry,
 ): Promise<ProposedListingFields | null> {
@@ -792,21 +990,7 @@ export async function getPrefillForEntry(
   const current = await getListingById(entry.listingId!);
   if (!current) return null;
 
-  return {
-    type: current.type,
-    title: current.title,
-    host: current.host,
-    description: current.description,
-    venueId: current.venue.id,
-    newVenue: null,
-    startTime: current.startTime,
-    signUpMethod: current.signUpMethod,
-    costToPerform: current.costToPerform,
-    ticketPrice: current.ticketPrice,
-    ticketUrl: current.ticketUrl,
-    recurrence: current.recurrenceRule,
-    oneOffDate: current.oneOffDate,
-  };
+  return listingToProposedFields(current);
 }
 
 export async function getArchiveEntries(

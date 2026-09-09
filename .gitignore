@@ -42,9 +42,18 @@ pnpm-debug.log*
 .impeccable
 .claude/settings.local.json
 .playwright-mcp
+.claude/skills/agent-email-inbox
+.claude/skills/email-best-practices
+.claude/skills/resend
+.claude/skills/resend-cli
+.agents
+skills-lock.json
 
 competitors
 drama
 .DS_Store
 
 .env*
+
+# supabase snippets
+supabase/snippets/Set the per-environment Vault secrets locally.sql

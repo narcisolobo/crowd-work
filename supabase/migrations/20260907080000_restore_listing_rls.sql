@@ -1,0 +1,21 @@
+-- Lets a moderator restore a previously archived listing back to
+-- `published`, closing the reversibility gap flagged by
+-- `/impeccable critique`: archiveListing() justifies skipping the
+-- two-moderator confirm step by calling archiving "reversible", but no
+-- restore path existed anywhere in the UI. The design doc
+-- (docs/superpowers/specs/2026-09-06-archive-status-rls-gap-design.md)
+-- explicitly deferred this as a non-goal, noting it "can reuse the same
+-- change_type/queue machinery later without redesign" — this is that reuse.
+--
+-- No new `listings` RLS policy is needed for the UPDATE itself: the
+-- existing "moderators can update listings" policy (20260903184043) is
+-- fully permissive, and the resulting row (status = 'published') already
+-- satisfies the original public SELECT policy (status = 'published', no
+-- `to` clause) — unlike the archive direction, which needed a new SELECT
+-- policy because 'archived' rows had no covering policy at all.
+--
+-- The moderation_queue INSERT policy for 'restore'-shaped rows lives in a
+-- separate, later migration — Postgres forbids using a new enum value
+-- within the same transaction that added it via ALTER TYPE ... ADD VALUE
+-- (SQLSTATE 55P04), same as the 'archive' value before it.
+alter type moderation_change_type add value 'restore';

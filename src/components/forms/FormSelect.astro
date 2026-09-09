@@ -12,6 +12,8 @@ interface Props {
   required?: boolean;
   error?: string | null;
   hint?: string | null;
+  autocomplete?: string;
+  requireChange?: boolean;
 }
 
 const {
@@ -22,6 +24,8 @@ const {
   required = false,
   error = null,
   hint = null,
+  autocomplete,
+  requireChange = false,
 } = Astro.props;
 const stringValue = value === null || value === undefined ? "" : String(value);
 const errorId = error ? `${name}-error` : undefined;
@@ -38,6 +42,8 @@ const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
     <select
       name={name}
       required={required}
+      autocomplete={autocomplete}
+      data-require-change={requireChange ? "true" : undefined}
       aria-invalid={error ? "true" : undefined}
       aria-describedby={describedBy}
       style={error ? "border-color: var(--error)" : undefined}

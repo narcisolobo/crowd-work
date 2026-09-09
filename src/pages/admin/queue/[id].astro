@@ -17,6 +17,7 @@ import {
   ORIGIN_LABEL,
   STATUS_LABEL,
 } from "../../../lib/utils/moderation-labels";
+import ModificationApprovalForm from "../../../components/moderation/ModificationApprovalForm.astro";
 
 const { id } = Astro.params;
 const supabase = Astro.locals.supabase!;
@@ -43,7 +44,11 @@ let submittedOtherReason = "";
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const action = formData.get("action")?.toString();
-  if (action === "approve" || action === "approve_cancellation") {
+  if (
+    action === "approve" ||
+    action === "approve_cancellation" ||
+    action === "approve_modification"
+  ) {
     submittedReason = formData.get("reason")?.toString() ?? "";
     submittedOtherReason = formData.get("otherReason")?.toString() ?? "";
   }
@@ -68,13 +73,19 @@ const proposedCancellation =
   entry.changeType === "cancellation"
     ? (entry.proposedData as ProposedCancellation)
     : null;
+const proposedModification =
+  entry.changeType === "modification"
+    ? (entry.proposedData as ProposedCancellation)
+    : null;
 const isOwnProposal = entry.proposedBy === user.id;
 
 const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   new: "New listing",
   update: "Update",
   cancellation: "Cancellation",
+  modification: "Modification",
   archive: "Archive",
+  restore: "Restore",
 };
 
 const venueOptions = venues.map((venue) => ({
@@ -140,6 +151,14 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
         reason={submittedReason}
         otherReason={submittedOtherReason}
       />
+    ) : entry.changeType === "modification" ? (
+      <ModificationApprovalForm
+        entry={entry}
+        proposedModification={proposedModification}
+        venueOptions={venueOptions}
+        reason={submittedReason}
+        otherReason={submittedOtherReason}
+      />
     ) : (
       <ListingApprovalForm
         entry={entry}
@@ -156,7 +175,7 @@ const neighborhoodOptions = neighborhoods.map((neighborhood) => ({
     entry.status === "pending" && (
       <form
         method="post"
-        class="border-rule mt-10 flex max-w-form-compact flex-col gap-3 border-t pt-6"
+        class="border-rule max-w-form-compact mt-10 flex flex-col gap-3 border-t pt-6"
       >
         <input type="hidden" name="action" value="propose_reject" />
         <FormTextarea label="Reason for rejection" name="reason" required />

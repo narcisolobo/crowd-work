@@ -15,6 +15,13 @@ interface Props {
   venueOptions: { value: string; label: string }[];
   neighborhoodOptions: { value: string; label: string }[];
   fieldErrors?: Record<string, string>;
+  // Only meaningful where the venue field always starts empty (no server
+  // prefill to trust) — gates the venue select behind a genuine `change`
+  // event so a browser-restored value can't silently satisfy `required`.
+  // Never set this where `prefill` can carry a real venue (edit, queue
+  // approval, or a validation-error redisplay) — that's the normal,
+  // legitimate case there, not a bug to guard against.
+  requireVenueChange?: boolean;
 }
 
 const {
@@ -22,6 +29,7 @@ const {
   venueOptions,
   neighborhoodOptions,
   fieldErrors = {},
+  requireVenueChange = false,
 } = Astro.props;
 
 const venueSelectOptions = [
@@ -85,6 +93,8 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     value={isNewVenue ? "__new__" : (prefill?.venueId ?? "")}
     required
     error={fieldErrors.venueId}
+    autocomplete="off"
+    requireChange={requireVenueChange}
   />
   <div data-new-venue hidden={!isNewVenue} class="flex flex-col gap-4">
     <FormField
