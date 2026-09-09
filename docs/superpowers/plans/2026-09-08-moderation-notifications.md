@@ -17,7 +17,11 @@
 - Urgent scope: `change_type in ('cancellation', 'modification')`, `status = 'pending'`, reported `proposed_data.originalDate` within 3 days, never previously notified.
 - Digest scope: `status = 'pending'` and not already notified today (regardless of `change_type`).
 - No React Email, no new templating dependency — plain inline-CSS HTML strings, `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`.
-- The classification rules, email templates, and orchestration-cycle modules in `src/lib/utils/` must have zero non-type-only imports beyond one another, so the Deno Edge Function can import them directly by relative path without pulling in the rest of the Node-oriented data layer. PostgREST can't cleanly filter on `(proposed_data->>'originalDate')::date`, so all three modules work by fetching every `status = 'pending'` row (a small, bounded set) and classifying in plain TypeScript rather than in the query itself.
+- The classification rules, email templates, and orchestration-cycle modules in `src/lib/utils/` (plus the pre-existing `moderation-labels.ts`) must have **zero imports from `../data/moderation`, even type-only**. `supabase functions serve` resolves type-only imports too (unlike Vitest/esbuild, which strip them before ever attempting resolution), and `moderation.ts` has a real transitive dependency on `../supabase/supabase.ts`, which reads `import.meta.env` — a Vite-only mechanism Deno's edge runtime doesn't have and will throw on. Each of these modules instead declares its own local, structurally-identical types (`QueueChangeType`, etc.) — a real `QueueEntry` still satisfies them. PostgREST can't cleanly filter on `(proposed_data->>'originalDate')::date`, so classification happens by fetching every `status = 'pending'` row (a small, bounded set) and classifying in plain TypeScript rather than in the query itself.
+- Every relative import between these Deno-shared modules needs an explicit `.ts` extension (`allowImportingTsExtensions` is already on via `astro/tsconfigs/strict`'s `moduleResolution: "Bundler"`) — Deno requires it, and Vite/tsc already accept it.
+- `@supabase/supabase-js` can't be imported as a bare specifier from a Deno Edge Function at all (type-only or not) — it needs a per-function `supabase/functions/<name>/deno.json` import map redirecting it to an explicit `npm:@supabase/supabase-js@<version>` specifier, auto-discovered by Deno with no CLI flag needed. This keeps the actual `.ts` source using the same plain bare specifier everywhere, which is what `tsc`/Vite also expect via `node_modules`.
+- Inside a Deno Edge Function, use the platform-reserved `SUPABASE_URL`/`SUPABASE_ANON_KEY` env vars (auto-injected locally and when deployed) — never this project's own `PUBLIC_SUPABASE_URL`/`PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which are just this app's Vite/Astro naming convention and are never set inside the Edge Function's environment.
+- Invoking a local Edge Function over HTTP needs an `Authorization: Bearer <token>` header to satisfy Kong's platform-level JWT gate, *in addition to* the function's own `x-notification-secret` check — and locally that token must be the legacy JWT-format `ANON_KEY` (from `supabase status -o env`), not the newer non-JWT `PUBLISHABLE_KEY`/`PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which Kong rejects with "Invalid JWT format."
 
 ---
 
@@ -31,7 +35,8 @@ crowd-work/
 │   │   └── <timestamp>_notification_cron_schedules.sql # new
 │   └── functions/
 │       └── send-moderation-notifications/
-│           └── index.ts                                # new (Deno)
+│           ├── index.ts                                # new (Deno)
+│           └── deno.json                                # new — import map for @supabase/supabase-js
 ├── scripts/
 │   └── provision-notification-agent.mjs                # new
 ├── src/
@@ -42,6 +47,7 @@ crowd-work/
 │       │   ├── moderation-test-helpers.ts               # modified: signInNotificationAgent()
 │       │   └── moderation-notifications-rls.test.ts      # new
 │       └── utils/
+│           ├── moderation-labels.ts                       # modified: previewFor loosened to PreviewableQueueEntry, no import from ../data/moderation
 │           ├── moderation-notification-rules.ts          # new
 │           ├── moderation-notification-rules.test.ts     # new
 │           ├── moderation-notification-templates.ts      # new
@@ -517,10 +523,10 @@ EOF
 
 **Interfaces:**
 
-- Consumes: `QueueChangeType`, `QueueStatus` types (type-only) from `../data/moderation`
+- Consumes: nothing — no imports at all, not even type-only (see Global Constraints)
 - Produces: `URGENT_WINDOW_DAYS: number`, `isUrgent(entry, now: Date): boolean`, `isDigestEligible(entry, now: Date): boolean` — consumed by Task 7's orchestration module
 
-This module must have no non-type-only imports at all, so Deno can import it directly by relative path (see Global Constraints).
+This module must have zero imports, so Deno can import it directly by relative path (see Global Constraints) — `QueueChangeType`/`QueueStatus` are declared locally rather than imported from `../data/moderation`.
 
 - [x] **Step 1: Write the failing tests**
 
@@ -665,7 +671,17 @@ Expected: FAIL with "Cannot find module './moderation-notification-rules'" or si
 - [x] **Step 3: Write the implementation**
 
 ```ts
-import type { QueueChangeType, QueueStatus } from "../data/moderation";
+// No import from "../data/moderation", even type-only — see Global
+// Constraints. These locally-declared unions are structurally identical
+// to the real QueueChangeType/QueueStatus.
+type QueueChangeType =
+  | "new"
+  | "update"
+  | "cancellation"
+  | "modification"
+  | "archive"
+  | "restore";
+type QueueStatus = "pending" | "rejection_proposed" | "approved" | "rejected";
 
 export const URGENT_WINDOW_DAYS = 3;
 
@@ -737,20 +753,20 @@ EOF
 
 - Create: `src/lib/utils/moderation-notification-templates.ts`
 - Create: `src/lib/utils/moderation-notification-templates.test.ts`
+- Modify: `src/lib/utils/moderation-labels.ts` — see below
 
 **Interfaces:**
 
-- Consumes: `CHANGE_TYPE_LABEL`, `ORIGIN_LABEL`, `previewFor` (value imports) from `./moderation-labels`; `QueueChangeType`, `ProposedListingFields`, `ProposedCancellation`, `ProposedModification` types (type-only) from `../data/moderation`
+- Consumes: `CHANGE_TYPE_LABEL`, `ORIGIN_LABEL`, `previewFor` (value imports) from `./moderation-labels.ts`
 - Produces: `buildUrgentEmail(entries, now: Date): { subject: string; html: string }`, `buildDigestEmail(entries, now: Date): { subject: string; html: string } | null` — consumed by Task 7's orchestration module
 
-`moderation-labels.ts` has no non-type-only imports of its own, so this module stays Deno-importable by relative path (see Global Constraints).
+`moderation-labels.ts` is a **pre-existing** file (used by `/admin`'s dashboard) that needs a small, backward-compatible modification first: remove its `import type {...} from "../data/moderation"` (real QueueEntry objects passed in from the dashboard still satisfy the new local types structurally, so no caller changes needed) and loosen `previewFor`'s parameter from `Pick<QueueEntry, ...>` to a new exported `PreviewableQueueEntry` interface with a merged `{ title?: string | null; originalDate?: string | null }` `proposedData` shape (both fields present — TypeScript's "weak type" check rejects an all-optional target type that shares *zero* properties with one of the union members being assigned, e.g. `ProposedCancellation` has no `title`, so `originalDate` has to be there too even though `previewFor` itself never reads it). This is what makes `moderation-labels.ts` safe for Deno to import (see Global Constraints) — it's a hard requirement for this task, since `previewFor` is a genuine runtime dependency of the templates module, not something that can be avoided.
 
 - [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, it, expect } from "vitest";
 import { buildUrgentEmail, buildDigestEmail } from "./moderation-notification-templates";
-import type { ProposedListingFields } from "../data/moderation";
 
 const NOW = new Date("2026-09-10T12:00:00Z");
 
@@ -768,10 +784,7 @@ const NEW_LISTING_ENTRY = {
   changeType: "new" as const,
   origin: "source_check",
   correctionNote: "Detected via automated check",
-  // Only `title` matters to previewFor's 'new'/'update' branch — the rest
-  // of ProposedListingFields is irrelevant to this test, so it's cast
-  // rather than fully populated.
-  proposedData: { title: "Brand New Open Mic" } as ProposedListingFields,
+  proposedData: { title: "Brand New Open Mic" },
   createdAt: "2026-09-09T08:00:00Z",
 };
 
@@ -822,16 +835,85 @@ pnpm test -- moderation-notification-templates
 
 Expected: FAIL with "Cannot find module './moderation-notification-templates'".
 
-- [x] **Step 3: Write the implementation**
+- [x] **Step 3: Modify `moderation-labels.ts` first**
+
+Remove its `import type {...} from "../data/moderation"` and loosen `previewFor`'s parameter type, so the file has zero imports (see Global Constraints — this is a hard requirement, not a style choice, since the templates module has a genuine runtime dependency on `previewFor`):
 
 ```ts
-import { CHANGE_TYPE_LABEL, ORIGIN_LABEL, previewFor } from "./moderation-labels";
-import type {
-  ProposedCancellation,
-  ProposedListingFields,
-  ProposedModification,
-  QueueChangeType,
-} from "../data/moderation";
+// Replace the import and CHANGE_TYPE_LABEL's key type:
+type QueueChangeType =
+  | "new"
+  | "update"
+  | "cancellation"
+  | "modification"
+  | "archive"
+  | "restore";
+
+export const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
+  // ...unchanged
+};
+
+// Replace previewFor's signature and the ProposedListingFields cast inside it:
+export interface PreviewableQueueEntry {
+  correctionNote: string | null;
+  // Loosened to the two fields real proposedData shapes actually carry,
+  // rather than importing the full ProposedListingFields |
+  // ProposedCancellation | ProposedModification union. previewFor only
+  // ever reads `title`; `originalDate` is included purely so every real
+  // shape shares at least one property with this type — TS's "weak type"
+  // check (all-optional-properties) otherwise rejects assigning a
+  // ProposedCancellation/ProposedModification value here, since neither
+  // has a `title` field at all.
+  proposedData: { title?: string | null; originalDate?: string | null } | null;
+  changeType: QueueChangeType;
+}
+
+export function previewFor(
+  entry: PreviewableQueueEntry,
+  listingTitle?: string | null,
+): string {
+  if (entry.changeType === "archive") {
+    return listingTitle ? `Archived: ${listingTitle}` : "Archived listing";
+  }
+  if (entry.changeType === "restore") {
+    return listingTitle ? `Restored: ${listingTitle}` : "Restored listing";
+  }
+  if (entry.correctionNote) {
+    return truncate(entry.correctionNote);
+  }
+  if (entry.proposedData?.title) {
+    return entry.changeType === "new"
+      ? `New listing: ${entry.proposedData.title}`
+      : `Update: ${entry.proposedData.title}`;
+  }
+  return entry.changeType === "modification" ? "Modification" : "Cancellation";
+}
+```
+
+Run `pnpm exec tsc --noEmit -p .` after this change — `moderation-archive.test.ts` calls `previewFor` with a real `entry.approvedData` (typed as the full union), which is exactly the case the `originalDate` field's presence is there to keep working; if it doesn't compile, that's the "weak type" check discussed above.
+
+- [x] **Step 4: Write the templates implementation**
+
+```ts
+import {
+  CHANGE_TYPE_LABEL,
+  ORIGIN_LABEL,
+  previewFor,
+} from "./moderation-labels.ts";
+
+// No import from "../data/moderation", even type-only — see Global
+// Constraints. A single merged shape (rather than the real
+// ProposedListingFields | ProposedCancellation | ProposedModification
+// union) is enough here: every field this module reads is optional, and a
+// real QueueEntry's proposedData is structurally assignable to it
+// regardless of which union member it actually is.
+type QueueChangeType =
+  | "new"
+  | "update"
+  | "cancellation"
+  | "modification"
+  | "archive"
+  | "restore";
 
 const FONT_STACK =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, system-ui';
@@ -841,23 +923,12 @@ interface TemplateEntry {
   changeType: QueueChangeType;
   origin: string;
   correctionNote: string | null;
-  proposedData:
-    | ProposedListingFields
-    | ProposedCancellation
-    | ProposedModification
-    | null;
+  proposedData: { originalDate?: string | null; title?: string | null } | null;
   createdAt: string;
 }
 
-// Only cancellation/modification proposedData carries originalDate —
-// ProposedListingFields (new/update) doesn't have the property at all, so
-// a plain `?.originalDate` won't type-check on the union. previewFor's own
-// QueueEntry parameter type is exactly this union, which is why
-// TemplateEntry has to match it rather than use a looser inline shape.
 function originalDateOf(entry: TemplateEntry): string | null {
-  const data = entry.proposedData;
-  if (data && "originalDate" in data) return data.originalDate;
-  return null;
+  return entry.proposedData?.originalDate ?? null;
 }
 
 function daysAway(dateStr: string, now: Date): number {
@@ -937,18 +1008,19 @@ export function buildDigestEmail(
 }
 ```
 
-- [x] **Step 4: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 ```bash
 pnpm test -- moderation-notification-templates
+pnpm exec tsc --noEmit -p .
 ```
 
-Expected: PASS, all tests. (The subject-line assertions in Step 1 use singular/plural exactly as this implementation produces — adjust either side if they drift.)
+Expected: both PASS. (The subject-line assertions in Step 1 use singular/plural exactly as this implementation produces — adjust either side if they drift. The `tsc` run specifically re-checks `moderation-archive.test.ts`, per Step 3.)
 
-- [x] **Step 5: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
-git add src/lib/utils/moderation-notification-templates.ts src/lib/utils/moderation-notification-templates.test.ts
+git add src/lib/utils/moderation-notification-templates.ts src/lib/utils/moderation-notification-templates.test.ts src/lib/utils/moderation-labels.ts
 git commit -m "$(cat <<'EOF'
 feat: add HTML email templates for moderation notifications
 
@@ -1040,11 +1112,13 @@ Run once (and again after any future `supabase db reset`) via `supabase db query
 
 ```sql
 select vault.create_secret('http://host.docker.internal:54521/functions/v1/send-moderation-notifications', 'notification_function_url');
-select vault.create_secret('<your PUBLIC_SUPABASE_PUBLISHABLE_KEY value>', 'notification_function_anon_key');
+select vault.create_secret('<your legacy ANON_KEY value from `supabase status -o env`>', 'notification_function_anon_key');
 select vault.create_secret('<your NOTIFICATION_FUNCTION_SECRET value from .env>', 'notification_function_secret');
 ```
 
 `host.docker.internal` is the standard way for the local Postgres container to reach the local Edge Runtime container; the port (`54521` here) must match this project's `[api]` port in `supabase/config.toml`. If your local Supabase CLI version resolves container networking differently, adjust the URL and re-verify Task 8's manual invocation still succeeds end-to-end.
+
+The `notification_function_anon_key` secret specifically must be the **legacy JWT-format** `ANON_KEY` (from `supabase status -o env`), not the newer `PUBLISHABLE_KEY`/`PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Kong's gateway-level JWT check rejects the latter with "Invalid JWT format" (discovered while testing Task 8; see its Step 3).
 
 - [x] **Step 5: Commit**
 
@@ -1069,10 +1143,10 @@ EOF
 
 **Interfaces:**
 
-- Consumes: `isUrgent`/`isDigestEligible` (Task 4), `buildUrgentEmail`/`buildDigestEmail` (Task 5), `SupabaseClient`/`Database` types (type-only), `signInNotificationAgent`/`createAdminClient` (Task 2, test-only)
+- Consumes: `isUrgent`/`isDigestEligible` (Task 4), `buildUrgentEmail`/`buildDigestEmail` (Task 5), `SupabaseClient` type (type-only, from `@supabase/supabase-js` directly — not `Database`), `signInNotificationAgent`/`createAdminClient` (Task 2, test-only)
 - Produces: `runNotificationCycle(client, mode, now, sendEmail): Promise<{ sent: boolean; matched: number }>` and its `SendEmail` type — consumed by Task 8's Edge Function
 
-This is the piece the spec calls out explicitly: "Resend calls mocked in tests" and "one integration-style test covering a full urgent-then-digest cycle." It runs against the **real local Supabase instance** (same convention as every other data-layer test in this project) authenticated as the real `notification_agents` account (proving the Task 1 RLS grant is sufficient for the whole cycle, not just the isolated update tested in Task 3), with only the `sendEmail` callback mocked — nothing about Resend itself needs a real network call to test this logic. It has zero non-type-only imports beyond Tasks 4-5, so it stays Deno-importable (see Global Constraints).
+This is the piece the spec calls out explicitly: "Resend calls mocked in tests" and "one integration-style test covering a full urgent-then-digest cycle." It runs against the **real local Supabase instance** (same convention as every other data-layer test in this project) authenticated as the real `notification_agents` account (proving the Task 1 RLS grant is sufficient for the whole cycle, not just the isolated update tested in Task 3), with only the `sendEmail` callback mocked — nothing about Resend itself needs a real network call to test this logic. Its only imports are Tasks 4-5 (zero imports themselves) and `SupabaseClient` — no `Database` generic, since that would need a relative import of `../supabase/database.types` that Deno can't resolve without an extension, and the code already treats fetched rows loosely anyway.
 
 - [x] **Step 1: Write the failing tests**
 
@@ -1199,9 +1273,14 @@ Expected: FAIL with "Cannot find module './moderation-notification-send'".
 
 ```ts
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../supabase/database.types";
-import { isUrgent, isDigestEligible } from "./moderation-notification-rules";
-import { buildUrgentEmail, buildDigestEmail } from "./moderation-notification-templates";
+import {
+  isUrgent,
+  isDigestEligible,
+} from "./moderation-notification-rules.ts";
+import {
+  buildUrgentEmail,
+  buildDigestEmail,
+} from "./moderation-notification-templates.ts";
 
 export type SendEmail = (args: {
   subject: string;
@@ -1210,7 +1289,7 @@ export type SendEmail = (args: {
 }) => Promise<boolean>;
 
 export async function runNotificationCycle(
-  client: SupabaseClient<Database>,
+  client: SupabaseClient,
   mode: "urgent" | "digest",
   now: Date,
   sendEmail: SendEmail,
@@ -1312,18 +1391,31 @@ EOF
 **Files:**
 
 - Create: `supabase/functions/send-moderation-notifications/index.ts`
+- Create: `supabase/functions/send-moderation-notifications/deno.json`
 
 **Interfaces:**
 
-- Consumes: `runNotificationCycle`/`SendEmail` (Task 7); `NOTIFICATION_AGENT_EMAIL`/`PASSWORD`/`RESEND_API_KEY`/`RESEND_FROM_EMAIL`/`NOTIFICATION_FUNCTION_SECRET` secrets
+- Consumes: `runNotificationCycle`/`SendEmail` (Task 7); `NOTIFICATION_AGENT_EMAIL`/`PASSWORD`/`RESEND_API_KEY`/`RESEND_FROM_EMAIL`/`NOTIFICATION_FUNCTION_SECRET` secrets; the platform-reserved `SUPABASE_URL`/`SUPABASE_ANON_KEY` env vars (auto-injected, not configured by this task)
 - Produces: the deployed function the Task 6 cron jobs invoke — this is the last code task; only Task 9 (docs) depends on this existing
 
-Since the substantive logic now lives in Task 7 (fully tested under Vitest), this file has no automated test of its own — it's a thin Deno wrapper, verified by local invocation, the same "run it and check the result" treatment as the provisioning script.
+Since the substantive logic now lives in Task 7 (fully tested under Vitest), this file has no automated test of its own — it's a thin Deno wrapper, verified by local invocation, the same "run it and check the result" treatment as the provisioning script. That manual verification is exactly what surfaced every item in the Global Constraints about Deno import resolution, the `deno.json` requirement, and the reserved env var names — expect the steps below to take several iterations even with everything already fixed, since this is genuinely the first time any code in this project runs under Deno rather than Node.
 
-- [x] **Step 1: Write the function**
+- [x] **Step 1: Write the import map**
+
+`@supabase/supabase-js` can't be imported as a bare specifier under Deno at all (see Global Constraints) — this file redirects it to an explicit `npm:` specifier, auto-discovered by Deno with no CLI flag needed:
+
+```json
+{
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.112.4"
+  }
+}
+```
+
+- [x] **Step 2: Write the function**
 
 ```ts
-import { createClient } from "npm:@supabase/supabase-js@2.112.4";
+import { createClient } from "@supabase/supabase-js";
 import { runNotificationCycle } from "../../../src/lib/utils/moderation-notification-send.ts";
 
 Deno.serve(async (req) => {
@@ -1339,8 +1431,13 @@ Deno.serve(async (req) => {
   }
 
   const client = createClient(
-    Deno.env.get("PUBLIC_SUPABASE_URL")!,
-    Deno.env.get("PUBLIC_SUPABASE_PUBLISHABLE_KEY")!,
+    // SUPABASE_URL/SUPABASE_ANON_KEY are reserved names Supabase's Edge
+    // Runtime auto-injects (both locally and when deployed) — distinct
+    // from this project's own PUBLIC_SUPABASE_URL/PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    // which are just this app's Vite/Astro naming convention and are
+    // never set inside the Edge Function's environment.
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
@@ -1381,7 +1478,7 @@ Deno.serve(async (req) => {
 });
 ```
 
-- [x] **Step 2: Set local Edge Function secrets**
+- [x] **Step 3: Set local Edge Function secrets**
 
 Create `supabase/functions/.env` (gitignored — do not commit):
 
@@ -1397,26 +1494,38 @@ RESEND_FROM_EMAIL=<a verified Resend sender address>
 supabase secrets set --env-file supabase/functions/.env
 ```
 
-`PUBLIC_SUPABASE_URL`/`PUBLIC_SUPABASE_PUBLISHABLE_KEY` are already available to local Edge Functions by default.
+`SUPABASE_URL`/`SUPABASE_ANON_KEY` are already available to local (and deployed) Edge Functions automatically — they're reserved names, not something this `.env` file sets. Do **not** try to `supabase secrets set` a variable with the `SUPABASE_` prefix yourself; the CLI rejects it, since the platform owns that namespace.
 
-- [ ] **Step 3: Serve locally and invoke manually**
+- [x] **Step 4: Serve locally and invoke manually**
 
 ```bash
 supabase functions serve send-moderation-notifications
 ```
 
-In another terminal:
+Keep this running in its own terminal — repeatedly starting and killing it in the background (e.g. from a script) can leave the local Edge Runtime's Docker container in a broken state (`No such container: supabase_edge_runtime_...`); if that happens, `supabase stop && supabase start` recovers it.
+
+In another terminal, get the two tokens this request needs — the platform's own gateway auth token, and this function's own secret — then send it:
 
 ```bash
+ANON_KEY=$(supabase status -o env | grep '^ANON_KEY=' | cut -d'=' -f2- | tr -d '"')
+FUNCTION_SECRET=$(grep '^NOTIFICATION_FUNCTION_SECRET=' supabase/functions/.env | cut -d'=' -f2- | tr -d '"')
+
 curl -i -X POST http://localhost:54521/functions/v1/send-moderation-notifications \
   -H "Content-Type: application/json" \
-  -H "x-notification-secret: <your NOTIFICATION_FUNCTION_SECRET>" \
+  -H "Authorization: Bearer $ANON_KEY" \
+  -H "x-notification-secret: $FUNCTION_SECRET" \
   -d '{"mode":"digest"}'
 ```
 
+Two things about that `Authorization` header that are easy to get wrong:
+
+1. **It's required at all** — Kong (Supabase's local API gateway) rejects any Edge Function request with no `Authorization` header (`401 UNAUTHORIZED_NO_AUTH_HEADER`) before the request ever reaches your code. This is a separate, platform-level gate from the function's own `x-notification-secret` check — both are needed.
+2. **It must be `ANON_KEY` specifically, not `PUBLISHABLE_KEY`** — `supabase status -o env` prints both. The newer `PUBLISHABLE_KEY` (matching `.env`'s `PUBLIC_SUPABASE_PUBLISHABLE_KEY`) isn't a JWT, and Kong's `verify_jwt` check rejects it with `401 UNAUTHORIZED_INVALID_JWT_FORMAT`. `ANON_KEY` is the legacy JWT-format key Kong actually expects here.
+3. `supabase status -o env`'s output quotes every value (`ANON_KEY="eyJ..."`) — strip the quotes (`tr -d '"'`) or the leading `"` breaks the JWT and produces the same "Invalid JWT format" error, which looks identical to using the wrong key entirely.
+
 Expected: `200 OK` with `{"sent":true,"matched":N}` if any pending entries exist locally (the seeded `EXISTING_PENDING_ENTRY_ID` entry qualifies), or `{"sent":false,"matched":0}` if none do. Check the Resend dashboard (or logs, if using a test API key) for the sent email. Re-run the same command — since the matched entry now has `notified_at` set to today, expect `{"sent":false,"matched":0}` on the second call, confirming idempotency.
 
-- [ ] **Step 4: Verify the cron path end-to-end**
+- [x] **Step 5: Verify the cron path end-to-end**
 
 With the function still served locally and the Task 6 Vault secrets set, manually trigger the cron job to confirm wiring without waiting 15 minutes:
 
@@ -1426,10 +1535,12 @@ supabase db query "select cron.schedule_in_database('notify-urgent-test', '5 sec
 
 Expected: the function logs (`supabase functions serve` output) show an incoming request within a few seconds. Clean up the one-off test job afterward: `supabase db query "select cron.unschedule('notify-urgent-test');" --local`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 6: Commit**
+
+Also includes `tsconfig.json`'s `supabase/functions` exclusion — a pre-existing gap (Deno globals/`npm:` specifiers were already failing plain `tsc`, just not something anyone had run against this directory before this task's manual testing surfaced it):
 
 ```bash
-git add supabase/functions
+git add supabase/functions tsconfig.json
 git commit -m "$(cat <<'EOF'
 feat: add the send-moderation-notifications Edge Function
 
@@ -1452,7 +1563,7 @@ EOF
 - Consumes: nothing — documentation only, no code interfaces
 - Produces: nothing consumed by other tasks; this is cleanup identified in the spec's Known Limitations section
 
-- [ ] **Step 1: Update `PRODUCT.md`**
+- [x] **Step 1: Update `PRODUCT.md`**
 
 Find the line (around line 35):
 
@@ -1466,7 +1577,7 @@ Replace with:
 - **Notifications**: Resend-powered daily digest of pending queue items, plus an instant alert (via `pg_cron`, polling every 15 minutes) for time-sensitive changes — a pending cancellation or modification within 3 days.
 ```
 
-- [ ] **Step 2: Annotate the superseded MVP design doc**
+- [x] **Step 2: Annotate the superseded MVP design doc**
 
 In `docs/superpowers/specs/2026-09-01-crowd-work-directory-mvp-design.md`, immediately before the `## Notifications` heading (around line 99), add:
 
@@ -1474,7 +1585,7 @@ In `docs/superpowers/specs/2026-09-01-crowd-work-directory-mvp-design.md`, immed
 > **Update (2026-09-08):** Superseded by [2026-09-08-moderation-notifications-design.md](2026-09-08-moderation-notifications-design.md) — the digest/urgent-alert split below is accurate in spirit, but the trigger mechanism (a `pg_cron`-invoked Edge Function, not a database webhook) and the urgency window (3 days, not "2-3") have both changed.
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add PRODUCT.md docs/superpowers/specs/2026-09-01-crowd-work-directory-mvp-design.md
