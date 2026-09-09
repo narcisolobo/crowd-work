@@ -65,13 +65,13 @@ crowd-work/
 - Consumes: `moderation_queue`, `listings`, `recurrence_rules`, `occurrence_exceptions`, `venues` tables as they exist today
 - Produces: `moderation_queue.notified_at` column; `notification_agents` table; a permissive UPDATE policy scoped to that account; restrictive policies blocking it from every other write — consumed by Task 2's provisioning script and Task 3's lockdown tests
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 ```bash
 supabase migration new notification_agents
 ```
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 ```sql
 alter table moderation_queue
@@ -160,7 +160,7 @@ create policy "notification agents can't insert venues"
   with check (auth.uid() not in (select id from notification_agents));
 ```
 
-- [ ] **Step 3: Apply the migration locally and verify**
+- [x] **Step 3: Apply the migration locally and verify**
 
 ```bash
 supabase db reset
@@ -168,7 +168,7 @@ supabase db reset
 
 Expected: all prior migrations plus `notification_agents` apply with no errors.
 
-- [ ] **Step 4: Regenerate TypeScript types**
+- [x] **Step 4: Regenerate TypeScript types**
 
 ```bash
 supabase gen types typescript --local > src/lib/supabase/database.types.ts
@@ -176,7 +176,7 @@ supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
 Expected: `notification_agents` and `moderation_queue.notified_at` now appear in `database.types.ts`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations src/lib/supabase/database.types.ts

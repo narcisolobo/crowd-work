@@ -120,6 +120,7 @@ export type Database = {
           decided_at: string | null
           id: string
           listing_id: string | null
+          notified_at: string | null
           origin: string
           proposed_by: string | null
           proposed_data: Json | null
@@ -137,6 +138,7 @@ export type Database = {
           decided_at?: string | null
           id?: string
           listing_id?: string | null
+          notified_at?: string | null
           origin: string
           proposed_by?: string | null
           proposed_data?: Json | null
@@ -154,6 +156,7 @@ export type Database = {
           decided_at?: string | null
           id?: string
           listing_id?: string | null
+          notified_at?: string | null
           origin?: string
           proposed_by?: string | null
           proposed_data?: Json | null
@@ -227,6 +230,18 @@ export type Database = {
         Update: {
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      notification_agents: {
+        Row: {
+          id: string
+        }
+        Insert: {
+          id: string
+        }
+        Update: {
+          id?: string
         }
         Relationships: []
       }
