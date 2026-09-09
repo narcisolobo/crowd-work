@@ -329,7 +329,7 @@ EOF
 - Consumes: `signInNotificationAgent`, `createAdminClient` (Task 2); seeded fixture ids from `supabase/seed.sql` (reuse `EXISTING_LISTING_ID`/`EXISTING_VENUE_ID`/`EXISTING_NEIGHBORHOOD_ID`/`EXISTING_PENDING_ENTRY_ID` values already used in `moderation-source-check.test.ts`)
 - Produces: proof the Task 1 policies hold — no other task depends on this file
 
-- [ ] **Step 1: Write the "can mark pending as notified" test**
+- [x] **Step 1: Write the "can mark pending as notified" test**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -370,7 +370,7 @@ describe("notification agent permitted update", () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it passes**
+- [x] **Step 2: Run it to verify it passes**
 
 ```bash
 pnpm test -- moderation-notifications-rls
@@ -378,7 +378,7 @@ pnpm test -- moderation-notifications-rls
 
 Expected: PASS. (This confirms the permissive policy works before testing the restrictive ones below.)
 
-- [ ] **Step 3: Write the lockdown tests**
+- [x] **Step 3: Write the lockdown tests**
 
 Append to the same file:
 
@@ -486,7 +486,7 @@ describe("notification agent lockdown", () => {
 });
 ```
 
-- [ ] **Step 4: Run the full file and verify all pass**
+- [x] **Step 4: Run the full file and verify all pass**
 
 ```bash
 pnpm test -- moderation-notifications-rls
@@ -494,7 +494,7 @@ pnpm test -- moderation-notifications-rls
 
 Expected: PASS, all tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/data/moderation-notifications-rls.test.ts
