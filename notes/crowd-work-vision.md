@@ -18,7 +18,7 @@ Two audiences, one dataset: general LA comedy audiences looking for shows to att
 
 ## Key Features
 
-- Directory of mics and shows, filterable by type, day, and neighborhood or broader LA area (e.g., "Eastside")
+- Directory of mics and shows, filterable by type, day, and broader LA area (e.g., "Eastside"); neighborhood-level filtering is a maybe for post-MVP (see future-considerations.md)
 - Recurrence-aware listings — weekly or monthly (e.g., "last Thursday") patterns, with one-off exceptions for cancellations or date/venue changes
 - Manually-triggered source checking (the `/check-sources` skill) that checks seed sources for changes and files findings into moderation; sources graduate from moderated to auto-published once they've proven reliable. A fully autonomous, continuously-scheduled version of this agent is a post-MVP goal — see [future-considerations.md](./future-considerations.md).
 - Public submission form for new listings and corrections, open to anyone, always human-reviewed

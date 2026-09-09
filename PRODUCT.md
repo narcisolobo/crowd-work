@@ -27,7 +27,7 @@ The differentiating mechanism is governance, not a feature list. A single shared
 
 ## Operating Context
 
-- **Public site** (no login required): browse/filter the directory by type (mic/show), day of week, and neighborhood or broader area (e.g. "Eastside"); view a listing's own detail page; submit a new listing or a correction via a public form (honeypot + IP rate-limiting for anti-abuse, no CAPTCHA at MVP).
+- **Public site** (no login required): browse/filter the directory by type (mic/show), day of week, and broader area (e.g. "Eastside"); view a listing's own detail page; submit a new listing or a correction via a public form (honeypot + IP rate-limiting for anti-abuse, no CAPTCHA at MVP).
 - **Recurrence-aware listings**: weekly/monthly patterns (including "last Thursday of the month" style rules) with one-off exceptions for cancellations, date changes, or venue changes, resolved against a date range rather than stored as raw future dates.
 - **Daily sourcing agent**: a scheduled Supabase Edge Function checks each seed source (venue sites, Instagram, etc.) for changes, using Claude Haiku 4.5 with a defined JSON schema to extract structured listing data. Sources start `unverified` and graduate to `trusted` after enough clean approvals in a row, at which point their future proposals auto-publish (still logged for audit).
 - **Moderation** (authenticated admin area, Supabase Auth): the site owner and volunteer comic moderators work the shared queue — approve, edit, or propose-and-confirm rejection. User submissions never accrue trust and are always human-reviewed regardless of history.
@@ -39,7 +39,7 @@ The differentiating mechanism is governance, not a feature list. A single shared
 - Budget constraint: free or near-free infrastructure, with one exception — a small LLM API budget (~$2-5/month) for the sourcing agent.
 - No visitor accounts/profiles in the MVP — browsing and submitting require no login. Auth exists only for moderators.
 - Instagram sources are hard to reach reliably (auth walls, rate limits, ToS) regardless of extraction quality; they stay manually-checked or rely on user submissions rather than automated fetching, until a legitimate access path exists.
-- Deferred, not in scope for MVP design work: map view, ratings/reviews on listings, Crowd Work Pass, Crowd Work HQ/Pro, The Green Room, Crowd Work Pulse (see notes/future-considerations.md).
+- Deferred, not in scope for MVP design work: map view, ratings/reviews on listings, Crowd Work Pass, Crowd Work HQ/Pro, The Green Room, Crowd Work Pulse, neighborhood-level filtering (area-only for now) (see notes/future-considerations.md).
 
 ## Brand Commitments
 
