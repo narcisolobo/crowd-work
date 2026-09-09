@@ -522,7 +522,7 @@ EOF
 
 This module must have no non-type-only imports at all, so Deno can import it directly by relative path (see Global Constraints).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -654,7 +654,7 @@ describe("isDigestEligible", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 pnpm test -- moderation-notification-rules
@@ -662,7 +662,7 @@ pnpm test -- moderation-notification-rules
 
 Expected: FAIL with "Cannot find module './moderation-notification-rules'" or similar.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 import type { QueueChangeType, QueueStatus } from "../data/moderation";
@@ -709,7 +709,7 @@ export function isDigestEligible(entry: DigestInput, now: Date): boolean {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 pnpm test -- moderation-notification-rules
@@ -717,7 +717,7 @@ pnpm test -- moderation-notification-rules
 
 Expected: PASS, all tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/utils/moderation-notification-rules.ts src/lib/utils/moderation-notification-rules.test.ts
