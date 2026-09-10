@@ -77,7 +77,20 @@ select sign_up_method, sign_up_url, sign_up_other_note, sign_up_opens_at from li
 ```
 Expected: two rows, both `sign_up_method = 'first_come'`, matching `sign_up_opens_at` values, `sign_up_url`/`sign_up_other_note` both null.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Regenerate Supabase TypeScript types**
+
+The generated `Database` type is what Task 2's `.insert()`/`.update()` calls type-check against — without this, `sign_up_url`/`sign_up_other_note`/`sign_up_opens_at` aren't valid keys on the `listings` Insert/Update types yet, and TypeScript reports those assignments as "not assignable to type 'never'".
+
+Run:
+```bash
+supabase gen types typescript --local > src/lib/supabase/database.types.ts
+```
+
+Verify: `grep -c sign_up_opens_at src/lib/supabase/database.types.ts` returns `3` (Row, Insert, Update).
+
+(This step was added after Task 1's commit already landed without it — the regenerated `database.types.ts` rides along with Task 2's commit instead, in its Step 20.)
+
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/*_structured_sign_up_method.sql supabase/seed.sql
@@ -100,7 +113,7 @@ git commit -m "feat(db): replace free-text sign-up method with structured enum +
 - Consumes: the migration from Task 1 (`sign_up_method_type` enum, three new columns).
 - Produces: `ProposedListingFields.signUpMethod: "bucket_lotto" | "first_come" | "curated" | "slotted_online" | "hybrid_other" | null`, `.signUpUrl: string | null`, `.signUpOtherNote: string | null`, `.signUpOpensAt: string | null`; `ListingWithVenue` with the same three additional fields. These are what Tasks 3 and 4 read/write via form fields named `signUpUrl`, `signUpOtherNote`, `signUpOpensAt`.
 
-- [ ] **Step 1: Write the failing test for parsing the three new form fields**
+- [x] **Step 1: Write the failing test for parsing the three new form fields**
 
 In `src/lib/data/moderation-parse.test.ts`, add to the `describe("parseProposedListingFields", ...)` block:
 
@@ -126,12 +139,12 @@ In `src/lib/data/moderation-parse.test.ts`, add to the `describe("parseProposedL
   });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pnpm test -- moderation-parse`
 Expected: FAIL — `fields.signUpUrl` is `undefined` (property doesn't exist yet) or a type error, since `parseProposedListingFields` doesn't read these fields yet.
 
-- [ ] **Step 3: Update the `ProposedListingFields` interface**
+- [x] **Step 3: Update the `ProposedListingFields` interface**
 
 In `src/lib/data/moderation.ts`, change:
 
@@ -161,7 +174,7 @@ and add, right after the existing `startTime: string;` line (so it sits near the
 
 (Final field order in the interface: `startTime`, `signUpMethod`, `signUpUrl`, `signUpOtherNote`, `signUpOpensAt`, `costToPerform`, ... — order doesn't affect behavior, just keep the four sign-up fields adjacent for readability.)
 
-- [ ] **Step 4: Update `parseProposedListingFields`**
+- [x] **Step 4: Update `parseProposedListingFields`**
 
 In `src/lib/data/moderation.ts`, change:
 
@@ -184,12 +197,12 @@ and add, right after the `startTime: formData.get("startTime")?.toString() ?? ""
     signUpOpensAt: formData.get("signUpOpensAt")?.toString() || null,
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `pnpm test -- moderation-parse`
 Expected: PASS. (This will also surface TypeScript errors from other now-incomplete `ProposedListingFields` object literals in the same test file and elsewhere — that's expected; fixed in later steps of this task.)
 
-- [ ] **Step 6: Fix the now-incomplete fixtures in `moderation-parse.test.ts`**
+- [x] **Step 6: Fix the now-incomplete fixtures in `moderation-parse.test.ts`**
 
 In the `describe("listingToProposedFields", ...)` block, the first test's `listing: ListingWithVenue` literal has `signUpMethod: "Sign-up list at the door",` — change to:
 
@@ -213,7 +226,7 @@ The second test's `listing: ListingWithVenue` literal has `signUpMethod: null,` 
 
 This won't compile yet — `ListingWithVenue` doesn't have these fields until Step 10. That's fine; proceed.
 
-- [ ] **Step 7: Write the failing test for the new required-field rule**
+- [x] **Step 7: Write the failing test for the new required-field rule**
 
 `findMissingRequiredFields` has no dedicated test file yet. Add one to `moderation-parse.test.ts` (it already imports pure functions from `./moderation` and needs no live Supabase connection, matching this function's shape). Add the import and a new `describe` block:
 
@@ -287,12 +300,12 @@ describe("findMissingRequiredFields", () => {
 
 You'll also need `import type { ProposedListingFields } from "./moderation";` added to this test file's imports (it currently only imports the two functions, not the type).
 
-- [ ] **Step 8: Run the test to verify it fails**
+- [x] **Step 8: Run the test to verify it fails**
 
 Run: `pnpm test -- moderation-parse`
 Expected: FAIL on the first new test (`findMissingRequiredFields` doesn't push the `signUpOtherNote` entry yet).
 
-- [ ] **Step 9: Implement the validation rule**
+- [x] **Step 9: Implement the validation rule**
 
 In `src/lib/data/moderation.ts`, in `findMissingRequiredFields`, add after the existing `venueId`/`newVenue` block:
 
@@ -302,9 +315,9 @@ In `src/lib/data/moderation.ts`, in `findMissingRequiredFields`, add after the e
   }
 ```
 
-- [ ] **Step 10: Update `ListingWithVenue` and its read mapping in `src/lib/data/listings.ts`**
+- [x] **Step 10: Update `ListingWithVenue` and its read mapping in `src/lib/data/listings.ts`**
 
-Add to the `ListingWithVenue` interface, right after its `signUpMethod: string | null;` line:
+In the `ListingWithVenue` interface, replace its `signUpMethod: string | null;` line with:
 
 ```ts
   signUpMethod:
@@ -318,7 +331,7 @@ Add to the `ListingWithVenue` interface, right after its `signUpMethod: string |
   signUpOtherNote: string | null;
 ```
 
-and add `signUpOpensAt: string | null;` near `startTime`.
+and add `signUpOpensAt: string | null;` near `startTime` (this one's a genuine addition, not a replacement).
 
 In the SELECT column list (the line reading `sign_up_method, cost_to_perform, ticket_price, ticket_url,`), change to:
 
@@ -336,7 +349,7 @@ In the row-mapping function, change `signUpMethod: row.sign_up_method,` to also 
     signUpOpensAt: row.sign_up_opens_at,
 ```
 
-- [ ] **Step 11: Update `listingToProposedFields`**
+- [x] **Step 11: Update `listingToProposedFields`**
 
 In `src/lib/data/moderation.ts`, change `signUpMethod: listing.signUpMethod,` to also carry the three new fields:
 
@@ -348,12 +361,12 @@ In `src/lib/data/moderation.ts`, change `signUpMethod: listing.signUpMethod,` to
 
 and add `signUpOpensAt: listing.signUpOpensAt,` near `startTime: listing.startTime,`.
 
-- [ ] **Step 12: Run the full test file to verify everything so far passes**
+- [x] **Step 12: Run the full test file to verify everything so far passes**
 
 Run: `pnpm test -- moderation-parse`
 Expected: PASS, all tests in the file.
 
-- [ ] **Step 13: Update the write paths — `createListingFromFields`**
+- [x] **Step 13: Update the write paths — `createListingFromFields`**
 
 In `src/lib/data/moderation.ts`, in `createListingFromFields`'s `.insert({...})` call, change `sign_up_method: fields.signUpMethod,` to also include:
 
@@ -364,11 +377,11 @@ In `src/lib/data/moderation.ts`, in `createListingFromFields`'s `.insert({...})`
       sign_up_opens_at: fields.signUpOpensAt,
 ```
 
-- [ ] **Step 14: Update the write paths — `applyListingFields`**
+- [x] **Step 14: Update the write paths — `applyListingFields`**
 
 In the same file, in `applyListingFields`'s `.update({...})` call, make the identical change to `sign_up_method: fields.signUpMethod,`.
 
-- [ ] **Step 15: Fix the now-incomplete fixtures in `moderation-approve.test.ts`**
+- [x] **Step 15: Fix the now-incomplete fixtures in `moderation-approve.test.ts`**
 
 This file has explicit `ProposedListingFields`-typed object literals at (originally) lines 67, 85, 157, 180, 260, and 331 with `signUpMethod: null,` or `signUpMethod: "text to sign up",`. For each one:
 - If the value is `signUpMethod: null,`, add right after it: `signUpUrl: null,\n      signUpOtherNote: null,` (matching the literal's existing indentation), and add `signUpOpensAt: null,` right after its `startTime` line.
@@ -376,20 +389,20 @@ This file has explicit `ProposedListingFields`-typed object literals at (origina
 
 Also check the `proposed_data: {...}` object passed to `createPendingEntry` near the top of the first test (originally around line 67) — it is a plain object (not typed as `ProposedListingFields`), so it won't fail to compile, but update its `signUpMethod: null,` line the same way for consistency with what a real caller would send, adding the three new fields as `null`.
 
-- [ ] **Step 16: Fix the now-incomplete fixture in `moderation-archive-listing.test.ts`**
+- [x] **Step 16: Fix the now-incomplete fixture in `moderation-archive-listing.test.ts`**
 
 At (originally) line 122, the `fields: ProposedListingFields` literal has `signUpMethod: null,`. Add right after it: `signUpUrl: null,\n      signUpOtherNote: null,`, and add `signUpOpensAt: null,` after its `startTime` line.
 
-- [ ] **Step 17: Fix the now-incomplete fixture in `moderation-source-check.test.ts`**
+- [x] **Step 17: Fix the now-incomplete fixture in `moderation-source-check.test.ts`**
 
 The `SAMPLE_FIELDS` object has `signUpMethod: "sign-up list at the door, 7:30pm",` at (originally) line 18. Change to `signUpMethod: "first_come" as const,` and add `signUpUrl: null,\n  signUpOtherNote: null,` right after it, plus `signUpOpensAt: null,` after its `startTime` line.
 
-- [ ] **Step 18: Run the full test suite**
+- [x] **Step 18: Run the full test suite**
 
 Run: `pnpm test`
 Expected: PASS, all files. (`pnpm test -- moderation-approve`, `moderation-archive-listing`, and `moderation-source-check` hit a real local Supabase instance — make sure it's running via `supabase status`, starting it with `supabase start` if not.)
 
-- [ ] **Step 19: Type-check the whole project**
+- [x] **Step 19: Type-check the whole project**
 
 Run: `pnpm run check`
 Expected: no errors. This catches any remaining `ProposedListingFields`/`ListingWithVenue` literal in the codebase this task's steps didn't already enumerate.
@@ -399,7 +412,8 @@ Expected: no errors. This catches any remaining `ProposedListingFields`/`Listing
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/listings.ts \
   src/lib/data/moderation-parse.test.ts src/lib/data/moderation-approve.test.ts \
-  src/lib/data/moderation-archive-listing.test.ts src/lib/data/moderation-source-check.test.ts
+  src/lib/data/moderation-archive-listing.test.ts src/lib/data/moderation-source-check.test.ts \
+  src/lib/supabase/database.types.ts
 git commit -m "feat(data): thread structured sign-up method through parse, validation, read, and write paths"
 ```
 

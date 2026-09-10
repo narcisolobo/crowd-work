@@ -57,7 +57,12 @@ export type Database = {
           host: string | null
           id: string
           one_off_date: string | null
-          sign_up_method: string | null
+          sign_up_method:
+            | Database["public"]["Enums"]["sign_up_method_type"]
+            | null
+          sign_up_opens_at: string | null
+          sign_up_other_note: string | null
+          sign_up_url: string | null
           start_time: string
           status: Database["public"]["Enums"]["listing_status"]
           ticket_price: string | null
@@ -73,7 +78,12 @@ export type Database = {
           host?: string | null
           id?: string
           one_off_date?: string | null
-          sign_up_method?: string | null
+          sign_up_method?:
+            | Database["public"]["Enums"]["sign_up_method_type"]
+            | null
+          sign_up_opens_at?: string | null
+          sign_up_other_note?: string | null
+          sign_up_url?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["listing_status"]
           ticket_price?: string | null
@@ -89,7 +99,12 @@ export type Database = {
           host?: string | null
           id?: string
           one_off_date?: string | null
-          sign_up_method?: string | null
+          sign_up_method?:
+            | Database["public"]["Enums"]["sign_up_method_type"]
+            | null
+          sign_up_opens_at?: string | null
+          sign_up_other_note?: string | null
+          sign_up_url?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["listing_status"]
           ticket_price?: string | null
@@ -422,6 +437,12 @@ export type Database = {
         | "approved"
         | "rejected"
       recurrence_frequency: "weekly" | "monthly"
+      sign_up_method_type:
+        | "bucket_lotto"
+        | "first_come"
+        | "curated"
+        | "slotted_online"
+        | "hybrid_other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -570,6 +591,13 @@ export const Constants = {
         "rejected",
       ],
       recurrence_frequency: ["weekly", "monthly"],
+      sign_up_method_type: [
+        "bucket_lotto",
+        "first_come",
+        "curated",
+        "slotted_online",
+        "hybrid_other",
+      ],
     },
   },
 } as const

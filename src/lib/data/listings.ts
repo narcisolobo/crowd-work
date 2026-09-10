@@ -18,7 +18,16 @@ export interface ListingWithVenue {
   host: string | null;
   description: string | null;
   startTime: string;
-  signUpMethod: string | null;
+  signUpOpensAt: string | null;
+  signUpMethod:
+    | "bucket_lotto"
+    | "first_come"
+    | "curated"
+    | "slotted_online"
+    | "hybrid_other"
+    | null;
+  signUpUrl: string | null;
+  signUpOtherNote: string | null;
   costToPerform: string | null;
   ticketPrice: string | null;
   ticketUrl: string | null;
@@ -69,7 +78,8 @@ export async function getAreas(): Promise<Area[]> {
 
 const LISTING_WITH_VENUE_SELECT = `
   id, type, title, host, description, start_time, one_off_date,
-  sign_up_method, cost_to_perform, ticket_price, ticket_url,
+  sign_up_method, sign_up_url, sign_up_other_note, sign_up_opens_at,
+  cost_to_perform, ticket_price, ticket_url,
   venue:venues (
     id, name, address, google_maps_url,
     neighborhood:neighborhoods ( id, neighborhood_areas ( area_id ) )
@@ -86,6 +96,9 @@ function mapListingRow(row: any): ListingWithVenue {
     description: row.description,
     startTime: row.start_time,
     signUpMethod: row.sign_up_method,
+    signUpUrl: row.sign_up_url,
+    signUpOtherNote: row.sign_up_other_note,
+    signUpOpensAt: row.sign_up_opens_at,
     costToPerform: row.cost_to_perform,
     ticketPrice: row.ticket_price,
     ticketUrl: row.ticket_url,
@@ -155,8 +168,7 @@ export async function getListingTitles(
     .select("id, title")
     .in("id", uniqueIds);
 
-  if (error)
-    throw new Error(`Failed to load listing titles: ${error.message}`);
+  if (error) throw new Error(`Failed to load listing titles: ${error.message}`);
 
   return Object.fromEntries((data ?? []).map((row) => [row.id, row.title]));
 }

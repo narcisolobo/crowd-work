@@ -22,7 +22,16 @@ export interface ProposedListingFields {
   venueId: string | null;
   newVenue: ProposedVenue | null;
   startTime: string;
-  signUpMethod: string | null;
+  signUpOpensAt: string | null;
+  signUpMethod:
+    | "bucket_lotto"
+    | "first_come"
+    | "curated"
+    | "slotted_online"
+    | "hybrid_other"
+    | null;
+  signUpUrl: string | null;
+  signUpOtherNote: string | null;
   costToPerform: string | null;
   ticketPrice: string | null;
   ticketUrl: string | null;
@@ -243,6 +252,12 @@ export function findMissingRequiredFields(
   } else if (!fields.venueId) {
     missing.push({ field: "venueId", label: "Venue" });
   }
+  if (
+    fields.signUpMethod === "hybrid_other" &&
+    !fields.signUpOtherNote?.trim()
+  ) {
+    missing.push({ field: "signUpOtherNote", label: "Sign-up explanation" });
+  }
   return missing;
 }
 
@@ -453,6 +468,9 @@ export async function createListingFromFields(
       start_time: fields.startTime,
       one_off_date: fields.oneOffDate,
       sign_up_method: fields.signUpMethod,
+      sign_up_url: fields.signUpUrl,
+      sign_up_other_note: fields.signUpOtherNote,
+      sign_up_opens_at: fields.signUpOpensAt,
       cost_to_perform: fields.costToPerform,
       ticket_price: fields.ticketPrice,
       ticket_url: fields.ticketUrl,
@@ -637,6 +655,9 @@ async function applyListingFields(
       start_time: fields.startTime,
       one_off_date: fields.oneOffDate,
       sign_up_method: fields.signUpMethod,
+      sign_up_url: fields.signUpUrl,
+      sign_up_other_note: fields.signUpOtherNote,
+      sign_up_opens_at: fields.signUpOpensAt,
       cost_to_perform: fields.costToPerform,
       ticket_price: fields.ticketPrice,
       ticket_url: fields.ticketUrl,
@@ -813,7 +834,11 @@ export function parseProposedListingFields(
     description: formData.get("description")?.toString() || null,
     ...parseVenueSelection(formData),
     startTime: formData.get("startTime")?.toString() ?? "",
-    signUpMethod: formData.get("signUpMethod")?.toString() || null,
+    signUpOpensAt: formData.get("signUpOpensAt")?.toString() || null,
+    signUpMethod: (formData.get("signUpMethod")?.toString() ||
+      null) as ProposedListingFields["signUpMethod"],
+    signUpUrl: formData.get("signUpUrl")?.toString() || null,
+    signUpOtherNote: formData.get("signUpOtherNote")?.toString() || null,
     costToPerform: formData.get("costToPerform")?.toString() || null,
     ticketPrice: formData.get("ticketPrice")?.toString() || null,
     ticketUrl: formData.get("ticketUrl")?.toString() || null,
@@ -965,7 +990,10 @@ export function listingToProposedFields(
     venueId: listing.venue.id,
     newVenue: null,
     startTime: listing.startTime,
+    signUpOpensAt: listing.signUpOpensAt,
     signUpMethod: listing.signUpMethod,
+    signUpUrl: listing.signUpUrl,
+    signUpOtherNote: listing.signUpOtherNote,
     costToPerform: listing.costToPerform,
     ticketPrice: listing.ticketPrice,
     ticketUrl: listing.ticketUrl,
