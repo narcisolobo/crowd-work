@@ -735,7 +735,7 @@ Expected: PASS (no test file directly covers these Astro templates, but this con
 
 Same constraint as Task 3 — don't start the dev server yourself; ask the user to check `/` and a mic's detail page with each of the five sign-up methods (using the seed data from Task 1, or by direct-adding a test listing) to confirm the row stays a plain label (or a linked label for `slotted_online` with a URL) and the detail page shows the extra note/drop-time lines correctly.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/pages/index.astro src/components/listings/ListingRow.astro src/pages/listings/\[id\].astro
@@ -752,7 +752,7 @@ git commit -m "feat(display): render structured sign-up method label, link, note
 **Interfaces:**
 - Consumes: the five enum values from Task 1/2 (documentation only — no code dependency).
 
-- [ ] **Step 1: Update the JSON shape in step 6**
+- [x] **Step 1: Update the JSON shape in step 6**
 
 In `.claude/skills/check-sources/SKILL.md`, replace:
 
@@ -769,7 +769,7 @@ with:
       "signUpOpensAt": "HH:MM or null",
 ```
 
-- [ ] **Step 2: Add classification guidance**
+- [x] **Step 2: Add classification guidance**
 
 Immediately after the JSON code block (before the `newVenue is always null...` sentence), add:
 
