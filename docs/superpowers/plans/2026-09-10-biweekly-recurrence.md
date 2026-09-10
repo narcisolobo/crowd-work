@@ -394,7 +394,7 @@ This is a structural fixture fix, not a behavior change — the test's assertion
 Run: `pnpm exec astro check`
 Expected: no new errors. (No existing test exercises `mapListingRow`/`toRecurrenceListing` directly — both are consumed by `index.astro`/`listings/[id].astro`, and by `moderation.ts`'s `listingToProposedFields` in Task 4 — so type-checking is the correctness signal here, same as this file's pre-existing untested mapping code.)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/data/listings.ts src/lib/data/moderation-parse.test.ts
@@ -549,12 +549,12 @@ In the `describe("findMissingRequiredFields", ...)` block:
   });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test -- moderation-parse`
 Expected: FAIL — `fields.recurrence.intervalWeeks`/`anchorDate` don't exist yet (parsing), and the two new `findMissingRequiredFields` rules don't exist yet (validation). The `listingToProposedFields` test (fixture-only edit) should still pass once the type change lands in Step 3, since it's additive.
 
-- [ ] **Step 3: Update the `ProposedListingFields` type**
+- [x] **Step 3: Update the `ProposedListingFields` type**
 
 In `src/lib/data/moderation.ts:38-42`, change:
 
@@ -578,7 +578,7 @@ to:
   } | null;
 ```
 
-- [ ] **Step 4: Update `parseProposedListingFields`**
+- [x] **Step 4: Update `parseProposedListingFields`**
 
 In `moderation.ts:826-857`, change:
 
@@ -657,7 +657,7 @@ export function parseProposedListingFields(
 }
 ```
 
-- [ ] **Step 5: Add the two new validation rules to `findMissingRequiredFields`**
+- [x] **Step 5: Add the two new validation rules to `findMissingRequiredFields`**
 
 In `moderation.ts:255-260`, immediately after the existing `signUpOtherNote`-for-`hybrid_other` block and before `return missing;`, add:
 
@@ -677,7 +677,7 @@ In `moderation.ts:255-260`, immediately after the existing `signUpOtherNote`-for
   }
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `pnpm test -- moderation-parse`
 Expected: PASS, all cases.
