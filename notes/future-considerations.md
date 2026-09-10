@@ -28,6 +28,8 @@ Ideas beyond the MVP directory, noted for context but not designed yet. See [cro
 
 - **Crowd Work HQ / Pro** — a backend portal for venue owners, hosts, and producers to manage their own show listings, drop-in slots, and check-ins directly. This is likely the most important long-term piece (it would make listings self-updating instead of agent/community-maintained), but it's a two-sided marketplace problem requiring venue adoption.
 
+- **Sign-up list feature** — a comedian-facing digital sign-up sheet for claiming a slot at a specific mic/show, similar to slotted.co. Not designed yet. Overlaps with **Crowd Work HQ / Pro** above (host/producer-managed drop-in slots), so likely worth scoping together rather than separately — would need host/producer adoption per mic, site-wide comedian accounts (the same auth gap flagged in the ratings/reviews idea above), and real-time slot-claiming/capacity data the current schema doesn't track.
+
 - **The Green Room by Crowd Work** — a comedian-facing content section: open-mic etiquette guides, venue reviews, host contact info. Relatively cheap to build (just content, no new data model) — could be added alongside the MVP or once there's traffic to justify it.
 
 - **Blog/newsletter content** — one of the moderation team is a working writer potentially interested in writing blog/news content about the LA comedy world; other moderators may have similar interest. This is a different kind of content than listings (long-form, not relational — no venue/recurrence/exception structure to preserve) and likely overlaps with or supersedes The Green Room idea above. Whatever authoring solution gets chosen (hand-rolled or third-party) needs to satisfy:
