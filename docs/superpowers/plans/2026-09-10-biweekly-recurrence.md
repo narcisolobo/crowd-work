@@ -29,13 +29,13 @@
 **Interfaces:**
 - Produces: `recurrence_rules.interval_weeks smallint not null default 1` (`check (interval_weeks >= 1)`), `recurrence_rules.anchor_date date`; constraints `recurrence_rules_anchor_date_for_interval` and `recurrence_rules_monthly_fields`.
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 Run: `supabase migration new recurrence_interval_weeks`
 
 This creates an empty, correctly-timestamped file under `supabase/migrations/`.
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 ```sql
 alter table recurrence_rules
@@ -60,12 +60,12 @@ alter table recurrence_rules
   );
 ```
 
-- [ ] **Step 3: Reset the local database and verify existing fixtures still insert**
+- [x] **Step 3: Reset the local database and verify existing fixtures still insert**
 
 Run: `supabase db reset`
 Expected: completes with no errors. `supabase/seed.sql`'s two `recurrence_rules` rows (one `weekly` with no `week_of_month`, one `monthly` with `week_of_month = -1`) already satisfy both new constraints — this confirms it.
 
-- [ ] **Step 4: Verify the new constraints actually reject bad data**
+- [x] **Step 4: Verify the new constraints actually reject bad data**
 
 Using `psql` or the Supabase MCP `execute_sql` tool, run inside a transaction so nothing persists:
 
@@ -95,7 +95,7 @@ rollback;
 
 Expected: fails with a `recurrence_rules_anchor_date_for_interval` violation.
 
-- [ ] **Step 5: Regenerate Supabase TypeScript types**
+- [x] **Step 5: Regenerate Supabase TypeScript types**
 
 Task 5's `.insert()`/`.update()` calls type-check against the generated `Database` type — without this, `interval_weeks`/`anchor_date` aren't valid keys on the `recurrence_rules` Insert/Update types yet.
 

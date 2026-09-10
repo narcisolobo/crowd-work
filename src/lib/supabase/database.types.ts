@@ -310,20 +310,26 @@ export type Database = {
       }
       recurrence_rules: {
         Row: {
+          anchor_date: string | null
           day_of_week: number
           frequency: Database["public"]["Enums"]["recurrence_frequency"]
+          interval_weeks: number
           listing_id: string
           week_of_month: number | null
         }
         Insert: {
+          anchor_date?: string | null
           day_of_week: number
           frequency: Database["public"]["Enums"]["recurrence_frequency"]
+          interval_weeks?: number
           listing_id: string
           week_of_month?: number | null
         }
         Update: {
+          anchor_date?: string | null
           day_of_week?: number
           frequency?: Database["public"]["Enums"]["recurrence_frequency"]
+          interval_weeks?: number
           listing_id?: string
           week_of_month?: number | null
         }
