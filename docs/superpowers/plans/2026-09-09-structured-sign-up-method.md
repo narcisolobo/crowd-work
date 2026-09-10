@@ -777,7 +777,7 @@ Immediately after the JSON code block (before the `newVenue is always null...` s
    Classifying `signUpMethod` from what the page says: `bucket_lotto` (names drawn from a bucket/hat/lottery), `first_come` (no list, arrive early), `curated` (host books performers, no public sign-up), `slotted_online` (a link like slotted.co — put it in `signUpUrl`), `hybrid_other` (doesn't fit cleanly — explain in `signUpOtherNote`). If the page states a specific time the list/bucket opens, put it in `signUpOpensAt`.
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .claude/skills/check-sources/SKILL.md
@@ -796,7 +796,7 @@ git commit -m "docs(check-sources): update sign-up method contract to the struct
 **Interfaces:**
 - Consumes: the five enum values and three detail-field names from Task 1/2.
 
-- [ ] **Step 1: Split the CSV template's column**
+- [x] **Step 1: Split the CSV template's column**
 
 In `data/open-mic-listings-template.csv`, change the header row's `sign_up_method` column into four columns, and update the one example row (`The Comedy Store` / `Whatever Wednesday Mic`) to match:
 
@@ -805,7 +805,7 @@ type,title,host,description,venue_name,frequency,day_of_week,week_of_month,one_o
 mic,Whatever Wednesday Mic,Alex Rivera,,The Comedy Store,weekly,3,,,20:00,first_come,,,19:30,Free,,
 ```
 
-- [ ] **Step 2: Update the column guide**
+- [x] **Step 2: Update the column guide**
 
 In `data/open-mic-listings-template.md`, replace the `sign_up_method` row of the table with four rows:
 
@@ -818,7 +818,7 @@ In `data/open-mic-listings-template.md`, replace the `sign_up_method` row of the
 
 Update the sentence above the table that says the example uses `Sign-up-up list at the door, 7:30pm` (if any) and the sentence below the table listing which columns a one-off show leaves blank — add `sign_up_url`, `sign_up_other_note`, `sign_up_opens_at` to that list alongside the existing `sign_up_method`.
 
-- [ ] **Step 3: Update the seed file's placeholder row**
+- [x] **Step 3: Update the seed file's placeholder row**
 
 In `supabase/seeds/03_open_mic_listings.sql`, update the column lists (both the `insert into listings (...)` column list and the `values(...)` alias list) to include the three new columns, and update the placeholder row's `sign_up_method` value and the commented example row to match:
 
@@ -853,7 +853,7 @@ with new_listings as (
 
 Note the explicit `::sign_up_method_type` and `::time` casts on `v.sign_up_method` and `v.sign_up_opens_at` — needed because the `values(...)` list's columns are untyped literals, same reason `v.type::listing_type` and `v.start_time::time` are already cast this way.
 
-- [ ] **Step 4: Reset the local database and verify**
+- [x] **Step 4: Reset the local database and verify**
 
 Run: `supabase db reset`
 Expected: completes with no errors (this exercises the placeholder row's type-correctness, even though it never actually inserts).
