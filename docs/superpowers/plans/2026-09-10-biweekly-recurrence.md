@@ -106,7 +106,7 @@ supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
 Verify: `grep -c interval_weeks src/lib/supabase/database.types.ts` returns `3` (Row, Insert, Update).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/*_recurrence_interval_weeks.sql src/lib/supabase/database.types.ts
@@ -124,7 +124,7 @@ git commit -m "feat(db): add interval_weeks/anchor_date to recurrence_rules"
 **Interfaces:**
 - Produces: `RecurrenceRule.intervalWeeks?: number` (default treated as `1` when absent), `RecurrenceRule.anchorDate?: string` — consumed by Task 3's `toRecurrenceListing`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `src/lib/utils/recurrence.test.ts`, inside the existing `describe('resolveOccurrences', ...)` block:
 
@@ -170,12 +170,12 @@ Add to `src/lib/utils/recurrence.test.ts`, inside the existing `describe('resolv
   });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test -- recurrence`
 Expected: both new tests FAIL (the current `weeklyDatesInRange` has no interval/anchor filtering, so it returns every Tuesday: `09-01, 09-08, 09-15, 09-22, 09-29`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `src/lib/utils/recurrence.ts`, update the `RecurrenceRule` interface:
 
@@ -250,7 +250,7 @@ function isOnIntervalWeek(date: Date, anchor: Date, intervalWeeks: number): bool
 
 `monthlyDatesInRange` and `nthWeekdayOfMonth` are unchanged.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm test -- recurrence`
 Expected: PASS, all cases (the two new ones plus every pre-existing one — `weeklyDatesInRange`'s plain-weekly path is unchanged when `intervalWeeks <= 1`).

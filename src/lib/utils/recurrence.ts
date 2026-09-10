@@ -1,12 +1,14 @@
 export interface RecurrenceRule {
-  frequency: 'weekly' | 'monthly';
+  frequency: "weekly" | "monthly";
   dayOfWeek: number; // 0 = Sunday .. 6 = Saturday
   weekOfMonth?: number; // 1-4, or -1 for "last" — required when frequency is 'monthly'
+  intervalWeeks?: number; // every N weeks; default 1 when absent — only meaningful when frequency is 'weekly'
+  anchorDate?: string; // "YYYY-MM-DD"; required when intervalWeeks > 1
 }
 
 export interface OccurrenceException {
   originalDate: string; // YYYY-MM-DD, the date being overridden
-  type: 'cancelled' | 'modified';
+  type: "cancelled" | "modified";
   newDate?: string;
   newStartTime?: string;
   newVenueId?: string;
@@ -57,11 +59,11 @@ export function resolveOccurrences(
   for (const date of baseDates) {
     const exception = exceptionsByDate.get(date);
 
-    if (exception?.type === 'cancelled') {
+    if (exception?.type === "cancelled") {
       continue;
     }
 
-    if (exception?.type === 'modified') {
+    if (exception?.type === "modified") {
       occurrences.push({
         listingId: listing.id,
         date: exception.newDate ?? date,
@@ -88,8 +90,14 @@ function resolveRecurringDates(
   rangeStart: string,
   rangeEnd: string,
 ): string[] {
-  if (rule.frequency === 'weekly') {
-    return weeklyDatesInRange(rule.dayOfWeek, rangeStart, rangeEnd);
+  if (rule.frequency === "weekly") {
+    return weeklyDatesInRange(
+      rule.dayOfWeek,
+      rule.intervalWeeks ?? 1,
+      rule.anchorDate,
+      rangeStart,
+      rangeEnd,
+    );
   }
   return monthlyDatesInRange(
     rule.dayOfWeek,
@@ -101,19 +109,38 @@ function resolveRecurringDates(
 
 function weeklyDatesInRange(
   dayOfWeek: number,
+  intervalWeeks: number,
+  anchorDate: string | undefined,
   rangeStart: string,
   rangeEnd: string,
 ): string[] {
   const dates: string[] = [];
   let current = toUTCDate(rangeStart);
   const end = toUTCDate(rangeEnd);
+  const anchor = anchorDate ? toUTCDate(anchorDate) : null;
   while (current <= end) {
-    if (current.getUTCDay() === dayOfWeek) {
+    if (
+      current.getUTCDay() === dayOfWeek &&
+      (intervalWeeks <= 1 ||
+        (anchor && isOnIntervalWeek(current, anchor, intervalWeeks)))
+    ) {
       dates.push(toDateStr(current));
     }
     current = addDays(current, 1);
   }
   return dates;
+}
+
+function isOnIntervalWeek(
+  date: Date,
+  anchor: Date,
+  intervalWeeks: number,
+): boolean {
+  const daysBetween = Math.round(
+    (date.getTime() - anchor.getTime()) / 86_400_000,
+  );
+  const weeksBetween = daysBetween / 7; // integer: both fall on the same weekday
+  return ((weeksBetween % intervalWeeks) + intervalWeeks) % intervalWeeks === 0;
 }
 
 function monthlyDatesInRange(
