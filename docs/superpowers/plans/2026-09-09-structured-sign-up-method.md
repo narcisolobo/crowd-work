@@ -858,7 +858,7 @@ Note the explicit `::sign_up_method_type` and `::time` casts on `v.sign_up_metho
 Run: `supabase db reset`
 Expected: completes with no errors (this exercises the placeholder row's type-correctness, even though it never actually inserts).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add data/open-mic-listings-template.csv data/open-mic-listings-template.md \
@@ -872,26 +872,26 @@ git commit -m "docs(seeds): split sign-up method template column into structured
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Full test suite**
+- [x] **Step 1: Full test suite**
 
 Run: `pnpm test`
 Expected: PASS, all files.
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm run check`
 Expected: no errors.
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `pnpm run build`
 Expected: succeeds.
 
-- [ ] **Step 4: Fresh database reset**
+- [x] **Step 4: Fresh database reset**
 
 Run: `supabase db reset`
 Expected: succeeds end-to-end (migrations + all seed files, including the updated `03_open_mic_listings.sql`).
 
-- [ ] **Step 5: Ask the user to do a final manual pass**
+- [x] **Step 5: Ask the user to do a final manual pass**
 
 Per this project's convention (Claude doesn't cycle the local dev server), ask the user to run `astro dev --background`, then check: direct-add a mic with each of the five sign-up methods, confirm the required-field error appears when "Hybrid / Other" is chosen with no explanation, and confirm the public homepage and a listing detail page render correctly for each.
