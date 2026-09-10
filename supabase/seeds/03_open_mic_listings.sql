@@ -28,18 +28,21 @@
 with new_listings as (
   insert into listings (
     type, title, host, description, venue_id, start_time, one_off_date,
-    sign_up_method, cost_to_perform, ticket_price, ticket_url, status
+    sign_up_method, sign_up_url, sign_up_other_note, sign_up_opens_at,
+    cost_to_perform, ticket_price, ticket_url, status
   )
   select
     v.type::listing_type, v.title, v.host, v.description, ven.id,
-    v.start_time::time, v.one_off_date::date, v.sign_up_method,
+    v.start_time::time, v.one_off_date::date, v.sign_up_method::sign_up_method_type,
+    v.sign_up_url, v.sign_up_other_note, v.sign_up_opens_at::time,
     v.cost_to_perform, v.ticket_price, v.ticket_url, 'published'
   from (values
-    -- ('mic', 'Example Mic Name', 'Example Host', null, 'Example Venue Name', '20:00', null, 'Sign-up list at the door', 'Free', null, null),
-    ('mic', '__EXAMPLE_REPLACE_ME__', null, null, '__EXAMPLE_VENUE_REPLACE_ME__', '20:00', null, 'Sign-up list at the door', 'Free', null, null)
+    -- ('mic', 'Example Mic Name', 'Example Host', null, 'Example Venue Name', '20:00', null, 'first_come', null, null, '19:30', 'Free', null, null),
+    ('mic', '__EXAMPLE_REPLACE_ME__', null, null, '__EXAMPLE_VENUE_REPLACE_ME__', '20:00', null, 'first_come', null, null, '19:30', 'Free', null, null)
   ) as v(
     type, title, host, description, venue_name, start_time, one_off_date,
-    sign_up_method, cost_to_perform, ticket_price, ticket_url
+    sign_up_method, sign_up_url, sign_up_other_note, sign_up_opens_at,
+    cost_to_perform, ticket_price, ticket_url
   )
   join venues ven on ven.name = v.venue_name
   where not exists (
