@@ -44,8 +44,17 @@ const neighborhoodSelectOptions = [
 ];
 const isNewVenue = Boolean(prefill?.newVenue);
 const initialType = prefill?.type ?? "mic";
-const isRecurring = Boolean(prefill?.recurrence?.frequency);
-const isMonthly = prefill?.recurrence?.frequency === "monthly";
+const initialCadence =
+  prefill?.recurrence == null
+    ? ""
+    : prefill.recurrence.frequency === "monthly"
+      ? "monthly"
+      : prefill.recurrence.intervalWeeks > 1
+        ? "every_other_week"
+        : "weekly";
+const isRecurring = initialCadence !== "";
+const isMonthly = initialCadence === "monthly";
+const isEveryOtherWeek = initialCadence === "every_other_week";
 const initialSignUpMethod = prefill?.signUpMethod ?? "";
 ---
 
@@ -229,7 +238,7 @@ const initialSignUpMethod = prefill?.signUpMethod ?? "";
     label="Frequency"
     name="frequency"
     options={FREQUENCY_OPTIONS}
-    value={prefill?.recurrence?.frequency ?? ""}
+    value={initialCadence}
   />
   <div data-recurrence-for="recurring" hidden={!isRecurring}>
     <FormSelect
@@ -245,6 +254,14 @@ const initialSignUpMethod = prefill?.signUpMethod ?? "";
       name="weekOfMonth"
       options={WEEK_OF_MONTH_OPTIONS}
       value={prefill?.recurrence?.weekOfMonth ?? ""}
+    />
+  </div>
+  <div data-recurrence-for="every-other-week" hidden={!isEveryOtherWeek}>
+    <FormField
+      label="Anchor date (any confirmed occurrence)"
+      name="anchorDate"
+      type="date"
+      value={prefill?.recurrence?.anchorDate ?? ""}
     />
   </div>
   <div data-recurrence-for="one-time" hidden={isRecurring}>
@@ -303,6 +320,9 @@ const initialSignUpMethod = prefill?.signUpMethod ?? "";
     const monthlyFields = form.querySelectorAll<HTMLElement>(
       '[data-recurrence-for="monthly"]',
     );
+    const everyOtherWeekFields = form.querySelectorAll<HTMLElement>(
+      '[data-recurrence-for="every-other-week"]',
+    );
     const oneTimeFields = form.querySelectorAll<HTMLElement>(
       '[data-recurrence-for="one-time"]',
     );
@@ -310,8 +330,10 @@ const initialSignUpMethod = prefill?.signUpMethod ?? "";
     const sync = () => {
       const isRecurring = select.value !== "";
       const isMonthly = select.value === "monthly";
+      const isEveryOtherWeek = select.value === "every_other_week";
       setGroupState(Array.from(recurringFields), !isRecurring);
       setGroupState(Array.from(monthlyFields), !isMonthly);
+      setGroupState(Array.from(everyOtherWeekFields), !isEveryOtherWeek);
       setGroupState(Array.from(oneTimeFields), isRecurring);
     };
     select.addEventListener("change", sync);

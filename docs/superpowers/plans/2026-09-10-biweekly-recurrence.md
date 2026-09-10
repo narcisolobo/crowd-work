@@ -907,7 +907,7 @@ to:
 Run: `pnpm test -- moderation-approve moderation-archive-listing moderation-source-check`
 Expected: PASS, all files. (These hit a real local Supabase instance — make sure it's running via `supabase status`, starting it with `supabase start` if not.)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-approve.test.ts src/lib/data/moderation-archive-listing.test.ts src/lib/data/moderation-source-check.test.ts
@@ -926,7 +926,7 @@ git commit -m "feat(moderation): write interval_weeks/anchor_date on create and 
 - Consumes: `ProposedListingFields['recurrence']` (Task 4) via the `prefill` prop.
 - Produces: `<select name="frequency">` option `"every_other_week"`, `<input name="anchorDate" type="date">` — consumed by Task 4's `parseProposedListingFields` (already implemented, this task just makes the value reachable from a real form).
 
-- [ ] **Step 1: Add the dropdown option**
+- [x] **Step 1: Add the dropdown option**
 
 In `src/lib/utils/moderation-labels.ts:44-48`, change:
 
@@ -949,7 +949,7 @@ export const FREQUENCY_OPTIONS = [
 ];
 ```
 
-- [ ] **Step 2: Compute the form's cadence value and derive the three booleans from it**
+- [x] **Step 2: Compute the form's cadence value and derive the three booleans from it**
 
 In `ListingFieldsFields.astro:45-49`, change:
 
@@ -980,7 +980,7 @@ const isEveryOtherWeek = initialCadence === "every_other_week";
 const initialSignUpMethod = prefill?.signUpMethod ?? "";
 ```
 
-- [ ] **Step 3: Point the frequency select at the new cadence value**
+- [x] **Step 3: Point the frequency select at the new cadence value**
 
 In `ListingFieldsFields.astro:228-233`, change:
 
@@ -1004,7 +1004,7 @@ to:
   />
 ```
 
-- [ ] **Step 4: Add the anchor-date field**
+- [x] **Step 4: Add the anchor-date field**
 
 In `ListingFieldsFields.astro:242-249`, immediately after the existing `data-recurrence-for="monthly"` block, add:
 
@@ -1019,7 +1019,7 @@ In `ListingFieldsFields.astro:242-249`, immediately after the existing `data-rec
   </div>
 ```
 
-- [ ] **Step 5: Add the client-side toggle**
+- [x] **Step 5: Add the client-side toggle**
 
 In the `<script>` block's `frequencySelects` loop (`ListingFieldsFields.astro:297-318`), change:
 
@@ -1070,18 +1070,20 @@ to:
     };
 ```
 
-- [ ] **Step 6: Type-check**
+- [x] **Step 6: Type-check**
 
 Run: `pnpm exec astro check`
 Expected: no new errors.
 
-- [ ] **Step 7: Manual verification in the browser**
+- [x] **Step 7: Manual verification in the browser**
 
-This project's own guidance is to start the dev server yourself (`astro dev --background`) rather than have your assistant cycle it — do that first if it isn't already running, then open the direct-add form (`/admin/listings/new`) and confirm:
-- Selecting "Weekly" shows the day-of-week field only.
-- Selecting "Every other week" shows day-of-week **and** the new anchor-date field, but not week-of-month.
-- Selecting "Monthly" shows day-of-week **and** week-of-month, but not the anchor-date field.
-- Submitting "Every other week" with no anchor date shows the "Anchor date" validation message; submitting "Monthly" with no week selected shows "Week of month".
+Verified via Playwright against a local dev server (`astro dev --background`) and local Supabase, signed in as `mod1@crowdwork.test`, on `/admin/listings/new`:
+- Selecting "Weekly" shows the day-of-week field only. ✓
+- Selecting "Every other week" shows day-of-week **and** the anchor-date field, not week-of-month. ✓
+- Selecting "Monthly" shows day-of-week **and** week-of-month, not the anchor-date field. ✓
+- Submitting "Every other week" with no anchor date, and separately "Monthly" with no week selected, both correctly blocked the insert (verified via direct DB query — no listing row was created for either submission) and surfaced the shared `"Error: Please fix the highlighted fields below."` banner.
+  - Note: this page (`/admin/listings/new`) always passes `prefill={null}` on a validation-error redisplay — a pre-existing characteristic of the direct-add form, unrelated to this task — so the specific "Anchor date"/"Week of month" field-level labels from `findMissingRequiredFields` aren't individually rendered here (no `error` prop is wired to any recurrence field, matching the pre-existing `dayOfWeek`/`weekOfMonth` fields). The generic banner is what this page has always shown for any missing-required-field case.
+- End-to-end happy path: submitted a real "Every other week" listing (day-of-week Tuesday, anchor `2026-09-01`) and confirmed via direct DB query that `recurrence_rules` got `frequency: weekly, day_of_week: 2, interval_weeks: 2, anchor_date: 2026-09-01` — then deleted the test row.
 
 - [ ] **Step 8: Commit**
 

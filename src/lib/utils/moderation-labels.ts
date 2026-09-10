@@ -44,6 +44,7 @@ export const TYPE_OPTIONS = [
 export const FREQUENCY_OPTIONS = [
   { value: "", label: "One-time" },
   { value: "weekly", label: "Weekly" },
+  { value: "every_other_week", label: "Every other week" },
   { value: "monthly", label: "Monthly" },
 ];
 
