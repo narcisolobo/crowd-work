@@ -29,13 +29,13 @@
 **Interfaces:**
 - Produces: Postgres enum type `sign_up_method_type` with labels `bucket_lotto | first_come | curated | slotted_online | hybrid_other`; `listings` columns `sign_up_method sign_up_method_type`, `sign_up_url text`, `sign_up_other_note text`, `sign_up_opens_at time`.
 
-- [ ] **Step 1: Generate the migration file**
+- [x] **Step 1: Generate the migration file**
 
 Run: `supabase migration new structured_sign_up_method`
 
 This creates an empty, correctly-timestamped file under `supabase/migrations/`.
 
-- [ ] **Step 2: Write the migration**
+- [x] **Step 2: Write the migration**
 
 ```sql
 create type sign_up_method_type as enum (
@@ -50,7 +50,7 @@ alter table listings
   add column sign_up_opens_at time;
 ```
 
-- [ ] **Step 3: Update `supabase/seed.sql`'s two `sign_up_method` values**
+- [x] **Step 3: Update `supabase/seed.sql`'s two `sign_up_method` values**
 
 In `supabase/seed.sql`, the first `insert into listings` (id `d0000000-0000-0000-0000-000000000001`) currently has `sign_up_method` value `'sign-up list at the door, 7:30pm'` in its column list at position matching `sign_up_method`. Change that INSERT's column list and values to include the new columns, and drop the old free-text value:
 
@@ -66,7 +66,7 @@ insert into listings (id, type, title, host, venue_id, start_time, sign_up_metho
   ('d0000000-0000-0000-0000-000000000002', 'mic', 'Last Thursday Mic', 'Dana Okafor', 'c0000000-0000-0000-0000-000000000001', '19:30', 'first_come', '18:00', '$5', 'published');
 ```
 
-- [ ] **Step 4: Reset the local database and verify**
+- [x] **Step 4: Reset the local database and verify**
 
 Run: `supabase db reset`
 Expected: completes with no errors, and both seed listings insert successfully.

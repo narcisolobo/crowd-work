@@ -11,14 +11,14 @@ insert into venues (id, name, address, neighborhood_id, google_maps_url) values
   ('c0000000-0000-0000-0000-000000000001', 'The Virgil', '4519 Santa Monica Blvd, Los Angeles, CA', 'b0000000-0000-0000-0000-000000000002', 'https://maps.google.com/?q=The+Virgil+LA'),
   ('c0000000-0000-0000-0000-000000000002', 'Westside Comedy Theater', '1323 3rd St Promenade, Santa Monica, CA', 'b0000000-0000-0000-0000-000000000003', 'https://maps.google.com/?q=Westside+Comedy+Theater');
 
-insert into listings (id, type, title, host, venue_id, start_time, sign_up_method, cost_to_perform, status) values
-  ('d0000000-0000-0000-0000-000000000001', 'mic', 'Tuesday Night Mic', 'Jamie Rivera', 'c0000000-0000-0000-0000-000000000001', '20:00', 'sign-up list at the door, 7:30pm', 'free', 'published');
+insert into listings (id, type, title, host, venue_id, start_time, sign_up_method, sign_up_opens_at, cost_to_perform, status) values
+  ('d0000000-0000-0000-0000-000000000001', 'mic', 'Tuesday Night Mic', 'Jamie Rivera', 'c0000000-0000-0000-0000-000000000001', '20:00', 'first_come', '19:30', 'free', 'published');
 
 insert into recurrence_rules (listing_id, frequency, day_of_week) values
   ('d0000000-0000-0000-0000-000000000001', 'weekly', 2);
 
-insert into listings (id, type, title, host, venue_id, start_time, sign_up_method, cost_to_perform, status) values
-  ('d0000000-0000-0000-0000-000000000002', 'mic', 'Last Thursday Mic', 'Dana Okafor', 'c0000000-0000-0000-0000-000000000001', '19:30', 'app sign-up opens 6pm', '$5', 'published');
+insert into listings (id, type, title, host, venue_id, start_time, sign_up_method, sign_up_opens_at, cost_to_perform, status) values
+  ('d0000000-0000-0000-0000-000000000002', 'mic', 'Last Thursday Mic', 'Dana Okafor', 'c0000000-0000-0000-0000-000000000001', '19:30', 'first_come', '18:00', '$5', 'published');
 
 insert into recurrence_rules (listing_id, frequency, day_of_week, week_of_month) values
   ('d0000000-0000-0000-0000-000000000002', 'monthly', 4, -1);
