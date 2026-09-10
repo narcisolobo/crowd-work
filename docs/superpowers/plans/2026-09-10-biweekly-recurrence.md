@@ -1085,7 +1085,7 @@ Verified via Playwright against a local dev server (`astro dev --background`) an
   - Note: this page (`/admin/listings/new`) always passes `prefill={null}` on a validation-error redisplay — a pre-existing characteristic of the direct-add form, unrelated to this task — so the specific "Anchor date"/"Week of month" field-level labels from `findMissingRequiredFields` aren't individually rendered here (no `error` prop is wired to any recurrence field, matching the pre-existing `dayOfWeek`/`weekOfMonth` fields). The generic banner is what this page has always shown for any missing-required-field case.
 - End-to-end happy path: submitted a real "Every other week" listing (day-of-week Tuesday, anchor `2026-09-01`) and confirmed via direct DB query that `recurrence_rules` got `frequency: weekly, day_of_week: 2, interval_weeks: 2, anchor_date: 2026-09-01` — then deleted the test row.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/lib/utils/moderation-labels.ts src/components/moderation/ListingFieldsFields.astro
@@ -1104,7 +1104,7 @@ git commit -m "feat(admin): add every-other-week option and anchor-date field to
 **Interfaces:**
 - Consumes: `recurrence_rules.interval_weeks`/`.anchor_date` (Task 1).
 
-- [ ] **Step 1: Update the seed file's recurrence columns**
+- [x] **Step 1: Update the seed file's recurrence columns**
 
 In `supabase/seeds/03_open_mic_listings.sql`, the second `insert` statement's column list and `values()` shape (lines 54-63) currently read:
 
@@ -1140,11 +1140,11 @@ join (values
 
 Update the header comment (around line 20-22) that documents how to add a recurring row, adding one sentence: after "a matching row — joined by title — to the second values() list for its recurrence rule", add "Leave `interval_weeks` as `1`/`anchor_date` as `null` unless the listing runs every other week, in which case set `interval_weeks` to `2` and `anchor_date` to any confirmed occurrence date on the same weekday as `day_of_week`."
 
-- [ ] **Step 2: Update the CSV template**
+- [x] **Step 2: Update the CSV template**
 
 In `data/open-mic-listings-template.csv`, add two columns, `interval_weeks` and `anchor_date`, after `week_of_month` in the header row and in every existing data row (blank values for all current rows, since none are every-other-week).
 
-- [ ] **Step 3: Update the column guide**
+- [x] **Step 3: Update the column guide**
 
 In `data/open-mic-listings-template.md`'s table, add two rows immediately after the `week_of_month` row:
 
@@ -1153,12 +1153,14 @@ In `data/open-mic-listings-template.md`'s table, add two rows immediately after 
 | `anchor_date` | *(blank)* | `YYYY-MM-DD`; required (and must fall on `day_of_week`) when `interval_weeks` is `2`, blank otherwise |
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `supabase db reset`
 Expected: completes with no errors — the placeholder row's `interval_weeks`/`anchor_date` values (`1`/`null`) satisfy `recurrence_rules_anchor_date_for_interval`, same as every other placeholder column.
 
-- [ ] **Step 5: Commit**
+Confirmed: reset succeeded, `pnpm exec astro check` stayed clean, and the full test suite (119 tests) passed after re-provisioning the local test accounts (`db reset` wipes `auth.users`, which isn't part of the SQL seeds — a general fact about this project's local dev setup, unrelated to this task, but easy to mistake for a regression if forgotten): `pnpm run provision:test-mods`, `provision:source-check-agent`, `provision:notification-agent`.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/seeds/03_open_mic_listings.sql data/open-mic-listings-template.csv data/open-mic-listings-template.md

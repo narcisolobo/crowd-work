@@ -18,7 +18,10 @@
 --
 -- To add a confirmed listing: append a row to the first values() list
 -- below (and, if it's recurring, a matching row — joined by title — to the
--- second values() list for its recurrence rule). One-off shows only need
+-- second values() list for its recurrence rule). Leave interval_weeks as 1
+-- /anchor_date as null unless the listing runs every other week, in which
+-- case set interval_weeks to 2 and anchor_date to any confirmed occurrence
+-- date on the same weekday as day_of_week. One-off shows only need
 -- the first list, with one_off_date set instead of a recurrence row.
 --
 -- The single placeholder row below joins against a venue name that will
@@ -51,13 +54,15 @@ with new_listings as (
   )
   returning id, title
 )
-insert into recurrence_rules (listing_id, frequency, day_of_week, week_of_month)
+insert into recurrence_rules (
+  listing_id, frequency, day_of_week, week_of_month, interval_weeks, anchor_date
+)
 select
   nl.id, r.frequency::recurrence_frequency, r.day_of_week::smallint,
-  r.week_of_month::smallint
+  r.week_of_month::smallint, r.interval_weeks::smallint, r.anchor_date::date
 from new_listings nl
 join (values
-  -- ('Example Mic Name', 'weekly', 2, null)
-  ('__EXAMPLE_REPLACE_ME__', 'weekly', 2, null)
-) as r(title, frequency, day_of_week, week_of_month)
+  -- ('Example Mic Name', 'weekly', 2, null, 1, null)
+  ('__EXAMPLE_REPLACE_ME__', 'weekly', 2, null, 1, null)
+) as r(title, frequency, day_of_week, week_of_month, interval_weeks, anchor_date)
   on r.title = nl.title;

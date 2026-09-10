@@ -1,9 +1,9 @@
-type,title,host,description,venue_name,frequency,day_of_week,week_of_month,one_off_date,start_time,sign_up_method,sign_up_url,sign_up_other_note,sign_up_opens_at,cost_to_perform,ticket_price,ticket_url
-mic,Storytelling Open Mic + Improv Jam,Adam Macias & Dina Mild,"Storytelling Mic & Improv Jam! Sundays at 3:30 pm at Lyric Hyperion. In-person sign-ups. First come, first serve.",Lyric Hyperion Theater & Cafe,weekly,0,,,15:30,first_come,,IG @storyjammic,,1-item minimum,,
-mic,Open Mic Comedy,,"15 names pulled, lottery style",Lyric Hyperion Theater & Cafe,weekly,1,,,21:00,bucket_lotto,,IG @uriahjokes,,$4 / 4 min if selected,,
-mic,Tag Team Mic,,,The Glendale Room,monthly,1,1,,14:00,bucket_lotto,,IG @ahmedbharoocha,,$3 / 3 min,,
-mic,Potluck (Sun),,"~16 performers; 21+, ID required",The Comedy Store,weekly,0,,,16:00,curated,,,,Free,,
-mic,Potluck (Mon),,"~16 performers; 21+, ID required",The Comedy Store,weekly,1,,,16:00,curated,,,,Free,,
-mic,Bear Knuckles,,,Brews Brothers (North Hollywood),weekly,4,,,19:00,slotted_online,,IG @drewjfahey,,1-item minimum,,
-mic,Set of the Night,,Best set gets a spot on Potluck,The Comedy Store,weekly,3,,,22:00,bucket_lotto,,,,1-item minimum,,
-mic,Open Mic,,Must work clean; booking dept watches,Laugh Factory (Hollywood),weekly,2,,,16:30,hybrid_other,,"First 10 in line, 10 more drawn from bucket",,,,
+type,title,host,description,venue_name,frequency,day_of_week,week_of_month,interval_weeks,anchor_date,one_off_date,start_time,sign_up_method,sign_up_url,sign_up_other_note,sign_up_opens_at,cost_to_perform,ticket_price,ticket_url
+mic,Storytelling Open Mic + Improv Jam,Adam Macias & Dina Mild,"Storytelling Mic & Improv Jam! Sundays at 3:30 pm at Lyric Hyperion. In-person sign-ups. First come, first serve.",Lyric Hyperion Theater & Cafe,weekly,0,,,,,15:30,first_come,,IG @storyjammic,,1-item minimum,,
+mic,Open Mic Comedy,,"15 names pulled, lottery style",Lyric Hyperion Theater & Cafe,weekly,1,,,,,21:00,bucket_lotto,,IG @uriahjokes,,$4 / 4 min if selected,,
+mic,Tag Team Mic,,,The Glendale Room,monthly,1,1,,,,14:00,bucket_lotto,,IG @ahmedbharoocha,,$3 / 3 min,,
+mic,Potluck (Sun),,"~16 performers; 21+, ID required",The Comedy Store,weekly,0,,,,,16:00,curated,,,,Free,,
+mic,Potluck (Mon),,"~16 performers; 21+, ID required",The Comedy Store,weekly,1,,,,,16:00,curated,,,,Free,,
+mic,Bear Knuckles,,,Brews Brothers (North Hollywood),weekly,4,,,,,19:00,slotted_online,,IG @drewjfahey,,1-item minimum,,
+mic,Set of the Night,,Best set gets a spot on Potluck,The Comedy Store,weekly,3,,,,,22:00,bucket_lotto,,,,1-item minimum,,
+mic,Open Mic,,Must work clean; booking dept watches,Laugh Factory (Hollywood),weekly,2,,,,,16:30,hybrid_other,,"First 10 in line, 10 more drawn from bucket",,,,
