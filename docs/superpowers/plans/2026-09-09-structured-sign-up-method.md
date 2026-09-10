@@ -590,7 +590,7 @@ This component has no dedicated unit test. Verified via Playwright against `/adm
 - Switching "Type" to "Show" hides the entire sign-up block, including whichever conditional field was open (existing `data-field-for="mic"` behavior, untouched). ✓
 - No console errors or warnings during the session.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/utils/moderation-labels.ts src/components/moderation/ListingFieldsFields.astro
@@ -609,7 +609,7 @@ git commit -m "feat(form): turn sign-up method into a dropdown with conditional 
 **Interfaces:**
 - Consumes: `SIGN_UP_METHOD_LABEL` from Task 3; `ListingWithVenue.signUpUrl`/`.signUpOtherNote`/`.signUpOpensAt` from Task 2; `formatTime` from `src/lib/utils/format.ts`.
 
-- [ ] **Step 1: Pass the new fields through `index.astro`**
+- [x] **Step 1: Pass the new fields through `index.astro`**
 
 In `src/pages/index.astro`, find the mapping that currently includes `signUpMethod: listing.signUpMethod,` (used to build `ListingRowData`) and add the two fields `ListingRow` needs:
 
@@ -620,7 +620,7 @@ In `src/pages/index.astro`, find the mapping that currently includes `signUpMeth
 
 (`signUpOtherNote`/`signUpOpensAt` are detail-page-only per the spec — `ListingRow` doesn't need them.)
 
-- [ ] **Step 2: Update `ListingRow.astro`'s props and rendering**
+- [x] **Step 2: Update `ListingRow.astro`'s props and rendering**
 
 In `src/components/listings/ListingRow.astro`, add to the `ListingRowData` interface, right after `signUpMethod?: string | null;`:
 
@@ -667,7 +667,7 @@ with:
     }
 ```
 
-- [ ] **Step 3: Update `listings/[id].astro`'s rendering**
+- [x] **Step 3: Update `listings/[id].astro`'s rendering**
 
 Add the import:
 
@@ -721,17 +721,17 @@ with:
 
 `formatTime` is already imported in this file (used for `timeLabel`), so no new import is needed for it.
 
-- [ ] **Step 4: Type-check**
+- [x] **Step 4: Type-check**
 
 Run: `pnpm run check`
 Expected: no errors.
 
-- [ ] **Step 5: Run the full test suite**
+- [x] **Step 5: Run the full test suite**
 
 Run: `pnpm test`
 Expected: PASS (no test file directly covers these Astro templates, but this confirms nothing else broke).
 
-- [ ] **Step 6: Manual verification**
+- [x] **Step 6: Manual verification**
 
 Same constraint as Task 3 — don't start the dev server yourself; ask the user to check `/` and a mic's detail page with each of the five sign-up methods (using the seed data from Task 1, or by direct-adding a test listing) to confirm the row stays a plain label (or a linked label for `slotted_online` with a URL) and the detail page shows the extra note/drop-time lines correctly.
 

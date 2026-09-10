@@ -10,6 +10,7 @@ import {
 import { resolveOccurrences } from "../../lib/utils/recurrence";
 import { getTodayInLA, addDaysToDateStr } from "../../lib/utils/date";
 import { formatStubDate, formatTime } from "../../lib/utils/format";
+import { SIGN_UP_METHOD_LABEL } from "../../lib/utils/moderation-labels";
 
 const { id } = Astro.params;
 
@@ -226,9 +227,38 @@ const label =
           {listing.signUpMethod && (
             <>
               <dt class={label}>Sign-up</dt>
-              <dd>{listing.signUpMethod}</dd>
+              <dd>
+                {listing.signUpMethod === "slotted_online" &&
+                listing.signUpUrl ? (
+                  <a
+                    href={listing.signUpUrl}
+                    target="_blank"
+                    rel="noopener"
+                    class="underline underline-offset-2"
+                  >
+                    {SIGN_UP_METHOD_LABEL[listing.signUpMethod]}
+                  </a>
+                ) : (
+                  SIGN_UP_METHOD_LABEL[listing.signUpMethod]
+                )}
+              </dd>
             </>
           )}
+          {listing.signUpMethod === "hybrid_other" &&
+            listing.signUpOtherNote && (
+              <>
+                <dt class={label}>Sign-up details</dt>
+                <dd>{listing.signUpOtherNote}</dd>
+              </>
+            )}
+          {(listing.signUpMethod === "bucket_lotto" ||
+            listing.signUpMethod === "first_come") &&
+            listing.signUpOpensAt && (
+              <>
+                <dt class={label}>Sign-up opens</dt>
+                <dd>{formatTime(listing.signUpOpensAt)}</dd>
+              </>
+            )}
           {listing.costToPerform && (
             <>
               <dt class={label}>Cost to perform</dt>
