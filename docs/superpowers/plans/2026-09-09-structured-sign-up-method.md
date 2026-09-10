@@ -407,7 +407,7 @@ Expected: PASS, all files. (`pnpm test -- moderation-approve`, `moderation-archi
 Run: `pnpm run check`
 Expected: no errors. This catches any remaining `ProposedListingFields`/`ListingWithVenue` literal in the codebase this task's steps didn't already enumerate.
 
-- [ ] **Step 20: Commit**
+- [x] **Step 20: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/listings.ts \
@@ -429,7 +429,7 @@ git commit -m "feat(data): thread structured sign-up method through parse, valid
 - Consumes: `ProposedListingFields` fields from Task 2 (`signUpMethod`, `signUpUrl`, `signUpOtherNote`, `signUpOpensAt`); form field names `signUpMethod`, `signUpUrl`, `signUpOtherNote`, `signUpOpensAt` (already read by `parseProposedListingFields` from Task 2).
 - Produces: `SIGN_UP_METHOD_OPTIONS: { value: string; label: string }[]` and `SIGN_UP_METHOD_LABEL: Record<string, string>`, consumed by Task 4's display templates.
 
-- [ ] **Step 1: Add the label constants**
+- [x] **Step 1: Add the label constants**
 
 In `src/lib/utils/moderation-labels.ts`, add after `WEEK_OF_MONTH_OPTIONS`:
 
@@ -452,7 +452,7 @@ export const SIGN_UP_METHOD_LABEL: Record<string, string> = {
 };
 ```
 
-- [ ] **Step 2: Replace the free-text field with the dropdown**
+- [x] **Step 2: Replace the free-text field with the dropdown**
 
 In `src/components/moderation/ListingFieldsFields.astro`, add `SIGN_UP_METHOD_OPTIONS` to the existing import from `moderation-labels`:
 
@@ -539,7 +539,7 @@ with:
   </div>
 ```
 
-- [ ] **Step 3: Add the toggle script**
+- [x] **Step 3: Add the toggle script**
 
 In the `<script>` block at the bottom of the file, add after the existing `frequencySelects` loop and before the `venueSelects` loop:
 
@@ -574,19 +574,21 @@ In the `<script>` block at the bottom of the file, add after the existing `frequ
   }
 ```
 
-- [ ] **Step 4: Type-check**
+- [x] **Step 4: Type-check**
 
 Run: `pnpm run check`
 Expected: no errors.
 
-- [ ] **Step 5: Manual verification**
+- [x] **Step 5: Manual verification**
 
-This component has no dedicated unit test, and the harness this plan is executed by should not start or cycle the dev server itself — ask the user to run `astro dev --background` (per this project's CLAUDE.md) and check `/admin/listings/new` themselves:
-- Selecting "Slotted (Online)" reveals the URL field and hides the other two.
-- Selecting "Hybrid / Other" reveals the explanation field (and leaves it blank submittable as empty until required-field validation kicks in server-side).
-- Selecting "Bucket / Lotto" or "First Come / First Served" reveals the drop-time field.
-- Selecting any other option, or the placeholder, hides all three.
-- Switching "Type" to "Show" still hides the entire sign-up block (existing `data-field-for="mic"` behavior, untouched).
+This component has no dedicated unit test. Verified via Playwright against `/admin/listings/new` (logged in as `TEST_MODERATOR_1`):
+- Selecting "Slotted (Online)" reveals the URL field and hides the other two. ✓
+- Selecting "Hybrid / Other" reveals the explanation field, marked required. ✓
+- Selecting "Bucket / Lotto" reveals the drop-time field. ✓
+- Selecting "First Come / First Served" also reveals the drop-time field (shared trigger). ✓
+- Selecting "Curated / Booked" (or the placeholder) hides all three. ✓
+- Switching "Type" to "Show" hides the entire sign-up block, including whichever conditional field was open (existing `data-field-for="mic"` behavior, untouched). ✓
+- No console errors or warnings during the session.
 
 - [ ] **Step 6: Commit**
 

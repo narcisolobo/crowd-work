@@ -6,6 +6,7 @@ import type { ProposedListingFields } from "../../lib/data/moderation";
 import {
   DAY_OF_WEEK_OPTIONS,
   FREQUENCY_OPTIONS,
+  SIGN_UP_METHOD_OPTIONS,
   TYPE_OPTIONS,
   WEEK_OF_MONTH_OPTIONS,
 } from "../../lib/utils/moderation-labels";
@@ -45,6 +46,7 @@ const isNewVenue = Boolean(prefill?.newVenue);
 const initialType = prefill?.type ?? "mic";
 const isRecurring = Boolean(prefill?.recurrence?.frequency);
 const isMonthly = prefill?.recurrence?.frequency === "monthly";
+const initialSignUpMethod = prefill?.signUpMethod ?? "";
 ---
 
 <p class="font-body text-ink-soft text-[0.82rem]">
@@ -144,12 +146,51 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
     error={fieldErrors.startTime}
   />
   <div data-field-for="mic" hidden={initialType === "show"}>
-    <FormField
+    <FormSelect
       label="Sign-up method"
       name="signUpMethod"
-      placeholder="Sign-up list at the door, 7:30pm"
-      value={prefill?.signUpMethod ?? ""}
+      options={SIGN_UP_METHOD_OPTIONS}
+      value={initialSignUpMethod}
     />
+    <div
+      data-signup-for="slotted_online"
+      hidden={initialSignUpMethod !== "slotted_online"}
+      class="mt-4"
+    >
+      <FormField
+        label="Slotted.co URL"
+        name="signUpUrl"
+        type="url"
+        placeholder="https://slotted.co/…"
+        value={prefill?.signUpUrl ?? ""}
+      />
+    </div>
+    <div
+      data-signup-for="hybrid_other"
+      hidden={initialSignUpMethod !== "hybrid_other"}
+      class="mt-4"
+    >
+      <FormField
+        label="Explain sign-up method"
+        name="signUpOtherNote"
+        required
+        value={prefill?.signUpOtherNote ?? ""}
+        error={fieldErrors.signUpOtherNote}
+      />
+    </div>
+    <div
+      data-signup-for="drop_time"
+      hidden={initialSignUpMethod !== "bucket_lotto" &&
+        initialSignUpMethod !== "first_come"}
+      class="mt-4"
+    >
+      <FormField
+        label="Sign-up opens at"
+        name="signUpOpensAt"
+        type="time"
+        value={prefill?.signUpOpensAt ?? ""}
+      />
+    </div>
   </div>
   <div data-field-for="mic" hidden={initialType === "show"}>
     <FormField
@@ -272,6 +313,35 @@ const isMonthly = prefill?.recurrence?.frequency === "monthly";
       setGroupState(Array.from(recurringFields), !isRecurring);
       setGroupState(Array.from(monthlyFields), !isMonthly);
       setGroupState(Array.from(oneTimeFields), isRecurring);
+    };
+    select.addEventListener("change", sync);
+    sync();
+  }
+
+  const signUpSelects = document.querySelectorAll<HTMLSelectElement>(
+    'select[name="signUpMethod"]',
+  );
+  for (const select of signUpSelects) {
+    const form = select.closest("form");
+    if (!form) continue;
+    const urlFields = form.querySelectorAll<HTMLElement>(
+      '[data-signup-for="slotted_online"]',
+    );
+    const otherFields = form.querySelectorAll<HTMLElement>(
+      '[data-signup-for="hybrid_other"]',
+    );
+    const dropTimeFields = form.querySelectorAll<HTMLElement>(
+      '[data-signup-for="drop_time"]',
+    );
+
+    const sync = () => {
+      const value = select.value;
+      setGroupState(Array.from(urlFields), value !== "slotted_online");
+      setGroupState(Array.from(otherFields), value !== "hybrid_other");
+      setGroupState(
+        Array.from(dropTimeFields),
+        value !== "bucket_lotto" && value !== "first_come",
+      );
     };
     select.addEventListener("change", sync);
     sync();

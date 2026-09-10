@@ -6,12 +6,7 @@
 // This local QueueChangeType is structurally identical to the one in
 // moderation.ts, so every real QueueEntry still satisfies it.
 type QueueChangeType =
-  | "new"
-  | "update"
-  | "cancellation"
-  | "modification"
-  | "archive"
-  | "restore";
+  "new" | "update" | "cancellation" | "modification" | "archive" | "restore";
 
 export const CHANGE_TYPE_LABEL: Record<QueueChangeType, string> = {
   new: "New",
@@ -71,6 +66,23 @@ export const WEEK_OF_MONTH_OPTIONS = [
   { value: "4", label: "4th" },
   { value: "-1", label: "Last" },
 ];
+
+export const SIGN_UP_METHOD_OPTIONS = [
+  { value: "", label: "Choose a sign-up method" },
+  { value: "bucket_lotto", label: "Bucket / Lotto" },
+  { value: "first_come", label: "First Come / First Served" },
+  { value: "curated", label: "Curated / Booked" },
+  { value: "slotted_online", label: "Slotted (Online)" },
+  { value: "hybrid_other", label: "Hybrid / Other" },
+];
+
+export const SIGN_UP_METHOD_LABEL: Record<string, string> = {
+  bucket_lotto: "Bucket / Lotto",
+  first_come: "First Come / First Served",
+  curated: "Curated / Booked",
+  slotted_online: "Slotted (Online)",
+  hybrid_other: "Hybrid / Other",
+};
 
 export const APPROVAL_REASON_OPTIONS = [
   { value: "", label: "Choose a reason" },
