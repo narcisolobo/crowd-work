@@ -43,6 +43,8 @@ export interface ListingWithVenue {
     frequency: "weekly" | "monthly";
     dayOfWeek: number;
     weekOfMonth: number | null;
+    intervalWeeks: number;
+    anchorDate: string | null;
   } | null;
   oneOffDate: string | null;
 }
@@ -84,7 +86,7 @@ const LISTING_WITH_VENUE_SELECT = `
     id, name, address, google_maps_url,
     neighborhood:neighborhoods ( id, neighborhood_areas ( area_id ) )
   ),
-  recurrence_rules ( frequency, day_of_week, week_of_month )
+  recurrence_rules ( frequency, day_of_week, week_of_month, interval_weeks, anchor_date )
 `;
 
 function mapListingRow(row: any): ListingWithVenue {
@@ -117,6 +119,8 @@ function mapListingRow(row: any): ListingWithVenue {
           frequency: row.recurrence_rules.frequency,
           dayOfWeek: row.recurrence_rules.day_of_week,
           weekOfMonth: row.recurrence_rules.week_of_month,
+          intervalWeeks: row.recurrence_rules.interval_weeks,
+          anchorDate: row.recurrence_rules.anchor_date,
         }
       : null,
     oneOffDate: row.one_off_date,
@@ -234,6 +238,8 @@ export function toRecurrenceListing(
         frequency: listing.recurrenceRule.frequency,
         dayOfWeek: listing.recurrenceRule.dayOfWeek,
         weekOfMonth: listing.recurrenceRule.weekOfMonth ?? undefined,
+        intervalWeeks: listing.recurrenceRule.intervalWeeks,
+        anchorDate: listing.recurrenceRule.anchorDate ?? undefined,
       },
     };
   }

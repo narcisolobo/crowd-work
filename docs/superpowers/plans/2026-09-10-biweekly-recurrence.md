@@ -255,7 +255,7 @@ function isOnIntervalWeek(date: Date, anchor: Date, intervalWeeks: number): bool
 Run: `pnpm test -- recurrence`
 Expected: PASS, all cases (the two new ones plus every pre-existing one — `weeklyDatesInRange`'s plain-weekly path is unchanged when `intervalWeeks <= 1`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/utils/recurrence.ts src/lib/utils/recurrence.test.ts
@@ -273,7 +273,7 @@ git commit -m "feat(recurrence): support every-N-weeks intervals in occurrence c
 - Consumes: `RecurrenceRule.intervalWeeks?`/`anchorDate?` (Task 2, `recurrence.ts`).
 - Produces: `ListingWithVenue['recurrenceRule'].intervalWeeks: number`, `.anchorDate: string | null` — consumed by Task 4/5 (`moderation.ts`, which reads `ListingWithVenue` in `listingToProposedFields`).
 
-- [ ] **Step 1: Update the `ListingWithVenue` type**
+- [x] **Step 1: Update the `ListingWithVenue` type**
 
 In `src/lib/data/listings.ts:42-46`, change:
 
@@ -297,7 +297,7 @@ to:
   } | null;
 ```
 
-- [ ] **Step 2: Extend the select column list**
+- [x] **Step 2: Extend the select column list**
 
 In `LISTING_WITH_VENUE_SELECT` (`listings.ts:79-88`), change:
 
@@ -311,7 +311,7 @@ to:
   recurrence_rules ( frequency, day_of_week, week_of_month, interval_weeks, anchor_date )
 ```
 
-- [ ] **Step 3: Extend the row mapping**
+- [x] **Step 3: Extend the row mapping**
 
 In `mapListingRow` (`listings.ts:115-121`), change:
 
@@ -339,7 +339,7 @@ to:
       : null,
 ```
 
-- [ ] **Step 4: Extend `toRecurrenceListing`**
+- [x] **Step 4: Extend `toRecurrenceListing`**
 
 In `toRecurrenceListing` (`listings.ts:225-238`), change:
 
@@ -363,15 +363,41 @@ to:
       },
 ```
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Fix the one test fixture this type change breaks**
+
+`ListingWithVenue.recurrenceRule` is now non-optional on `intervalWeeks`/`anchorDate` (Step 1), so any existing literal typed as `ListingWithVenue` that constructs a `recurrenceRule` needs both fields. There's exactly one: `moderation-parse.test.ts:117-121`, inside `describe("listingToProposedFields", ...)`. Change:
+
+```ts
+      recurrenceRule: {
+        frequency: "weekly",
+        dayOfWeek: 2,
+        weekOfMonth: null,
+      },
+```
+
+to:
+
+```ts
+      recurrenceRule: {
+        frequency: "weekly",
+        dayOfWeek: 2,
+        weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
+      },
+```
+
+This is a structural fixture fix, not a behavior change — the test's assertions don't change (Task 4 updates the matching expected-output side of this same test).
+
+- [x] **Step 6: Type-check**
 
 Run: `pnpm exec astro check`
 Expected: no new errors. (No existing test exercises `mapListingRow`/`toRecurrenceListing` directly — both are consumed by `index.astro`/`listings/[id].astro`, and by `moderation.ts`'s `listingToProposedFields` in Task 4 — so type-checking is the correctness signal here, same as this file's pre-existing untested mapping code.)
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add src/lib/data/listings.ts
+git add src/lib/data/listings.ts src/lib/data/moderation-parse.test.ts
 git commit -m "feat(listings): read interval_weeks/anchor_date through the listing query"
 ```
 
@@ -389,20 +415,9 @@ git commit -m "feat(listings): read interval_weeks/anchor_date through the listi
 
 - [ ] **Step 1: Write the failing tests**
 
-In `src/lib/data/moderation-parse.test.ts`, update the two existing recurrence fixtures first (both need the new fields to keep type-checking as non-optional `ProposedListingFields`/`ListingWithVenue` members):
+In `src/lib/data/moderation-parse.test.ts`, update the existing expected-output fixture first (Task 3 already fixed the matching `ListingWithVenue` input fixture at lines 117-121, since that one belongs to the type Task 3 changed):
 
-Line 117-121 (inside the `listing: ListingWithVenue` in `"maps a recurring listing's current values..."`):
-```ts
-      recurrenceRule: {
-        frequency: "weekly",
-        dayOfWeek: 2,
-        weekOfMonth: null,
-        intervalWeeks: 1,
-        anchorDate: null,
-      },
-```
-
-Line 140-144 (the matching expected `recurrence` in the same test's `toEqual`):
+Line 140-144 (the expected `recurrence` in `describe("listingToProposedFields", ...)`'s `toEqual`, matching the `listing.recurrenceRule` set two tasks ago):
 ```ts
       recurrence: {
         frequency: "weekly",
@@ -537,7 +552,7 @@ In the `describe("findMissingRequiredFields", ...)` block:
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test -- moderation-parse`
-Expected: FAIL — `fields.recurrence.intervalWeeks`/`anchorDate` don't exist yet (parsing), and the two new `findMissingRequiredFields` rules don't exist yet (validation). The two fixture-only edits (updating existing tests) should still pass once the type change lands in Step 3, since they're additive.
+Expected: FAIL — `fields.recurrence.intervalWeeks`/`anchorDate` don't exist yet (parsing), and the two new `findMissingRequiredFields` rules don't exist yet (validation). The `listingToProposedFields` test (fixture-only edit) should still pass once the type change lands in Step 3, since it's additive.
 
 - [ ] **Step 3: Update the `ProposedListingFields` type**
 

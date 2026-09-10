@@ -118,6 +118,8 @@ describe("listingToProposedFields", () => {
         frequency: "weekly",
         dayOfWeek: 2,
         weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
       },
       oneOffDate: null,
     };
