@@ -510,6 +510,8 @@ export async function createListingFromFields(
         frequency: fields.recurrence.frequency,
         day_of_week: fields.recurrence.dayOfWeek,
         week_of_month: fields.recurrence.weekOfMonth,
+        interval_weeks: fields.recurrence.intervalWeeks,
+        anchor_date: fields.recurrence.anchorDate,
       });
     if (recurrenceError) {
       try {
@@ -691,6 +693,8 @@ async function applyListingFields(
           frequency: fields.recurrence.frequency,
           day_of_week: fields.recurrence.dayOfWeek,
           week_of_month: fields.recurrence.weekOfMonth,
+          interval_weeks: fields.recurrence.intervalWeeks,
+          anchor_date: fields.recurrence.anchorDate,
         },
         { onConflict: "listing_id" },
       );

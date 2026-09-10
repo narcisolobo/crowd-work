@@ -682,7 +682,7 @@ In `moderation.ts:255-260`, immediately after the existing `signUpOtherNote`-for
 Run: `pnpm test -- moderation-parse`
 Expected: PASS, all cases.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/data/moderation.ts src/lib/data/moderation-parse.test.ts
@@ -700,7 +700,7 @@ git commit -m "feat(moderation): parse and validate every-other-week recurrence 
 **Interfaces:**
 - Consumes: `ProposedListingFields['recurrence'].intervalWeeks`/`.anchorDate` (Task 4); `recurrence_rules.interval_weeks`/`.anchor_date` DB columns (Task 1).
 
-- [ ] **Step 1: Update existing fixtures so they keep type-checking**
+- [x] **Step 1: Update existing fixtures so they keep type-checking**
 
 `moderation-approve.test.ts:74` and `:95` — both currently `recurrence: { frequency: "weekly", dayOfWeek: 1, weekOfMonth: null }`. Change both to:
 
@@ -740,7 +740,7 @@ git commit -m "feat(moderation): parse and validate every-other-week recurrence 
   },
 ```
 
-- [ ] **Step 2: Write the failing test for the new columns**
+- [x] **Step 2: Write the failing test for the new columns**
 
 Add to `moderation-approve.test.ts`, inside `describe("approveNewListing", ...)`, after the existing "inserts a listing and recurrence rule..." test:
 
@@ -827,12 +827,12 @@ Add to `moderation-approve.test.ts`, inside `describe("approveNewListing", ...)`
   });
 ```
 
-- [ ] **Step 3: Run the tests to verify the new one fails**
+- [x] **Step 3: Run the tests to verify the new one fails**
 
 Run: `pnpm test -- moderation-approve`
 Expected: the new test FAILS — `recurrence_rules.interval_weeks` stays at its default (`1`) and `anchor_date` stays `null`, because `createListingFromFields`'s insert doesn't write them yet. The three fixture-only files from Step 1 should already pass (they're type/structure updates, not behavior changes).
 
-- [ ] **Step 4: Update the insert path**
+- [x] **Step 4: Update the insert path**
 
 In `moderation.ts:490-498` (inside `createListingFromFields`), change:
 
@@ -864,7 +864,7 @@ to:
       });
 ```
 
-- [ ] **Step 5: Update the update path**
+- [x] **Step 5: Update the update path**
 
 In `moderation.ts:670-681` (inside `applyListingFields`), change:
 
@@ -902,7 +902,7 @@ to:
       );
 ```
 
-- [ ] **Step 6: Run the full data-layer test suite**
+- [x] **Step 6: Run the full data-layer test suite**
 
 Run: `pnpm test -- moderation-approve moderation-archive-listing moderation-source-check`
 Expected: PASS, all files. (These hit a real local Supabase instance — make sure it's running via `supabase status`, starting it with `supabase start` if not.)

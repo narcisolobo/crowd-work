@@ -133,7 +133,13 @@ describe("createListingFromFields recovery fallback", () => {
       // day_of_week 9 violates recurrence_rules' `check (day_of_week
       // between 0 and 6)` constraint — a real, deterministic Postgres
       // failure, not a mock, so this exercises the actual insert path.
-      recurrence: { frequency: "weekly", dayOfWeek: 9, weekOfMonth: null },
+      recurrence: {
+        frequency: "weekly",
+        dayOfWeek: 9,
+        weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
+      },
       oneOffDate: null,
     };
 
