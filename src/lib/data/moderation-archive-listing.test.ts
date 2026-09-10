@@ -44,7 +44,9 @@ async function createTempListing(title: string) {
 
 describe("listings RLS: archived listings are visible to moderators", () => {
   it("lets a moderator archive a listing and read it back afterward", async () => {
-    const listingId = await createTempListing("Temp Listing For Archive RLS Test");
+    const listingId = await createTempListing(
+      "Temp Listing For Archive RLS Test",
+    );
     const moderator1 = await signInTestModerator(1);
 
     // The exact repro from notes/archive-status-rls-gap.md: before Task 1's
@@ -69,7 +71,9 @@ describe("listings RLS: archived listings are visible to moderators", () => {
 
 describe("archiveListing", () => {
   it("archives a listing and records an approved 'archive' queue entry", async () => {
-    const listingId = await createTempListing("Temp Listing For archiveListing Test");
+    const listingId = await createTempListing(
+      "Temp Listing For archiveListing Test",
+    );
     const moderator1 = await signInTestModerator(1);
     const {
       data: { user: moderator1User },
@@ -119,7 +123,10 @@ describe("createListingFromFields recovery fallback", () => {
       venueId: EXISTING_VENUE_ID,
       newVenue: null,
       startTime: "19:00",
+      signUpOpensAt: null,
       signUpMethod: null,
+      signUpUrl: null,
+      signUpOtherNote: null,
       costToPerform: null,
       ticketPrice: null,
       ticketUrl: null,

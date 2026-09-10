@@ -42,7 +42,10 @@ Checks one or more registered venue-website sources against crowd-work's existin
        "venueId": "<the source's venue_id>",
        "newVenue": null,
        "startTime": "HH:MM",
-       "signUpMethod": "string or null",
+       "signUpMethod": "bucket_lotto" | "first_come" | "curated" | "slotted_online" | "hybrid_other" | null,
+       "signUpUrl": "string or null",
+       "signUpOtherNote": "string or null",
+       "signUpOpensAt": "HH:MM or null",
        "costToPerform": "string or null",
        "ticketPrice": "string or null",
        "ticketUrl": "string or null",
@@ -52,6 +55,8 @@ Checks one or more registered venue-website sources against crowd-work's existin
      "note": "One sentence: what changed and where you saw it, e.g. 'Start time now reads 8:30pm on the venue's Tuesday mic page.'"
    }
    ```
+
+   Classifying `signUpMethod` from what the page says: `bucket_lotto` (names drawn from a bucket/hat/lottery), `first_come` (no list, arrive early), `curated` (host books performers, no public sign-up), `slotted_online` (a link like slotted.co — put it in `signUpUrl`), `hybrid_other` (doesn't fit cleanly — explain in `signUpOtherNote`). If the page states a specific time the list/bucket opens, put it in `signUpOpensAt`.
 
    `newVenue` is always `null` in this phase — sources only ever propose changes to listings at their own already-registered venue, never a new venue. Then run:
 

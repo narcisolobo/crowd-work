@@ -1,0 +1,2 @@
+type,title,host,description,venue_name,frequency,day_of_week,week_of_month,one_off_date,start_time,sign_up_method,sign_up_url,sign_up_other_note,sign_up_opens_at,cost_to_perform,ticket_price,ticket_url
+mic,Whatever Wednesday Mic,Alex Rivera,,The Comedy Store,weekly,3,,,20:00,first_come,,,19:30,Free,,

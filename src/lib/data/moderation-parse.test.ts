@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { listingToProposedFields, parseProposedListingFields } from "./moderation";
+import {
+  listingToProposedFields,
+  parseProposedListingFields,
+  findMissingRequiredFields,
+} from "./moderation";
 import type { ListingWithVenue } from "./listings";
+import type { ProposedListingFields } from "./moderation";
 
 function buildFormData(fields: Record<string, string>): FormData {
   const formData = new FormData();
@@ -63,6 +68,26 @@ describe("parseProposedListingFields", () => {
 
     expect(fields.newVenue?.googleMapsUrl).toBeNull();
   });
+
+  it("parses the three sign-up detail fields", () => {
+    const fields = parseProposedListingFields(
+      buildFormData({
+        type: "mic",
+        title: "A Mic",
+        venueId: "c0000000-0000-0000-0000-000000000001",
+        startTime: "20:00",
+        signUpMethod: "slotted_online",
+        signUpUrl: "https://slotted.co/some-mic",
+        signUpOtherNote: "",
+        signUpOpensAt: "",
+      }),
+    );
+
+    expect(fields.signUpMethod).toBe("slotted_online");
+    expect(fields.signUpUrl).toBe("https://slotted.co/some-mic");
+    expect(fields.signUpOtherNote).toBeNull();
+    expect(fields.signUpOpensAt).toBeNull();
+  });
 });
 
 describe("listingToProposedFields", () => {
@@ -74,7 +99,10 @@ describe("listingToProposedFields", () => {
       host: "Jane Host",
       description: "A great mic.",
       startTime: "20:00",
-      signUpMethod: "Sign-up list at the door",
+      signUpOpensAt: null,
+      signUpMethod: "first_come",
+      signUpUrl: null,
+      signUpOtherNote: null,
       costToPerform: "Free",
       ticketPrice: null,
       ticketUrl: null,
@@ -102,7 +130,10 @@ describe("listingToProposedFields", () => {
       venueId: "c0000000-0000-0000-0000-000000000001",
       newVenue: null,
       startTime: "20:00",
-      signUpMethod: "Sign-up list at the door",
+      signUpOpensAt: null,
+      signUpMethod: "first_come",
+      signUpUrl: null,
+      signUpOtherNote: null,
       costToPerform: "Free",
       ticketPrice: null,
       ticketUrl: null,
@@ -123,7 +154,10 @@ describe("listingToProposedFields", () => {
       host: null,
       description: null,
       startTime: "21:00",
+      signUpOpensAt: null,
       signUpMethod: null,
+      signUpUrl: null,
+      signUpOtherNote: null,
       costToPerform: null,
       ticketPrice: "$15",
       ticketUrl: "https://example.com/tickets",
@@ -143,5 +177,63 @@ describe("listingToProposedFields", () => {
     expect(result.recurrence).toBeNull();
     expect(result.oneOffDate).toBe("2026-10-01");
     expect(result.newVenue).toBeNull();
+  });
+});
+
+describe("findMissingRequiredFields", () => {
+  const baseFields: ProposedListingFields = {
+    type: "mic",
+    title: "A Mic",
+    host: null,
+    description: null,
+    venueId: "c0000000-0000-0000-0000-000000000001",
+    newVenue: null,
+    startTime: "20:00",
+    signUpMethod: null,
+    signUpUrl: null,
+    signUpOtherNote: null,
+    signUpOpensAt: null,
+    costToPerform: null,
+    ticketPrice: null,
+    ticketUrl: null,
+    recurrence: null,
+    oneOffDate: "2026-10-01",
+  };
+
+  it("requires signUpOtherNote when signUpMethod is hybrid_other", () => {
+    const missing = findMissingRequiredFields({
+      ...baseFields,
+      signUpMethod: "hybrid_other",
+      signUpOtherNote: null,
+    });
+
+    expect(missing).toContainEqual({
+      field: "signUpOtherNote",
+      label: "Sign-up explanation",
+    });
+  });
+
+  it("does not require signUpOtherNote for other sign-up methods", () => {
+    const missing = findMissingRequiredFields({
+      ...baseFields,
+      signUpMethod: "first_come",
+      signUpOtherNote: null,
+    });
+
+    expect(missing).not.toContainEqual(
+      expect.objectContaining({ field: "signUpOtherNote" }),
+    );
+  });
+
+  it("does not require signUpOtherNote when hybrid_other has a non-empty note", () => {
+    const missing = findMissingRequiredFields({
+      ...baseFields,
+      signUpMethod: "hybrid_other",
+      signUpOtherNote: "Bucket for first half, list for second half",
+    });
+
+    expect(missing).not.toContainEqual(
+      expect.objectContaining({ field: "signUpOtherNote" }),
+    );
   });
 });
