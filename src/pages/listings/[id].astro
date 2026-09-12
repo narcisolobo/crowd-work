@@ -11,6 +11,7 @@ import { resolveOccurrences } from "../../lib/utils/recurrence";
 import { getTodayInLA, addDaysToDateStr } from "../../lib/utils/date";
 import { formatStubDate, formatTime } from "../../lib/utils/format";
 import { SIGN_UP_METHOD_LABEL } from "../../lib/utils/moderation-labels";
+import { linkify } from "../../lib/utils/linkify";
 
 const { id } = Astro.params;
 
@@ -214,8 +215,21 @@ const label =
 
   {
     listing.description && (
-      <p class="mt-4 max-w-[65ch] text-[1rem] leading-normal">
-        {listing.description}
+      <p class="mt-4 max-w-[65ch] whitespace-pre-line text-[1rem] leading-normal">
+        {linkify(listing.description).map((segment) =>
+          segment.type === "link" ? (
+            <a
+              href={segment.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline"
+            >
+              {segment.value}
+            </a>
+          ) : (
+            segment.value
+          ),
+        )}
       </p>
     )
   }
