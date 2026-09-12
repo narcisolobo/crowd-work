@@ -88,6 +88,49 @@ describe("parseProposedListingFields", () => {
     expect(fields.signUpOtherNote).toBeNull();
     expect(fields.signUpOpensAt).toBeNull();
   });
+
+  it("parses 'every_other_week' into weekly with intervalWeeks 2 and the anchor date", () => {
+    const fields = parseProposedListingFields(
+      buildFormData({
+        type: "mic",
+        title: "A Mic",
+        venueId: "c0000000-0000-0000-0000-000000000001",
+        startTime: "20:00",
+        frequency: "every_other_week",
+        dayOfWeek: "2",
+        anchorDate: "2026-09-01",
+      }),
+    );
+
+    expect(fields.recurrence).toEqual({
+      frequency: "weekly",
+      intervalWeeks: 2,
+      dayOfWeek: 2,
+      weekOfMonth: null,
+      anchorDate: "2026-09-01",
+    });
+  });
+
+  it("parses plain 'weekly' into intervalWeeks 1 with a null anchor date", () => {
+    const fields = parseProposedListingFields(
+      buildFormData({
+        type: "mic",
+        title: "A Mic",
+        venueId: "c0000000-0000-0000-0000-000000000001",
+        startTime: "20:00",
+        frequency: "weekly",
+        dayOfWeek: "3",
+      }),
+    );
+
+    expect(fields.recurrence).toEqual({
+      frequency: "weekly",
+      intervalWeeks: 1,
+      dayOfWeek: 3,
+      weekOfMonth: null,
+      anchorDate: null,
+    });
+  });
 });
 
 describe("listingToProposedFields", () => {
@@ -118,6 +161,8 @@ describe("listingToProposedFields", () => {
         frequency: "weekly",
         dayOfWeek: 2,
         weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
       },
       oneOffDate: null,
     };
@@ -141,6 +186,8 @@ describe("listingToProposedFields", () => {
         frequency: "weekly",
         dayOfWeek: 2,
         weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
       },
       oneOffDate: null,
     });
@@ -234,6 +281,75 @@ describe("findMissingRequiredFields", () => {
 
     expect(missing).not.toContainEqual(
       expect.objectContaining({ field: "signUpOtherNote" }),
+    );
+  });
+  it("requires anchorDate when intervalWeeks is greater than 1", () => {
+    const missing = findMissingRequiredFields({
+      ...baseFields,
+      recurrence: {
+        frequency: "weekly",
+        dayOfWeek: 2,
+        weekOfMonth: null,
+        intervalWeeks: 2,
+        anchorDate: null,
+      },
+    });
+
+    expect(missing).toContainEqual({
+      field: "anchorDate",
+      label: "Anchor date",
+    });
+  });
+
+  it("does not require anchorDate for plain weekly (intervalWeeks 1)", () => {
+    const missing = findMissingRequiredFields({
+      ...baseFields,
+      recurrence: {
+        frequency: "weekly",
+        dayOfWeek: 2,
+        weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
+      },
+    });
+
+    expect(missing).not.toContainEqual(
+      expect.objectContaining({ field: "anchorDate" }),
+    );
+  });
+
+  it("requires weekOfMonth when frequency is monthly", () => {
+    const missing = findMissingRequiredFields({
+      ...baseFields,
+      recurrence: {
+        frequency: "monthly",
+        dayOfWeek: 4,
+        weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
+      },
+    });
+
+    expect(missing).toContainEqual({
+      field: "weekOfMonth",
+      label: "Week of month",
+    });
+  });
+
+  it("does not require weekOfMonth for weekly", () => {
+    const missing = findMissingRequiredFields({
+      ...baseFields,
+      recurrence: {
+        frequency: "weekly",
+        dayOfWeek: 2,
+        weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
+      },
+    });
+
+    expect(missing).not.toContainEqual(
+      expect.objectContaining({ field: "weekOfMonth" }),
     );
   });
 });

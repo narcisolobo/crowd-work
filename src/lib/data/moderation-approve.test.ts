@@ -71,7 +71,13 @@ describe("approveNewListing", () => {
         costToPerform: null,
         ticketPrice: null,
         ticketUrl: null,
-        recurrence: { frequency: "weekly", dayOfWeek: 1, weekOfMonth: null },
+        recurrence: {
+          frequency: "weekly",
+          dayOfWeek: 1,
+          weekOfMonth: null,
+          intervalWeeks: 1,
+          anchorDate: null,
+        },
         oneOffDate: null,
       },
     });
@@ -92,7 +98,13 @@ describe("approveNewListing", () => {
       costToPerform: "free",
       ticketPrice: null,
       ticketUrl: null,
-      recurrence: { frequency: "weekly", dayOfWeek: 1, weekOfMonth: null },
+      recurrence: {
+        frequency: "weekly",
+        dayOfWeek: 1,
+        weekOfMonth: null,
+        intervalWeeks: 1,
+        anchorDate: null,
+      },
       oneOffDate: null,
     };
 
@@ -141,6 +153,87 @@ describe("approveNewListing", () => {
     expect((entry!.approved_data as { title: string }).title).toBe(
       "Moderator-Corrected Title",
     );
+  });
+
+  it("inserts interval_weeks and anchor_date for an every-other-week recurrence", async () => {
+    const entryId = await createPendingEntry({
+      change_type: "new",
+      listing_id: null,
+      proposed_data: {
+        type: "mic",
+        title: "Every Other Week Original",
+        host: null,
+        description: null,
+        venueId: EXISTING_VENUE_ID,
+        newVenue: null,
+        startTime: "19:00",
+        signUpOpensAt: null,
+        signUpMethod: null,
+        signUpUrl: null,
+        signUpOtherNote: null,
+        costToPerform: null,
+        ticketPrice: null,
+        ticketUrl: null,
+        recurrence: {
+          frequency: "weekly",
+          dayOfWeek: 2,
+          weekOfMonth: null,
+          intervalWeeks: 2,
+          anchorDate: "2026-09-01",
+        },
+        oneOffDate: null,
+      },
+    });
+
+    const moderator1 = await signInTestModerator(1);
+    const edited: ProposedListingFields = {
+      type: "mic",
+      title: "Every Other Week Mic",
+      host: null,
+      description: null,
+      venueId: EXISTING_VENUE_ID,
+      newVenue: null,
+      startTime: "19:00",
+      signUpOpensAt: null,
+      signUpMethod: null,
+      signUpUrl: null,
+      signUpOtherNote: null,
+      costToPerform: null,
+      ticketPrice: null,
+      ticketUrl: null,
+      recurrence: {
+        frequency: "weekly",
+        dayOfWeek: 2,
+        weekOfMonth: null,
+        intervalWeeks: 2,
+        anchorDate: "2026-09-01",
+      },
+      oneOffDate: null,
+    };
+
+    await approveNewListing(
+      moderator1,
+      entryId,
+      edited,
+      "Verified independently",
+    );
+
+    const admin = createAdminClient();
+    const { data: listing } = await admin
+      .from("listings")
+      .select("id")
+      .eq("title", "Every Other Week Mic")
+      .single();
+    expect(listing).not.toBeNull();
+    insertedListingIds.push(listing!.id);
+
+    const { data: rule } = await admin
+      .from("recurrence_rules")
+      .select("interval_weeks, anchor_date")
+      .eq("listing_id", listing!.id)
+      .single();
+    expect(rule!.interval_weeks).toBe(2);
+    expect(rule!.anchor_date).toBe("2026-09-01");
   });
 
   it("creates a new venue when the proposal includes one, and records the resolved venue id in approved_data", async () => {

@@ -39,6 +39,8 @@ export interface ProposedListingFields {
     frequency: "weekly" | "monthly";
     dayOfWeek: number;
     weekOfMonth: number | null;
+    intervalWeeks: number;
+    anchorDate: string | null;
   } | null;
   oneOffDate: string | null;
 }
@@ -257,6 +259,19 @@ export function findMissingRequiredFields(
     !fields.signUpOtherNote?.trim()
   ) {
     missing.push({ field: "signUpOtherNote", label: "Sign-up explanation" });
+  }
+  if (
+    fields.recurrence &&
+    fields.recurrence.intervalWeeks > 1 &&
+    !fields.recurrence.anchorDate
+  ) {
+    missing.push({ field: "anchorDate", label: "Anchor date" });
+  }
+  if (
+    fields.recurrence?.frequency === "monthly" &&
+    fields.recurrence.weekOfMonth == null
+  ) {
+    missing.push({ field: "weekOfMonth", label: "Week of month" });
   }
   return missing;
 }
@@ -495,6 +510,8 @@ export async function createListingFromFields(
         frequency: fields.recurrence.frequency,
         day_of_week: fields.recurrence.dayOfWeek,
         week_of_month: fields.recurrence.weekOfMonth,
+        interval_weeks: fields.recurrence.intervalWeeks,
+        anchor_date: fields.recurrence.anchorDate,
       });
     if (recurrenceError) {
       try {
@@ -676,6 +693,8 @@ async function applyListingFields(
           frequency: fields.recurrence.frequency,
           day_of_week: fields.recurrence.dayOfWeek,
           week_of_month: fields.recurrence.weekOfMonth,
+          interval_weeks: fields.recurrence.intervalWeeks,
+          anchor_date: fields.recurrence.anchorDate,
         },
         { onConflict: "listing_id" },
       );
@@ -826,7 +845,11 @@ function parseVenueSelection(formData: FormData): {
 export function parseProposedListingFields(
   formData: FormData,
 ): ProposedListingFields {
-  const frequency = formData.get("frequency")?.toString();
+  const cadence = formData.get("frequency")?.toString();
+  const isRecurring =
+    cadence === "weekly" ||
+    cadence === "every_other_week" ||
+    cadence === "monthly";
   return {
     type: formData.get("type")?.toString() === "show" ? "show" : "mic",
     title: formData.get("title")?.toString() ?? "",
@@ -842,16 +865,17 @@ export function parseProposedListingFields(
     costToPerform: formData.get("costToPerform")?.toString() || null,
     ticketPrice: formData.get("ticketPrice")?.toString() || null,
     ticketUrl: formData.get("ticketUrl")?.toString() || null,
-    recurrence:
-      frequency === "weekly" || frequency === "monthly"
-        ? {
-            frequency,
-            dayOfWeek: Number(formData.get("dayOfWeek")),
-            weekOfMonth: formData.get("weekOfMonth")
-              ? Number(formData.get("weekOfMonth"))
-              : null,
-          }
-        : null,
+    recurrence: isRecurring
+      ? {
+          frequency: cadence === "monthly" ? "monthly" : "weekly",
+          intervalWeeks: cadence === "every_other_week" ? 2 : 1,
+          dayOfWeek: Number(formData.get("dayOfWeek")),
+          weekOfMonth: formData.get("weekOfMonth")
+            ? Number(formData.get("weekOfMonth"))
+            : null,
+          anchorDate: formData.get("anchorDate")?.toString() || null,
+        }
+      : null,
     oneOffDate: formData.get("oneOffDate")?.toString() || null,
   };
 }

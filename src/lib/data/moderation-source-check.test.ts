@@ -22,7 +22,13 @@ const SAMPLE_FIELDS = {
   costToPerform: "free",
   ticketPrice: null,
   ticketUrl: null,
-  recurrence: { frequency: "weekly" as const, dayOfWeek: 2, weekOfMonth: null },
+  recurrence: {
+    frequency: "weekly" as const,
+    dayOfWeek: 2,
+    weekOfMonth: null,
+    intervalWeeks: 1,
+    anchorDate: null,
+  },
   oneOffDate: null,
 };
 
