@@ -84,6 +84,13 @@ const initialSignUpMethod = prefill?.signUpMethod ?? "";
   <div data-field-for="mic" hidden={initialType === "show"}>
     <FormField label="Host" name="host" value={prefill?.host ?? ""} />
   </div>
+  <FormField
+    label="Instagram"
+    name="instagram"
+    placeholder="handle, without @"
+    value={prefill?.instagram ?? ""}
+    error={fieldErrors.instagram}
+  />
   <FormTextarea
     label="Description"
     name="description"
