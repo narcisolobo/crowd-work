@@ -190,7 +190,8 @@ const initialSignUpMethod = prefill?.signUpMethod ?? "";
     <div
       data-signup-for="drop_time"
       hidden={initialSignUpMethod !== "bucket_lotto" &&
-        initialSignUpMethod !== "first_come"}
+        initialSignUpMethod !== "first_come" &&
+        initialSignUpMethod !== "slotted_online"}
       class="mt-4"
     >
       <FormField
@@ -362,7 +363,9 @@ const initialSignUpMethod = prefill?.signUpMethod ?? "";
       setGroupState(Array.from(otherFields), value !== "hybrid_other");
       setGroupState(
         Array.from(dropTimeFields),
-        value !== "bucket_lotto" && value !== "first_come",
+        value !== "bucket_lotto" &&
+          value !== "first_come" &&
+          value !== "slotted_online",
       );
     };
     select.addEventListener("change", sync);

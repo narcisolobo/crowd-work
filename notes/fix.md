@@ -36,7 +36,7 @@ These aren't Instagram handles, but the method isn't `hybrid_other` either.
 ## Open questions
 
 - [x] `sign_up_opens_at` is allowed for `slotted_online` (when the online list opens), not for `curated`. Guide updated, so rows 9 and 21 are fine as they are. Rows 7–8 still need it blanked.
-- [ ] Let the admin form and listing page show `sign_up_opens_at` for `slotted_online`. Both currently limit it to `bucket_lotto`/`first_come`:
+- [x] Let the admin form and listing page show `sign_up_opens_at` for `slotted_online`. Both currently limit it to `bucket_lotto`/`first_come`:
   - `src/components/moderation/ListingFieldsFields.astro`: the `drop_time` block's initial `hidden` condition (~line 192) and the toggle script (~line 365)
   - `src/pages/listings/[id].astro`: the "Sign-up opens" condition (~line 268)
 - [ ] Add the `instagram` column to the schema, admin form, seed file, and CSV template/guide.

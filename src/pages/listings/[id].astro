@@ -266,7 +266,8 @@ const label =
               </>
             )}
           {(listing.signUpMethod === "bucket_lotto" ||
-            listing.signUpMethod === "first_come") &&
+            listing.signUpMethod === "first_come" ||
+            listing.signUpMethod === "slotted_online") &&
             listing.signUpOpensAt && (
               <>
                 <dt class={label}>Sign-up opens</dt>
