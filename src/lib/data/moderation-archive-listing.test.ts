@@ -127,6 +127,7 @@ describe("createListingFromFields recovery fallback", () => {
       signUpMethod: null,
       signUpUrl: null,
       signUpOtherNote: null,
+      instagram: null,
       costToPerform: null,
       ticketPrice: null,
       ticketUrl: null,

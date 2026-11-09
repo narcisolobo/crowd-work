@@ -19,6 +19,7 @@ const SAMPLE_FIELDS = {
   signUpMethod: "first_come" as const,
   signUpUrl: null,
   signUpOtherNote: null,
+  instagram: null,
   costToPerform: "free",
   ticketPrice: null,
   ticketUrl: null,

@@ -89,6 +89,34 @@ describe("parseProposedListingFields", () => {
     expect(fields.signUpOpensAt).toBeNull();
   });
 
+  it("normalizes the instagram field to a bare handle", () => {
+    const fields = parseProposedListingFields(
+      buildFormData({
+        type: "mic",
+        title: "A Mic",
+        venueId: "c0000000-0000-0000-0000-000000000001",
+        startTime: "20:00",
+        instagram: "@storyjammic",
+      }),
+    );
+
+    expect(fields.instagram).toBe("storyjammic");
+  });
+
+  it("parses an empty instagram field as null", () => {
+    const fields = parseProposedListingFields(
+      buildFormData({
+        type: "mic",
+        title: "A Mic",
+        venueId: "c0000000-0000-0000-0000-000000000001",
+        startTime: "20:00",
+        instagram: "",
+      }),
+    );
+
+    expect(fields.instagram).toBeNull();
+  });
+
   it("parses 'every_other_week' into weekly with intervalWeeks 2 and the anchor date", () => {
     const fields = parseProposedListingFields(
       buildFormData({
@@ -146,6 +174,7 @@ describe("listingToProposedFields", () => {
       signUpMethod: "first_come",
       signUpUrl: null,
       signUpOtherNote: null,
+      instagram: "storyjammic",
       costToPerform: "Free",
       ticketPrice: null,
       ticketUrl: null,
@@ -179,6 +208,7 @@ describe("listingToProposedFields", () => {
       signUpMethod: "first_come",
       signUpUrl: null,
       signUpOtherNote: null,
+      instagram: "storyjammic",
       costToPerform: "Free",
       ticketPrice: null,
       ticketUrl: null,
@@ -205,6 +235,7 @@ describe("listingToProposedFields", () => {
       signUpMethod: null,
       signUpUrl: null,
       signUpOtherNote: null,
+      instagram: null,
       costToPerform: null,
       ticketPrice: "$15",
       ticketUrl: "https://example.com/tickets",
@@ -239,6 +270,7 @@ describe("findMissingRequiredFields", () => {
     signUpMethod: null,
     signUpUrl: null,
     signUpOtherNote: null,
+    instagram: null,
     signUpOpensAt: null,
     costToPerform: null,
     ticketPrice: null,
@@ -246,6 +278,35 @@ describe("findMissingRequiredFields", () => {
     recurrence: null,
     oneOffDate: "2026-10-01",
   };
+
+  it("flags an invalid instagram handle", () => {
+    const missing = findMissingRequiredFields({
+      ...baseFields,
+      instagram: "my handle",
+    });
+
+    expect(missing).toContainEqual({
+      field: "instagram",
+      label: "Valid Instagram handle",
+    });
+  });
+
+  it("does not flag a valid or null instagram handle", () => {
+    expect(
+      findMissingRequiredFields({ ...baseFields, instagram: "storyjammic" }),
+    ).not.toContainEqual(expect.objectContaining({ field: "instagram" }));
+    expect(
+      findMissingRequiredFields({ ...baseFields, instagram: null }),
+    ).not.toContainEqual(expect.objectContaining({ field: "instagram" }));
+  });
+
+  it("does not flag queue data saved before the instagram field existed", () => {
+    const { instagram: _omit, ...legacy } = baseFields;
+
+    expect(
+      findMissingRequiredFields(legacy as ProposedListingFields),
+    ).not.toContainEqual(expect.objectContaining({ field: "instagram" }));
+  });
 
   it("requires signUpOtherNote when signUpMethod is hybrid_other", () => {
     const missing = findMissingRequiredFields({

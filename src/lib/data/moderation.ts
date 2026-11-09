@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getListingById, type ListingWithVenue } from "./listings";
 import type { Database, Json } from "../supabase/database.types";
+import {
+  isValidInstagramHandle,
+  normalizeInstagramHandle,
+} from "../utils/instagram";
 
 export type QueueStatus =
   "pending" | "rejection_proposed" | "approved" | "rejected";
@@ -32,6 +36,7 @@ export interface ProposedListingFields {
     | null;
   signUpUrl: string | null;
   signUpOtherNote: string | null;
+  instagram: string | null;
   costToPerform: string | null;
   ticketPrice: string | null;
   ticketUrl: string | null;
@@ -260,6 +265,9 @@ export function findMissingRequiredFields(
   ) {
     missing.push({ field: "signUpOtherNote", label: "Sign-up explanation" });
   }
+  if (fields.instagram && !isValidInstagramHandle(fields.instagram)) {
+    missing.push({ field: "instagram", label: "Valid Instagram handle" });
+  }
   if (
     fields.recurrence &&
     fields.recurrence.intervalWeeks > 1 &&
@@ -485,6 +493,7 @@ export async function createListingFromFields(
       sign_up_method: fields.signUpMethod,
       sign_up_url: fields.signUpUrl,
       sign_up_other_note: fields.signUpOtherNote,
+      instagram: fields.instagram ?? null,
       sign_up_opens_at: fields.signUpOpensAt,
       cost_to_perform: fields.costToPerform,
       ticket_price: fields.ticketPrice,
@@ -674,6 +683,7 @@ async function applyListingFields(
       sign_up_method: fields.signUpMethod,
       sign_up_url: fields.signUpUrl,
       sign_up_other_note: fields.signUpOtherNote,
+      instagram: fields.instagram ?? null,
       sign_up_opens_at: fields.signUpOpensAt,
       cost_to_perform: fields.costToPerform,
       ticket_price: fields.ticketPrice,
@@ -862,6 +872,7 @@ export function parseProposedListingFields(
       null) as ProposedListingFields["signUpMethod"],
     signUpUrl: formData.get("signUpUrl")?.toString() || null,
     signUpOtherNote: formData.get("signUpOtherNote")?.toString() || null,
+    instagram: normalizeInstagramHandle(formData.get("instagram")?.toString()),
     costToPerform: formData.get("costToPerform")?.toString() || null,
     ticketPrice: formData.get("ticketPrice")?.toString() || null,
     ticketUrl: formData.get("ticketUrl")?.toString() || null,
@@ -1018,6 +1029,7 @@ export function listingToProposedFields(
     signUpMethod: listing.signUpMethod,
     signUpUrl: listing.signUpUrl,
     signUpOtherNote: listing.signUpOtherNote,
+    instagram: listing.instagram,
     costToPerform: listing.costToPerform,
     ticketPrice: listing.ticketPrice,
     ticketUrl: listing.ticketUrl,
