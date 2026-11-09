@@ -39,4 +39,4 @@ These aren't Instagram handles, but the method isn't `hybrid_other` either.
 - [x] Let the admin form and listing page show `sign_up_opens_at` for `slotted_online`. Both currently limit it to `bucket_lotto`/`first_come`:
   - `src/components/moderation/ListingFieldsFields.astro`: the `drop_time` block's initial `hidden` condition (~line 192) and the toggle script (~line 365)
   - `src/pages/listings/[id].astro`: the "Sign-up opens" condition (~line 268)
-- [ ] Add the `instagram` column to the schema, admin form, seed file, and CSV template/guide.
+- [x] Add the `instagram` column to the schema, admin form, seed file, and CSV template/guide. (The repo CSV got the empty column only; handles weren't migrated because it's a stale snapshot of the sheet.)

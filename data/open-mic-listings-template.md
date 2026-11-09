@@ -18,7 +18,8 @@ Companion to [open-mic-listings-template.csv](./open-mic-listings-template.csv).
 | `start_time` | `20:00` | 24-hour `HH:MM` |
 | `sign_up_method` | `first_come` | mic-specific; blank for shows. One of `bucket_lotto`, `first_come`, `curated`, `slotted_online`, `hybrid_other` |
 | `sign_up_url` | *(blank)* | only when `sign_up_method` is `slotted_online`; optional even then |
-| `sign_up_other_note` | *(blank)* | required when `sign_up_method` is `hybrid_other`; blank otherwise |
+| `sign_up_other_note` | *(blank)* | required when `sign_up_method` is `hybrid_other`; blank otherwise. Put Instagram handles in `instagram`, not here |
+| `instagram` | `storyjammic` | bare handle, no `@`: the mic's own account, else the main host's. 1–30 letters, digits, periods, underscores (the database rejects anything else) |
 | `sign_up_opens_at` | `19:30` | only when `sign_up_method` is `bucket_lotto`, `first_come`, or `slotted_online` (when the online list opens); 24-hour `HH:MM`, blank otherwise |
 | `cost_to_perform` | `Free` | mic-specific; blank for shows |
 | `ticket_price` | *(blank)* | show-specific; blank for mics |

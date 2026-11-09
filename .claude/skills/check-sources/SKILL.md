@@ -45,6 +45,7 @@ Checks one or more registered venue-website sources against crowd-work's existin
        "signUpMethod": "bucket_lotto" | "first_come" | "curated" | "slotted_online" | "hybrid_other" | null,
        "signUpUrl": "string or null",
        "signUpOtherNote": "string or null",
+       "instagram": "bare handle without @, or null",
        "signUpOpensAt": "HH:MM or null",
        "costToPerform": "string or null",
        "ticketPrice": "string or null",
@@ -56,7 +57,7 @@ Checks one or more registered venue-website sources against crowd-work's existin
    }
    ```
 
-   Classifying `signUpMethod` from what the page says: `bucket_lotto` (names drawn from a bucket/hat/lottery), `first_come` (no list, arrive early), `curated` (host books performers, no public sign-up), `slotted_online` (a link like slotted.co — put it in `signUpUrl`), `hybrid_other` (doesn't fit cleanly — explain in `signUpOtherNote`). If the page states a specific time the list/bucket opens, put it in `signUpOpensAt`.
+   Classifying `signUpMethod` from what the page says: `bucket_lotto` (names drawn from a bucket/hat/lottery), `first_come` (no list, arrive early), `curated` (host books performers, no public sign-up), `slotted_online` (a link like slotted.co — put it in `signUpUrl`), `hybrid_other` (doesn't fit cleanly — explain in `signUpOtherNote`). If the page states a specific time the list/bucket opens, put it in `signUpOpensAt`. If the page names the mic's (or its host's) Instagram account, put the bare handle, without `@`, in `instagram`.
 
    `newVenue` is always `null` in this phase — sources only ever propose changes to listings at their own already-registered venue, never a new venue. Then run:
 

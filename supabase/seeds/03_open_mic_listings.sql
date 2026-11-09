@@ -21,7 +21,8 @@
 -- second values() list for its recurrence rule). Leave interval_weeks as 1
 -- /anchor_date as null unless the listing runs every other week, in which
 -- case set interval_weeks to 2 and anchor_date to any confirmed occurrence
--- date on the same weekday as day_of_week. One-off shows only need
+-- date on the same weekday as day_of_week. instagram is the bare handle,
+-- no leading @ (the database rejects anything else). One-off shows only need
 -- the first list, with one_off_date set instead of a recurrence row.
 --
 -- The single placeholder row below joins against a venue name that will
@@ -31,20 +32,20 @@
 with new_listings as (
   insert into listings (
     type, title, host, description, venue_id, start_time, one_off_date,
-    sign_up_method, sign_up_url, sign_up_other_note, sign_up_opens_at,
+    sign_up_method, sign_up_url, sign_up_other_note, instagram, sign_up_opens_at,
     cost_to_perform, ticket_price, ticket_url, status
   )
   select
     v.type::listing_type, v.title, v.host, v.description, ven.id,
     v.start_time::time, v.one_off_date::date, v.sign_up_method::sign_up_method_type,
-    v.sign_up_url, v.sign_up_other_note, v.sign_up_opens_at::time,
+    v.sign_up_url, v.sign_up_other_note, v.instagram, v.sign_up_opens_at::time,
     v.cost_to_perform, v.ticket_price, v.ticket_url, 'published'
   from (values
-    -- ('mic', 'Example Mic Name', 'Example Host', null, 'Example Venue Name', '20:00', null, 'first_come', null, null, '19:30', 'Free', null, null),
-    ('mic', '__EXAMPLE_REPLACE_ME__', null, null, '__EXAMPLE_VENUE_REPLACE_ME__', '20:00', null, 'first_come', null, null, '19:30', 'Free', null, null)
+    -- ('mic', 'Example Mic Name', 'Example Host', null, 'Example Venue Name', '20:00', null, 'first_come', null, null, null, '19:30', 'Free', null, null),
+    ('mic', '__EXAMPLE_REPLACE_ME__', null, null, '__EXAMPLE_VENUE_REPLACE_ME__', '20:00', null, 'first_come', null, null, null, '19:30', 'Free', null, null)
   ) as v(
     type, title, host, description, venue_name, start_time, one_off_date,
-    sign_up_method, sign_up_url, sign_up_other_note, sign_up_opens_at,
+    sign_up_method, sign_up_url, sign_up_other_note, instagram, sign_up_opens_at,
     cost_to_perform, ticket_price, ticket_url
   )
   join venues ven on ven.name = v.venue_name
