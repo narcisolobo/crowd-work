@@ -56,6 +56,7 @@ export type Database = {
           description: string | null
           host: string | null
           id: string
+          instagram: string | null
           one_off_date: string | null
           sign_up_method:
             | Database["public"]["Enums"]["sign_up_method_type"]
@@ -77,6 +78,7 @@ export type Database = {
           description?: string | null
           host?: string | null
           id?: string
+          instagram?: string | null
           one_off_date?: string | null
           sign_up_method?:
             | Database["public"]["Enums"]["sign_up_method_type"]
@@ -98,6 +100,7 @@ export type Database = {
           description?: string | null
           host?: string | null
           id?: string
+          instagram?: string | null
           one_off_date?: string | null
           sign_up_method?:
             | Database["public"]["Enums"]["sign_up_method_type"]
