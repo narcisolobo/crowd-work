@@ -19,7 +19,7 @@ Companion to [open-mic-listings-template.csv](./open-mic-listings-template.csv).
 | `sign_up_method` | `first_come` | mic-specific; blank for shows. One of `bucket_lotto`, `first_come`, `curated`, `slotted_online`, `hybrid_other` |
 | `sign_up_url` | *(blank)* | only when `sign_up_method` is `slotted_online`; optional even then |
 | `sign_up_other_note` | *(blank)* | required when `sign_up_method` is `hybrid_other`; blank otherwise |
-| `sign_up_opens_at` | `19:30` | only when `sign_up_method` is `bucket_lotto` or `first_come`; 24-hour `HH:MM`, blank otherwise |
+| `sign_up_opens_at` | `19:30` | only when `sign_up_method` is `bucket_lotto`, `first_come`, or `slotted_online` (when the online list opens); 24-hour `HH:MM`, blank otherwise |
 | `cost_to_perform` | `Free` | mic-specific; blank for shows |
 | `ticket_price` | *(blank)* | show-specific; blank for mics |
 | `ticket_url` | *(blank)* | show-specific; blank for mics |
