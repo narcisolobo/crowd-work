@@ -22,7 +22,10 @@ afterEach(async () => {
   insertedEntryIds = [];
 });
 
-async function createTempListing(title: string, status: "published" | "archived" = "archived") {
+async function createTempListing(
+  title: string,
+  status: "published" | "archived" = "archived",
+) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("listings")
