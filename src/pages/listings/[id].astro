@@ -12,6 +12,7 @@ import { getTodayInLA, addDaysToDateStr } from "../../lib/utils/date";
 import { formatStubDate, formatTime } from "../../lib/utils/format";
 import { SIGN_UP_METHOD_LABEL } from "../../lib/utils/moderation-labels";
 import { linkify } from "../../lib/utils/linkify";
+import { instagramProfileUrl } from "../../lib/utils/instagram";
 
 const { id } = Astro.params;
 
@@ -210,6 +211,21 @@ const label =
   {
     listing.host && (
       <p class="text-ink-soft mt-2 text-[0.86rem]">Hosted by {listing.host}</p>
+    )
+  }
+
+  {
+    listing.instagram && (
+      <p class="text-ink-soft mt-2 text-[0.86rem]">
+        <a
+          href={instagramProfileUrl(listing.instagram)}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="underline underline-offset-2"
+        >
+          @{listing.instagram}
+        </a>
+      </p>
     )
   }
 
